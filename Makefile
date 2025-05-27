@@ -47,11 +47,8 @@ $(OUTDIR)/%.o: $(SOURCES) | $(OUTDIR)
 
 $(OUTDIR):
 	mkdir -p $(OUTDIR)
-	mkdir -p $(OUTDIR)/common
-	mkdir -p $(OUTDIR)/linux
 
 clean:
-	rm -rf $(OUTDIR)
-	rm -f source/*.o
+	rm -rf $(OUTDIR) $(OBJECTS)
 
 .PHONY: all clean
