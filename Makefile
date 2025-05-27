@@ -6,33 +6,31 @@ OUTDIR = build
 SOURCES = $(wildcard src/common/*.c)
 PLATFORM = $(shell uname -s)
 
-ifeq ($(PLATFORM),Linux)
+ifeq ($(CC), emcc)
+	EXT = so
+	LDFLAGS = -shared 
+    LIBS = 
+else ifeq ($(PLATFORM),Linux)
    	EXT = so
 	LDFLAGS = -shared 
 	CFLAGS += -I./src/linux/ 
     LIBS = 
-    TARGET = $(OUTDIR)/libminigamepad.$(EXT)
 	SOURCES += $(wildcard src/linux/*.c)
 	SOURCES += $(wildcard src/linux/*/*.c)
-	OBJECTS = $(SOURCES:.c=.o)
 else ifeq ($(PLATFORM),Darwin)
     EXT = dylib
     LDFLAGS = -dynamiclib
     LIBS =  -framework IOKit
-    TARGET = $(OUTDIR)/libminigamepad.$(EXT)
-    OBJECTS = $(SOURCES:.c=.o)
 else
 	EXT = dll
     LDFLAGS = -shared
     LIBS = 
-    DLL_TARGET = $(OUTDIR)/libminigamepad.$(EXT)
-    IMPLIB = $(OUTDIR)/libminigamepad.a
-    TARGET = $(DLL_TARGET)
-    OBJECTS = $(patsubst src/%.c,$(OUTDIR)/%.o,$(SOURCES))
-    CFLAGS += -DBUILD_DLL
 endif
 
-TARGET += $(OUTDIR)/libminigamepad.a
+TARGET = $(OUTDIR)/libminigamepad.$(EXT) \
+		 $(OUTDIR)/libminigamepad.a
+
+OBJECTS = $(SOURCES:.c=.o)
 
 all: $(TARGET) 
 $(OUTDIR)/libminigamepad.a: $(OBJECTS) | $(OUTDIR)
