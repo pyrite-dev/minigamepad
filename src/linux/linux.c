@@ -25,16 +25,15 @@ mg_gamepads *mg_gamepads_get() {
   // for each file found:
   while ((dp = readdir(dfd)) != NULL) {
     // get the full path of it
-    char *full_path = malloc(255);
-    snprintf(full_path, 255, "/dev/input/by-id/%s", dp->d_name);
+    char full_path[256];
+    snprintf(full_path, 256, "/dev/input/by-id/%s", dp->d_name);
 
     // open said full path with libevdev
     struct libevdev *dev = libevdev_new();
     if (libevdev_set_fd(dev, open(full_path, O_RDONLY))) {
-      // char *err = malloc(255);
-      // snprintf(err, 255, "could not open %s", full_path);
+      // char err[256];
+      // snprintf(err, 256, "could not open %s", full_path);
       // perror(err);
-      // free(err);
       continue;
     };
 
@@ -100,8 +99,6 @@ mg_gamepads *mg_gamepads_get() {
         libevdev_free(dev);
       }
     }
-
-    free(full_path);
   }
 
   struct mg_gamepads_t *joysticks = malloc(sizeof(struct mg_gamepads_t));
