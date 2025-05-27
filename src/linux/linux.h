@@ -1,4 +1,3 @@
-#include "../stb/stb_ds.h"
 #include "libevdev/libevdev.h"
 #include "minigamepad.h"
 
@@ -25,8 +24,8 @@ struct mg_gamepad_t {
   // deadzone_len is the same as axis_len
 };
 struct mg_gamepads_t {
-  struct mg_gamepad_t *joysticks_list;
-  size_t joysticks_list_len;
+  struct mg_gamepad_t *gamepads_list;
+  size_t gamepads_list_len;
 };
 
 mg_gamepad_btn get_gamepad_btn(int btn);
