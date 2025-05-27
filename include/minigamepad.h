@@ -97,7 +97,7 @@ typedef enum {
 void mg_gamepad_update(mg_gamepad *gamepad);
 
 /// Get the gamepads currently connected to the system.
-mg_gamepads *mg_gamepads_get();
+mg_gamepads *mg_gamepads_get(void);
 /// Get the number of gamepads attached to the system.
 size_t mg_gamepads_num(mg_gamepads *gamepads);
 /// Get the game pad at the given index.

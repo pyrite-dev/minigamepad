@@ -84,7 +84,7 @@ const char *mg_gamepad_btn_get_name(mg_gamepad_btn btn) {
     return "DIGI Button";
   }
   return NULL;
-};
+}
 
 const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis) {
   switch (axis) {
