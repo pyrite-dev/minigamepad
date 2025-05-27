@@ -11,6 +11,7 @@ extern "C" {
 typedef struct mg_gamepad_t mg_gamepad;
 typedef struct mg_gamepads_t mg_gamepads;
 
+/// A button on a gamepad
 typedef enum {
   MG_GAMEPAD_BUTTON_0,
   MG_GAMEPAD_BUTTON_1,
@@ -67,19 +68,33 @@ typedef enum {
   MG_GAMEPAD_BUTTON_UNKNOWN,
 } mg_gamepad_btn;
 
+/// Get the name of a gamepad button.
 const char *mg_gamepad_btn_get_name(mg_gamepad_btn);
 
+/// Get the gamepads currently connected to the system.
 mg_gamepads *mg_gamepads_get();
-mg_gamepad *mg_gamepads_at(mg_gamepads *mj, size_t);
-size_t mg_gamepads_num(mg_gamepads *mj);
-void mg_gamepads_free(mg_gamepads *);
+/// Get the number of gamepads attached to the system.
+size_t mg_gamepads_num(mg_gamepads *gamepads);
+/// Get the game pad at the given index.
+mg_gamepad *mg_gamepads_at(mg_gamepads *mj, size_t idx);
+/// Free the struct acquired by `mg_gamepads_get`.
+void mg_gamepads_free(mg_gamepads *gamepads);
 
-const char *mg_gamepad_get_name(mg_gamepad *);
-int mg_gamepad_get_value(mg_gamepad *, mg_gamepad_btn);
-void mg_gamepad_update(mg_gamepad *joy);
+/// Get the gamepad's name.
+const char *mg_gamepad_get_name(mg_gamepad *gamepad);
+/// Get the current status of the button.
+int mg_gamepad_get_button_status(mg_gamepad *gamepad, mg_gamepad_btn btn);
 
-size_t mg_gamepad_btns_num(mg_gamepad *);
-mg_gamepad_btn mg_gamepad_btns_at(mg_gamepad *, size_t);
+/// Update the gamepad's internal structure.
+/// This needs to be called before any gamepad buttons/axises are checked if you
+/// want the correct values.
+void mg_gamepad_update(mg_gamepad *gamepad);
+
+/// Get the number of buttons on the given gamepad
+size_t mg_gamepad_btns_num(mg_gamepad *gamepad);
+
+/// Get the button at the given index.
+mg_gamepad_btn mg_gamepad_btns_at(mg_gamepad *gamepad, size_t idx);
 
 #ifdef __cplusplus
 }

@@ -7,8 +7,8 @@ int main() {
   size_t joystick_num = mg_gamepads_num(joysticks);
 
   for (int i = 0; i < joystick_num; i++) {
-    mg_gamepad *joystick = mg_gamepads_at(joysticks, i);
-    printf("%s\n", mg_gamepad_get_name(joystick));
+    mg_gamepad *gamepad = mg_gamepads_at(joysticks, i);
+    printf("%s\n", mg_gamepad_get_name(gamepad));
 
     //
   }

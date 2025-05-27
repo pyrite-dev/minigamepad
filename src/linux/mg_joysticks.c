@@ -75,9 +75,11 @@ mg_gamepads *mg_gamepads_get() {
   return joysticks;
 };
 
-size_t mg_gamepads_num(mg_gamepads *mj) { return mj->joysticks_list_len; };
-mg_gamepad *mg_gamepads_at(mg_gamepads *mj, size_t idx) {
-  return &mj->joysticks_list[idx];
+size_t mg_gamepads_num(mg_gamepads *gamepads) {
+  return gamepads->joysticks_list_len;
+};
+mg_gamepad *mg_gamepads_at(mg_gamepads *gamepads, size_t idx) {
+  return &gamepads->joysticks_list[idx];
 };
 
-void mg_gamepads_free(mg_gamepads *mj) { free(mj); };
+void mg_gamepads_free(mg_gamepads *gamepads) { free(gamepads); };
