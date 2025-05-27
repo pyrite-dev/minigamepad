@@ -21,7 +21,7 @@ mg_gamepads *mg_gamepads_get(void) {
     return 0;
   }
 
-  struct mg_gamepad_t *gamepads_list = NULL;
+  struct mg_gamepad_t *list = NULL;
   size_t gamepad_len = 0;
 
   struct mg_gamepads_t *gamepads = malloc(sizeof(struct mg_gamepads_t));
@@ -42,13 +42,21 @@ mg_gamepads *mg_gamepads_get(void) {
     };
 
     bool good = false;
-    mg_gamepad_btn_map_type buttons[MAX_BUTTONS];
-    mg_gamepad_axis_map_type axises[MAX_AXISES];
-    mg_gamepad_axis_map_type deadzones[MAX_AXISES];
-    size_t button_len = 0;
-    size_t axis_len = 0;
+    struct {
+      mg_gamepad_btn key;
+      int16_t value;
+    } buttons[MAX_BUTTONS];
+    struct {
+      mg_gamepad_axis key;
+      int16_t value;
+      int16_t deadzone;
+    } axises[MAX_AXISES];
+    size_t button_num = 0;
+    size_t axis_num = 0;
     size_t deadzones_len = 0;
-    struct mg_gamepad_t gamepad;
+    struct mg_gamepad_t gamepad = {};
+    gamepad.ctx = malloc(sizeof(struct mg_gamepad_context_t));
+
     // go through any buttons a gamepad would have
     for (unsigned int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
       // if this device has one...
@@ -56,22 +64,20 @@ mg_gamepads *mg_gamepads_get(void) {
         // On the first run, we're gonna save this device, and signify to the
         // below code that we have something.
         if (!good) {
-          gamepad.dev = dev;
+          gamepad.ctx->dev = dev;
           good = true;
         }
         // and put the gamepad button we have down.
-        gamepad.buttons[button_len] = (mg_gamepad_btn_map_type){
-            .key = get_gamepad_btn(i),
-            .value = 0,
-        };
-        button_len += 1;
+        gamepad.buttons[button_num].key = get_gamepad_btn(i);
+        gamepad.buttons[button_num].value = 0;
+        button_num += 1;
       }
     }
     // go through any axises a gamepad would have
     for (unsigned int i = ABS_X; i <= ABS_MAX; i++) {
       if (libevdev_has_event_code(dev, EV_ABS, i)) {
         if (!good) {
-          gamepad.dev = dev;
+          gamepad.ctx->dev = dev;
           good = true;
         }
 
@@ -94,20 +100,21 @@ mg_gamepads *mg_gamepads_get(void) {
           break;
         }
 
-        gamepad.axises[axis_len] =
-            (mg_gamepad_axis_map_type){.key = get_gamepad_axis(i), .value = -1};
+        gamepad.axises[axis_num].key = get_gamepad_axis(i);
+        gamepad.axises[axis_num].value = 0;
+        gamepad.axises[axis_num].deadzone = deadzone;
 
-        gamepad.deadzones[axis_len] = (mg_gamepad_axis_map_type){
-            .key = get_gamepad_axis(i), .value = deadzone};
-
-        axis_len += 1;
+        axis_num += 1;
       }
     }
 
     if (good) {
-      gamepad.button_len = button_len;
-      gamepad.axis_len = axis_len;
-      gamepads->gamepads_list[gamepad_len] = gamepad;
+      gamepad.button_num = button_num;
+      gamepad.axis_num = axis_num;
+
+      gamepads->list[gamepad_len] = malloc(sizeof(gamepad));
+      *gamepads->list[gamepad_len] = gamepad;
+
       gamepad_len += 1;
     } else {
       if (dev != NULL) {
@@ -116,30 +123,25 @@ mg_gamepads *mg_gamepads_get(void) {
     }
   }
 
-  gamepads->gamepads_list_len = gamepad_len;
+  gamepads->num = gamepad_len;
 
   return gamepads;
 }
 
-size_t mg_gamepads_num(mg_gamepads *gamepads) {
-  return gamepads->gamepads_list_len;
-}
-mg_gamepad *mg_gamepads_at(mg_gamepads *gamepads, size_t idx) {
-  return &gamepads->gamepads_list[idx];
-}
+size_t mg_gamepads_num(mg_gamepads *gamepads) { return gamepads->num; };
 
 void mg_gamepads_free(mg_gamepads *gamepads) { free(gamepads); };
 
 const char *mg_gamepad_get_name(mg_gamepad *gamepad) {
-  return libevdev_get_name(gamepad->dev);
+  return libevdev_get_name(gamepad->ctx->dev);
 }
 
 void mg_gamepad_update(mg_gamepad *gamepad) {
   struct input_event ev;
-  int pending = libevdev_has_event_pending(gamepad->dev);
+  int pending = libevdev_has_event_pending(gamepad->ctx->dev);
   if (pending) {
-    int rc =
-        libevdev_next_event(gamepad->dev, LIBEVDEV_READ_FLAG_BLOCKING, &ev);
+    int rc = libevdev_next_event(gamepad->ctx->dev, LIBEVDEV_READ_FLAG_BLOCKING,
+                                 &ev);
     if (rc) {
       return;
     }
@@ -147,16 +149,11 @@ void mg_gamepad_update(mg_gamepad *gamepad) {
     return;
   }
 
-  // // take this opprutunity to reset every axis
-  // for(unsigned int i = 0; i < gamepad->axis_len; i++) {
-  //   gamepad->axises[i].value = 0;
-  // }
-
   switch (ev.type) {
   case EV_KEY: {
     mg_gamepad_btn btn = get_gamepad_btn(ev.code);
 
-    for (unsigned int i = 0; i <= gamepad->button_len; i++) {
+    for (int i = 0; i <= gamepad->button_num; i++) {
       if (gamepad->buttons[i].key == btn) {
         gamepad->buttons[i].value = (int16_t)ev.value;
       }
@@ -168,16 +165,13 @@ void mg_gamepad_update(mg_gamepad *gamepad) {
 
     for (unsigned int i = 0; i <= gamepad->axis_len; i++) {
       if (gamepad->axises[i].key == axis) {
-        int deadzone = gamepad->deadzones[i].value;
+        int deadzone = gamepad->axises[i].deadzone;
         int event_val = 0;
         if (abs(ev.value) >= deadzone) {
           event_val = ev.value;
         }
-        mg_gamepad_axis_map_type value = {
-            .key = axis,
-            .value = event_val,
-        };
-        gamepad->axises[i] = value;
+        gamepad->axises[i].key = axis;
+        gamepad->axises[i].value = event_val;
       }
     }
     break;

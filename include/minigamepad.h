@@ -92,6 +92,38 @@ typedef enum {
 #define MAX_BUTTONS MG_GAMEPAD_BUTTON_MAX
 #define MAX_AXISES MG_GAMEPAD_AXIS_MAX
 
+/// Internal context of the gamepad, i.e. implementation details.
+struct mg_gamepad_context_t;
+
+typedef struct mg_gamepad_t {
+  // Internal context for platform dependent items.
+  struct mg_gamepad_context_t *ctx;
+  // Map of buttons that the controller has
+  struct {
+    mg_gamepad_btn key;
+    int16_t value;
+  } buttons[MAX_BUTTONS];
+  // The number of buttons on the controller.
+  size_t button_num;
+  // Map of axises that the controller has, + their deadzones
+  // By default, the deadzones are 5000 for any axis that isn't the d-pad; you
+  // are strongly encouraged to make this customizable in any program you make
+  // with this.
+  struct {
+    mg_gamepad_axis key;
+    int16_t value;
+    int16_t deadzone;
+  } axises[MAX_AXISES];
+  // The number of axises on the controller.
+  size_t axis_num;
+} mg_gamepad;
+
+/// A list of gamepads recognized by the system.
+typedef struct mg_gamepads_t {
+  struct mg_gamepad_t *list[16];
+  size_t num;
+} mg_gamepads;
+
 /// Update the gamepad's internal structure.
 /// This needs to be called before any gamepad buttons/axises are checked if you
 /// want the correct values.
@@ -108,32 +140,11 @@ void mg_gamepads_free(mg_gamepads *gamepads);
 
 /// Get the gamepad's name.
 const char *mg_gamepad_get_name(mg_gamepad *gamepad);
-/// Get the current status of the button.
-int mg_gamepad_get_button_status(mg_gamepad *gamepad, mg_gamepad_btn btn);
 
-/// Get the number of buttons on the given gamepad
-size_t mg_gamepad_btns_num(mg_gamepad *gamepad);
-/// Get the button at the given index.
-mg_gamepad_btn mg_gamepad_btns_at(mg_gamepad *gamepad, size_t idx);
 /// Get the name of a gamepad button.
 const char *mg_gamepad_btn_get_name(mg_gamepad_btn);
-
-/// Get the number of axises on a gamepad
-size_t mg_gamepad_get_axis_num(mg_gamepad *gamepad);
-/// Get the axis at the given index.
-mg_gamepad_axis mg_gamepad_axis_at(mg_gamepad *gamepad, size_t idx);
-/// Get the value of the nth axis on this gamepad
-int mg_gamepad_get_axis_status(mg_gamepad *gamepad, size_t idx);
 /// Get the name of a gamepad axis.
 const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis);
-
-/// Get the deadzone set for this controller axis
-/// By default, this is 5000 for any axis that isn't a hat; you are strongly
-/// encouraged to make this customizable in any program you make with this.
-size_t mg_gamepad_get_axis_deadzone(mg_gamepad *gamepad, size_t axis);
-/// Set the deadzone for this controller axis
-void mg_gamepad_set_axis_deadzone(mg_gamepad *gamepad, size_t axis,
-                                  int16_t deadzone);
 
 #ifdef __cplusplus
 }
