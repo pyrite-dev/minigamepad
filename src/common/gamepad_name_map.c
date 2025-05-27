@@ -31,22 +31,6 @@ const char *mg_gamepad_btn_get_name(mg_gamepad_btn btn) {
     return "Button 12";
   case MG_GAMEPAD_BUTTON_13:
     return "Button 13";
-  case MG_GAMEPAD_BUTTON_LEFT:
-    return "Left Button";
-  case MG_GAMEPAD_BUTTON_RIGHT:
-    return "Right Button";
-  case MG_GAMEPAD_BUTTON_MIDDLE:
-    return "Middle Button";
-  case MG_GAMEPAD_BUTTON_SIDE:
-    return "Side Button";
-  case MG_GAMEPAD_BUTTON_EXTRA:
-    return "Extra Button";
-  case MG_GAMEPAD_BUTTON_FORWARD:
-    return "Forward Button";
-  case MG_GAMEPAD_BUTTON_BACK:
-    return "Back Button";
-  case MG_GAMEPAD_BUTTON_TASK:
-    return "Task Button";
   case MG_GAMEPAD_BUTTON_JOYSTICK:
     return "Joystick Button";
   case MG_GAMEPAD_BUTTON_THUMB:

@@ -24,27 +24,14 @@ mg_gamepad_btn get_gamepad_btn(int btn) {
     return MG_GAMEPAD_BUTTON_8;
   case BTN_9:
     return MG_GAMEPAD_BUTTON_9;
-
   case BTN_SOUTH:
     return MG_GAMEPAD_BUTTON_10;
-
-  case BTN_LEFT:
-    return MG_GAMEPAD_BUTTON_LEFT;
-  case BTN_RIGHT:
-    return MG_GAMEPAD_BUTTON_RIGHT;
-  case BTN_MIDDLE:
-    return MG_GAMEPAD_BUTTON_MIDDLE;
-  case BTN_SIDE:
-    return MG_GAMEPAD_BUTTON_SIDE;
-  case BTN_EXTRA:
-    return MG_GAMEPAD_BUTTON_EXTRA;
-  case BTN_FORWARD:
-    return MG_GAMEPAD_BUTTON_FORWARD;
-  case BTN_BACK:
-    return MG_GAMEPAD_BUTTON_BACK;
-  case BTN_TASK:
-    return MG_GAMEPAD_BUTTON_TASK;
-
+  case BTN_NORTH:
+    return MG_GAMEPAD_BUTTON_11;
+  case BTN_WEST:
+    return MG_GAMEPAD_BUTTON_12;
+  case BTN_EAST:
+    return MG_GAMEPAD_BUTTON_13;
   case BTN_JOYSTICK:
     return MG_GAMEPAD_BUTTON_JOYSTICK;
   case BTN_THUMB:
@@ -71,19 +58,8 @@ mg_gamepad_btn get_gamepad_btn(int btn) {
     return MG_GAMEPAD_BUTTON_BASE6;
   case BTN_DEAD:
     return MG_GAMEPAD_BUTTON_DEAD;
-  // case BTN_A:
-
-  // case BTN_B:
-  case BTN_EAST:
-    return MG_GAMEPAD_BUTTON_13;
   case BTN_C:
     return MG_GAMEPAD_BUTTON_C;
-  // case BTN_X:
-  case BTN_NORTH:
-    return MG_GAMEPAD_BUTTON_11;
-  // case BTN_Y:
-  case BTN_WEST:
-    return MG_GAMEPAD_BUTTON_12;
   case BTN_Z:
     return MG_GAMEPAD_BUTTON_Z;
   case BTN_TL:
@@ -104,10 +80,8 @@ mg_gamepad_btn get_gamepad_btn(int btn) {
     return MG_GAMEPAD_BUTTON_THUMBL;
   case BTN_THUMBR:
     return MG_GAMEPAD_BUTTON_THUMBR;
-
   case BTN_DIGI:
     return MG_GAMEPAD_BUTTON_DIGI;
-
   default:
     return MG_GAMEPAD_BUTTON_UNKNOWN;
   }
@@ -135,22 +109,6 @@ int get_native_btn(mg_gamepad_btn btn) {
     return BTN_8;
   case MG_GAMEPAD_BUTTON_9:
     return BTN_9;
-  case MG_GAMEPAD_BUTTON_LEFT:
-    return BTN_LEFT;
-  case MG_GAMEPAD_BUTTON_RIGHT:
-    return BTN_RIGHT;
-  case MG_GAMEPAD_BUTTON_MIDDLE:
-    return BTN_MIDDLE;
-  case MG_GAMEPAD_BUTTON_SIDE:
-    return BTN_SIDE;
-  case MG_GAMEPAD_BUTTON_EXTRA:
-    return BTN_EXTRA;
-  case MG_GAMEPAD_BUTTON_FORWARD:
-    return BTN_FORWARD;
-  case MG_GAMEPAD_BUTTON_BACK:
-    return BTN_BACK;
-  case MG_GAMEPAD_BUTTON_TASK:
-    return BTN_TASK;
   case MG_GAMEPAD_BUTTON_JOYSTICK:
     return BTN_JOYSTICK;
   case MG_GAMEPAD_BUTTON_THUMB:
