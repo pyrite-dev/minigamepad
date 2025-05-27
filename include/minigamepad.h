@@ -57,6 +57,8 @@ typedef enum {
   MG_GAMEPAD_BUTTON_THUMBL,
   MG_GAMEPAD_BUTTON_THUMBR,
   MG_GAMEPAD_BUTTON_DIGI,
+
+  MG_GAMEPAD_BUTTON_MAX
 } mg_gamepad_btn;
 
 /// An axis on a gamepad
@@ -89,7 +91,12 @@ typedef enum {
   MG_GAMEPAD_AXIS_VOLUME,
   MG_GAMEPAD_AXIS_PROFILE,
   MG_GAMEPAD_AXIS_MISC,
+
+  MG_GAMEPAD_AXIS_MAX,
 } mg_gamepad_axis;
+
+#define MAX_BUTTONS MG_GAMEPAD_BUTTON_MAX
+#define MAX_AXISES MG_GAMEPAD_AXIS_MAX
 
 /// Update the gamepad's internal structure.
 /// This needs to be called before any gamepad buttons/axises are checked if you

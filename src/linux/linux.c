@@ -23,6 +23,8 @@ mg_gamepads *mg_gamepads_get() {
   struct mg_gamepad_t *gamepads_list = NULL;
   size_t gamepad_len = 0;
 
+  struct mg_gamepads_t *gamepads = malloc(sizeof(struct mg_gamepads_t));
+
   // for each file found:
   while ((dp = readdir(dfd)) != NULL) {
     // get the full path of it
@@ -39,10 +41,10 @@ mg_gamepads *mg_gamepads_get() {
     };
 
     bool good = false;
-    mg_gamepad_btn_map_type *gamepad_buttons = NULL;
-    mg_gamepad_axis_map_type *axises = NULL;
-    mg_gamepad_axis_map_type *deadzones = NULL;
-    size_t gamepad_button_len = 0;
+    mg_gamepad_btn_map_type buttons[MAX_BUTTONS];
+    mg_gamepad_axis_map_type axises[MAX_AXISES];
+    mg_gamepad_axis_map_type deadzones[MAX_AXISES];
+    size_t button_len = 0;
     size_t axis_len = 0;
     size_t deadzones_len = 0;
     struct mg_gamepad_t gamepad;
@@ -57,14 +59,11 @@ mg_gamepads *mg_gamepads_get() {
           good = true;
         }
         // and put the gamepad button we have down.
-        gamepad_button_len += 1;
-        gamepad_buttons =
-            realloc(gamepad_buttons,
-                    gamepad_button_len * sizeof(mg_gamepad_btn_map_type));
-        gamepad_buttons[gamepad_button_len - 1] = (mg_gamepad_btn_map_type){
+        gamepad.buttons[button_len] = (mg_gamepad_btn_map_type){
             .key = get_gamepad_btn(i),
             .value = 0,
         };
+        button_len += 1;
       }
     }
     // go through any axises a gamepad would have
@@ -94,29 +93,21 @@ mg_gamepads *mg_gamepads_get() {
           break;
         }
 
-        axis_len += 1;
-
-        axises = realloc(axises, axis_len * sizeof(mg_gamepad_axis_map_type));
-        axises[axis_len - 1] =
+        gamepad.axises[axis_len] =
             (mg_gamepad_axis_map_type){.key = get_gamepad_axis(i), .value = 0};
 
-        deadzones =
-            realloc(deadzones, axis_len * sizeof(mg_gamepad_axis_map_type));
-        deadzones[axis_len - 1] = (mg_gamepad_axis_map_type){
+        gamepad.deadzones[axis_len] = (mg_gamepad_axis_map_type){
             .key = get_gamepad_axis(i), .value = deadzone};
+
+        axis_len += 1;
       }
     }
 
     if (good) {
-      gamepad.buttons = gamepad_buttons;
-      gamepad.button_len = gamepad_button_len;
-      gamepad.axises = axises;
+      gamepad.button_len = button_len;
       gamepad.axis_len = axis_len;
-      gamepad.deadzones = deadzones;
+      gamepads->gamepads_list[gamepad_len] = gamepad;
       gamepad_len += 1;
-      gamepads_list =
-          realloc(gamepads_list, gamepad_len * sizeof(struct mg_gamepad_t));
-      gamepads_list[gamepad_len - 1] = gamepad;
     } else {
       if (dev != NULL) {
         libevdev_free(dev);
@@ -124,8 +115,6 @@ mg_gamepads *mg_gamepads_get() {
     }
   }
 
-  struct mg_gamepads_t *gamepads = malloc(sizeof(struct mg_gamepads_t));
-  gamepads->gamepads_list = gamepads_list;
   gamepads->gamepads_list_len = gamepad_len;
 
   return gamepads;
