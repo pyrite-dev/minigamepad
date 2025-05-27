@@ -22,6 +22,13 @@ else ifeq ($(PLATFORM),Linux)
 	LIBS = 
 	SOURCES += $(wildcard src/linux/*.c)
 	SOURCES += $(wildcard src/linux/*/*.c)
+else ifeq ($(PLATFORM),Windows)
+   	EXT = dll
+	LDFLAGS = -shared 
+	CFLAGS += -I./src/winmm/ 
+    LIBS = -lwinmm
+	SOURCES += $(wildcard src/winmm/*.c)
+	SOURCES += $(wildcard src/winmm/*/*.c)
 else ifeq ($(PLATFORM),Darwin)
 	EXT = dylib
 	LDFLAGS = -dynamiclib
@@ -41,7 +48,7 @@ OBJECTS = $(SOURCES:.c=.o)
 
 all: $(TARGET) $(EXAMPLES) 
 $(OUTDIR)/libminigamepad.a: $(OBJECTS) | $(OUTDIR)
-	$(AR) ar rcs $@ $(OBJECTS)
+	$(AR) rcs $@ $(OBJECTS)
 
 $(OUTDIR)/libminigamepad.$(EXT): $(OBJECTS) | $(OUTDIR)
 ifeq ($(PLATFORM),Windows)
