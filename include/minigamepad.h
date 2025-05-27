@@ -22,9 +22,13 @@ typedef enum {
   MG_GAMEPAD_BUTTON_7,
   MG_GAMEPAD_BUTTON_8,
   MG_GAMEPAD_BUTTON_9,
+  // A Button on an Xbox One Controller
   MG_GAMEPAD_BUTTON_10,
+  // x Button on an Xbox One Controller
   MG_GAMEPAD_BUTTON_11,
+  // Y Button on an Xbox One Controller
   MG_GAMEPAD_BUTTON_12,
+  // B Button on an Xbox One Controller
   MG_GAMEPAD_BUTTON_13,
 
   MG_GAMEPAD_BUTTON_LEFT,
