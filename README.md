@@ -1,6 +1,6 @@
 # minigamepad
 
-Minimalist cross-platform library for dealing with gamepads. Currently not heavily battle-tested and is only supported for Linux.
+Minimalist, cross-platform, C99 library for dealing with gamepads. Currently not heavily battle-tested and is only supported for Linux.
 
 ```c
 #include <minigamepad.h>
