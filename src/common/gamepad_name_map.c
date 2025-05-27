@@ -83,6 +83,7 @@ const char *mg_gamepad_btn_get_name(mg_gamepad_btn btn) {
   case MG_GAMEPAD_BUTTON_DIGI:
     return "DIGI Button";
   }
+  return NULL;
 };
 
 const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis) {
@@ -144,4 +145,5 @@ const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis) {
   case MG_GAMEPAD_AXIS_MISC:
     return "Misc Axis";
   }
+  return NULL;
 }

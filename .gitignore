@@ -1,1 +1,6 @@
 build/
+*.o
+*.so
+*.a
+*.dll
+*.swp
