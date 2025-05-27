@@ -49,7 +49,7 @@ mg_gamepads *mg_gamepads_get() {
     size_t deadzones_len = 0;
     struct mg_gamepad_t gamepad;
     // go through any buttons a gamepad would have
-    for (int i = BTN_MISC; i <= BTN_GEAR_UP; i++) {
+    for (int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
       // if this device has one...
       if (libevdev_has_event_code(dev, EV_KEY, i)) {
         // On the first run, we're gonna save this device, and signify to the

@@ -2,86 +2,53 @@
 
 const char *mg_gamepad_btn_get_name(mg_gamepad_btn btn) {
   switch (btn) {
+  case MG_GAMEPAD_BUTTON_MAX:
   case MG_GAMEPAD_BUTTON_UNKNOWN:
-  case MG_GAMEPAD_BUTTON_0:
-    return "Button 0";
-  case MG_GAMEPAD_BUTTON_1:
-    return "Button 1";
-  case MG_GAMEPAD_BUTTON_2:
-    return "Button 2";
-  case MG_GAMEPAD_BUTTON_3:
-    return "Button 3";
-  case MG_GAMEPAD_BUTTON_4:
-    return "Button 4";
-  case MG_GAMEPAD_BUTTON_5:
-    return "Button 5";
-  case MG_GAMEPAD_BUTTON_6:
-    return "Button 6";
-  case MG_GAMEPAD_BUTTON_7:
-    return "Button 7";
-  case MG_GAMEPAD_BUTTON_8:
-    return "Button 8";
-  case MG_GAMEPAD_BUTTON_9:
-    return "Button 9";
-  case MG_GAMEPAD_BUTTON_10:
-    return "Button 10";
-  case MG_GAMEPAD_BUTTON_11:
-    return "Button 11";
-  case MG_GAMEPAD_BUTTON_12:
-    return "Button 12";
-  case MG_GAMEPAD_BUTTON_13:
-    return "Button 13";
-  case MG_GAMEPAD_BUTTON_JOYSTICK:
-    return "Joystick Button";
-  case MG_GAMEPAD_BUTTON_THUMB:
-    return "Thumb Button";
-  case MG_GAMEPAD_BUTTON_THUMB2:
-    return "Thumb Button 2";
-  case MG_GAMEPAD_BUTTON_TOP:
-    return "Top Button";
-  case MG_GAMEPAD_BUTTON_TOP2:
-    return "Top Button 2";
-  case MG_GAMEPAD_BUTTON_PINKIE:
-    return "Pinkie Button";
-  case MG_GAMEPAD_BUTTON_BASE:
-    return "Base Button 1";
-  case MG_GAMEPAD_BUTTON_BASE2:
-    return "Base Button 2";
-  case MG_GAMEPAD_BUTTON_BASE3:
-    return "Base Button 3";
-  case MG_GAMEPAD_BUTTON_BASE4:
-    return "Base Button 4";
-  case MG_GAMEPAD_BUTTON_BASE5:
-    return "Base Button 5";
-  case MG_GAMEPAD_BUTTON_BASE6:
-    return "Base Button 6";
-  case MG_GAMEPAD_BUTTON_DEAD:
-    return "Dead Button";
-  case MG_GAMEPAD_BUTTON_C:
-    return "Button C";
-
-  case MG_GAMEPAD_BUTTON_Z:
-    return "Z Button";
-  case MG_GAMEPAD_BUTTON_TL:
-    return "TL Button";
-  case MG_GAMEPAD_BUTTON_TR:
-    return "TR Button";
-  case MG_GAMEPAD_BUTTON_TL2:
-    return "TL2 Button";
-  case MG_GAMEPAD_BUTTON_TR2:
-    return "TR2 Button";
-  case MG_GAMEPAD_BUTTON_SELECT:
-    return "Select Button";
+    return "Unknown Button";
+  case MG_GAMEPAD_BUTTON_SOUTH:
+    return "South Button";
+  case MG_GAMEPAD_BUTTON_WEST:
+    return "West Button";
+  case MG_GAMEPAD_BUTTON_NORTH:
+    return "North Button";
+  case MG_GAMEPAD_BUTTON_EAST:
+    return "East Button";
+  case MG_GAMEPAD_BUTTON_BACK:
+    return "Back Button";
+  case MG_GAMEPAD_BUTTON_GUIDE:
+    return "Guide Button";
   case MG_GAMEPAD_BUTTON_START:
     return "Start Button";
-  case MG_GAMEPAD_BUTTON_MODE:
-    return "Mode Button";
-  case MG_GAMEPAD_BUTTON_THUMBL:
-    return "Thumb Button L";
-  case MG_GAMEPAD_BUTTON_THUMBR:
-    return "Thumb Button R";
-  case MG_GAMEPAD_BUTTON_DIGI:
-    return "DIGI Button";
+  case MG_GAMEPAD_BUTTON_LEFT_STICK:
+    return "Left Stick Button";
+  case MG_GAMEPAD_BUTTON_RIGHT_STICK:
+    return "Right Stick Button";
+  case MG_GAMEPAD_BUTTON_LEFT_SHOULDER:
+    return "Left Shoulder Button";
+  case MG_GAMEPAD_BUTTON_RIGHT_SHOULDER:
+    return "Right Shoulder Button";
+  case MG_GAMEPAD_BUTTON_MISC1:
+    return "Misc Button 1";
+  case MG_GAMEPAD_BUTTON_RIGHT_PADDLE1:
+    return "Paddle 1 Right";
+  case MG_GAMEPAD_BUTTON_LEFT_PADDLE1:
+    return "Paddle 1 Left";
+  case MG_GAMEPAD_BUTTON_RIGHT_PADDLE2:
+    return "Paddle 2 Right";
+  case MG_GAMEPAD_BUTTON_LEFT_PADDLE2:
+    return "Paddle 2 Left";
+  case MG_GAMEPAD_BUTTON_TOUCHPAD:
+    return "Touchpad";
+  case MG_GAMEPAD_BUTTON_MISC2:
+    return "Misc Button 2";
+  case MG_GAMEPAD_BUTTON_MISC3:
+    return "Misc Button 3";
+  case MG_GAMEPAD_BUTTON_MISC4:
+    return "Misc Button 4";
+  case MG_GAMEPAD_BUTTON_MISC5:
+    return "Misc Button 5";
+  case MG_GAMEPAD_BUTTON_MISC6:
+    return "Misc Button 6";
   }
   return NULL;
 };

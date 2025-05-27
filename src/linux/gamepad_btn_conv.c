@@ -4,84 +4,52 @@
 
 mg_gamepad_btn get_gamepad_btn(int btn) {
   switch (btn) {
-  case BTN_0:
-    return MG_GAMEPAD_BUTTON_0;
-  case BTN_1:
-    return MG_GAMEPAD_BUTTON_1;
-  case BTN_2:
-    return MG_GAMEPAD_BUTTON_2;
-  case BTN_3:
-    return MG_GAMEPAD_BUTTON_3;
-  case BTN_4:
-    return MG_GAMEPAD_BUTTON_4;
-  case BTN_5:
-    return MG_GAMEPAD_BUTTON_5;
-  case BTN_6:
-    return MG_GAMEPAD_BUTTON_6;
-  case BTN_7:
-    return MG_GAMEPAD_BUTTON_7;
-  case BTN_8:
-    return MG_GAMEPAD_BUTTON_8;
-  case BTN_9:
-    return MG_GAMEPAD_BUTTON_9;
-  case BTN_SOUTH:
-    return MG_GAMEPAD_BUTTON_10;
-  case BTN_NORTH:
-    return MG_GAMEPAD_BUTTON_11;
   case BTN_WEST:
-    return MG_GAMEPAD_BUTTON_12;
+    return MG_GAMEPAD_BUTTON_WEST;
+  case BTN_A:
+    return MG_GAMEPAD_BUTTON_SOUTH;
+  case BTN_NORTH:
+    return MG_GAMEPAD_BUTTON_NORTH;
   case BTN_EAST:
-    return MG_GAMEPAD_BUTTON_13;
-  case BTN_JOYSTICK:
-    return MG_GAMEPAD_BUTTON_JOYSTICK;
-  case BTN_THUMB:
-    return MG_GAMEPAD_BUTTON_THUMB;
-  case BTN_THUMB2:
-    return MG_GAMEPAD_BUTTON_THUMB2;
-  case BTN_TOP:
-    return MG_GAMEPAD_BUTTON_TOP;
-  case BTN_TOP2:
-    return MG_GAMEPAD_BUTTON_TOP2;
-  case BTN_PINKIE:
-    return MG_GAMEPAD_BUTTON_PINKIE;
-  case BTN_BASE:
-    return MG_GAMEPAD_BUTTON_BASE;
-  case BTN_BASE2:
-    return MG_GAMEPAD_BUTTON_BASE2;
-  case BTN_BASE3:
-    return MG_GAMEPAD_BUTTON_BASE3;
-  case BTN_BASE4:
-    return MG_GAMEPAD_BUTTON_BASE4;
-  case BTN_BASE5:
-    return MG_GAMEPAD_BUTTON_BASE5;
-  case BTN_BASE6:
-    return MG_GAMEPAD_BUTTON_BASE6;
-  case BTN_DEAD:
-    return MG_GAMEPAD_BUTTON_DEAD;
-  case BTN_C:
-    return MG_GAMEPAD_BUTTON_C;
-  case BTN_Z:
-    return MG_GAMEPAD_BUTTON_Z;
-  case BTN_TL:
-    return MG_GAMEPAD_BUTTON_TL;
-  case BTN_TR:
-    return MG_GAMEPAD_BUTTON_TR;
-  case BTN_TL2:
-    return MG_GAMEPAD_BUTTON_TL2;
-  case BTN_TR2:
-    return MG_GAMEPAD_BUTTON_TR2;
-  case BTN_SELECT:
-    return MG_GAMEPAD_BUTTON_SELECT;
+    return MG_GAMEPAD_BUTTON_EAST;
+  case BTN_BACK:
+    return MG_GAMEPAD_BUTTON_BACK;
+  case BTN_MODE:
+    return MG_GAMEPAD_BUTTON_GUIDE;
   case BTN_START:
     return MG_GAMEPAD_BUTTON_START;
-  case BTN_MODE:
-    return MG_GAMEPAD_BUTTON_MODE;
   case BTN_THUMBL:
-    return MG_GAMEPAD_BUTTON_THUMBL;
+    return MG_GAMEPAD_BUTTON_LEFT_STICK;
   case BTN_THUMBR:
-    return MG_GAMEPAD_BUTTON_THUMBR;
-  case BTN_DIGI:
-    return MG_GAMEPAD_BUTTON_DIGI;
+    return MG_GAMEPAD_BUTTON_RIGHT_STICK;
+  case BTN_TL:
+    return MG_GAMEPAD_BUTTON_LEFT_SHOULDER;
+  case BTN_TR:
+    return MG_GAMEPAD_BUTTON_RIGHT_SHOULDER;
+  case BTN_TOUCH:
+    return MG_GAMEPAD_BUTTON_TOUCHPAD;
+  case BTN_TRIGGER_HAPPY5:
+    return MG_GAMEPAD_BUTTON_RIGHT_PADDLE1;
+  case BTN_TRIGGER_HAPPY6:
+    return MG_GAMEPAD_BUTTON_RIGHT_PADDLE2;
+  case BTN_TRIGGER_HAPPY7:
+    return MG_GAMEPAD_BUTTON_LEFT_PADDLE1;
+  case BTN_TRIGGER_HAPPY8:
+    return MG_GAMEPAD_BUTTON_LEFT_PADDLE2;
+
+  case BTN_SELECT:
+    return MG_GAMEPAD_BUTTON_MISC1;
+  case BTN_TRIGGER_HAPPY2:
+    return MG_GAMEPAD_BUTTON_MISC2;
+  case BTN_TRIGGER_HAPPY3:
+    return MG_GAMEPAD_BUTTON_MISC3;
+  case BTN_TRIGGER_HAPPY4:
+    return MG_GAMEPAD_BUTTON_MISC4;
+  case BTN_TRIGGER_HAPPY9:
+    return MG_GAMEPAD_BUTTON_MISC5;
+  case BTN_TRIGGER_HAPPY10:
+    return MG_GAMEPAD_BUTTON_MISC6;
+
   default:
     return MG_GAMEPAD_BUTTON_UNKNOWN;
   }
@@ -89,85 +57,46 @@ mg_gamepad_btn get_gamepad_btn(int btn) {
 
 int get_native_btn(mg_gamepad_btn btn) {
   switch (btn) {
-  case MG_GAMEPAD_BUTTON_0:
-    return BTN_0;
-  case MG_GAMEPAD_BUTTON_1:
-    return BTN_1;
-  case MG_GAMEPAD_BUTTON_2:
-    return BTN_2;
-  case MG_GAMEPAD_BUTTON_3:
-    return BTN_3;
-  case MG_GAMEPAD_BUTTON_4:
-    return BTN_4;
-  case MG_GAMEPAD_BUTTON_5:
-    return BTN_5;
-  case MG_GAMEPAD_BUTTON_6:
-    return BTN_6;
-  case MG_GAMEPAD_BUTTON_7:
-    return BTN_7;
-  case MG_GAMEPAD_BUTTON_8:
-    return BTN_8;
-  case MG_GAMEPAD_BUTTON_9:
-    return BTN_9;
-  case MG_GAMEPAD_BUTTON_JOYSTICK:
-    return BTN_JOYSTICK;
-  case MG_GAMEPAD_BUTTON_THUMB:
-    return BTN_THUMB;
-  case MG_GAMEPAD_BUTTON_THUMB2:
-    return BTN_THUMB2;
-  case MG_GAMEPAD_BUTTON_TOP:
-    return BTN_TOP;
-  case MG_GAMEPAD_BUTTON_TOP2:
-    return BTN_TOP2;
-  case MG_GAMEPAD_BUTTON_PINKIE:
-    return BTN_PINKIE;
-  case MG_GAMEPAD_BUTTON_BASE:
-    return BTN_BASE;
-  case MG_GAMEPAD_BUTTON_BASE2:
-    return BTN_BASE2;
-  case MG_GAMEPAD_BUTTON_BASE3:
-    return BTN_BASE3;
-  case MG_GAMEPAD_BUTTON_BASE4:
-    return BTN_BASE4;
-  case MG_GAMEPAD_BUTTON_BASE5:
-    return BTN_BASE5;
-  case MG_GAMEPAD_BUTTON_BASE6:
-    return BTN_BASE6;
-  case MG_GAMEPAD_BUTTON_DEAD:
-    return BTN_DEAD;
-  case MG_GAMEPAD_BUTTON_10:
+  case MG_GAMEPAD_BUTTON_MAX:
+  case MG_GAMEPAD_BUTTON_UNKNOWN:
+    return BTN_MISC;
+  case MG_GAMEPAD_BUTTON_SOUTH:
     return BTN_SOUTH;
-  case MG_GAMEPAD_BUTTON_13:
-    return BTN_EAST;
-  case MG_GAMEPAD_BUTTON_C:
-    return BTN_C;
-  case MG_GAMEPAD_BUTTON_11:
-    return BTN_NORTH;
-  case MG_GAMEPAD_BUTTON_12:
+  case MG_GAMEPAD_BUTTON_WEST:
     return BTN_WEST;
-  case MG_GAMEPAD_BUTTON_Z:
-    return BTN_Z;
-  case MG_GAMEPAD_BUTTON_TL:
-    return BTN_TL;
-  case MG_GAMEPAD_BUTTON_TR:
-    return BTN_TR;
-  case MG_GAMEPAD_BUTTON_TL2:
-    return BTN_TL2;
-  case MG_GAMEPAD_BUTTON_TR2:
-    return BTN_TR2;
-  case MG_GAMEPAD_BUTTON_SELECT:
-    return BTN_SELECT;
+  case MG_GAMEPAD_BUTTON_NORTH:
+    return BTN_NORTH;
+  case MG_GAMEPAD_BUTTON_EAST:
+    return BTN_EAST;
+  case MG_GAMEPAD_BUTTON_BACK:
+    return BTN_BACK;
+  case MG_GAMEPAD_BUTTON_GUIDE:
+    return BTN_MODE;
   case MG_GAMEPAD_BUTTON_START:
     return BTN_START;
-  case MG_GAMEPAD_BUTTON_MODE:
-    return BTN_MODE;
-  case MG_GAMEPAD_BUTTON_THUMBL:
+  case MG_GAMEPAD_BUTTON_LEFT_STICK:
     return BTN_THUMBL;
-  case MG_GAMEPAD_BUTTON_THUMBR:
+  case MG_GAMEPAD_BUTTON_RIGHT_STICK:
     return BTN_THUMBR;
-  case MG_GAMEPAD_BUTTON_DIGI:
-    return BTN_DIGI;
-  case MG_GAMEPAD_BUTTON_UNKNOWN:
+  case MG_GAMEPAD_BUTTON_LEFT_SHOULDER:
+    return BTN_TL;
+  case MG_GAMEPAD_BUTTON_RIGHT_SHOULDER:
+    return BTN_TR;
+  case MG_GAMEPAD_BUTTON_TOUCHPAD:
+    return BTN_TOUCH;
+  case MG_GAMEPAD_BUTTON_MISC1:
+    return BTN_TRIGGER_HAPPY1;
+  case MG_GAMEPAD_BUTTON_MISC2:
+    return BTN_TRIGGER_HAPPY2;
+  case MG_GAMEPAD_BUTTON_MISC3:
+    return BTN_TRIGGER_HAPPY3;
+  case MG_GAMEPAD_BUTTON_MISC4:
+    return BTN_TRIGGER_HAPPY4;
+  case MG_GAMEPAD_BUTTON_MISC5:
+    return BTN_TRIGGER_HAPPY5;
+  case MG_GAMEPAD_BUTTON_MISC6:
+    return BTN_TRIGGER_HAPPY6;
+  default:
     return BTN_MISC;
   }
 };
