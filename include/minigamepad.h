@@ -14,50 +14,35 @@ typedef struct mg_gamepads_t mg_gamepads;
 /// A button on a gamepad
 typedef enum {
   MG_GAMEPAD_BUTTON_UNKNOWN = 0,
-  MG_GAMEPAD_BUTTON_0,
-  MG_GAMEPAD_BUTTON_1,
-  MG_GAMEPAD_BUTTON_2,
-  MG_GAMEPAD_BUTTON_3,
-  MG_GAMEPAD_BUTTON_4,
-  MG_GAMEPAD_BUTTON_5,
-  MG_GAMEPAD_BUTTON_6,
-  MG_GAMEPAD_BUTTON_7,
-  MG_GAMEPAD_BUTTON_8,
-  MG_GAMEPAD_BUTTON_9,
-  // A Button on an Xbox One Controller
-  MG_GAMEPAD_BUTTON_10,
-  // x Button on an Xbox One Controller
-  MG_GAMEPAD_BUTTON_11,
-  // Y Button on an Xbox One Controller
-  MG_GAMEPAD_BUTTON_12,
-  // B Button on an Xbox One Controller
-  MG_GAMEPAD_BUTTON_13,
-  MG_GAMEPAD_BUTTON_JOYSTICK,
-  MG_GAMEPAD_BUTTON_THUMB,
-  MG_GAMEPAD_BUTTON_THUMB2,
-  MG_GAMEPAD_BUTTON_TOP,
-  MG_GAMEPAD_BUTTON_TOP2,
-  MG_GAMEPAD_BUTTON_PINKIE,
-  MG_GAMEPAD_BUTTON_BASE,
-  MG_GAMEPAD_BUTTON_BASE2,
-  MG_GAMEPAD_BUTTON_BASE3,
-  MG_GAMEPAD_BUTTON_BASE4,
-  MG_GAMEPAD_BUTTON_BASE5,
-  MG_GAMEPAD_BUTTON_BASE6,
-  MG_GAMEPAD_BUTTON_DEAD,
-  MG_GAMEPAD_BUTTON_C,
-  MG_GAMEPAD_BUTTON_Z,
-  MG_GAMEPAD_BUTTON_TL,
-  MG_GAMEPAD_BUTTON_TR,
-  MG_GAMEPAD_BUTTON_TL2,
-  MG_GAMEPAD_BUTTON_TR2,
-  MG_GAMEPAD_BUTTON_SELECT,
+  MG_GAMEPAD_BUTTON_SOUTH, /**< Bottom face button (e.g. Xbox A button) */
+  MG_GAMEPAD_BUTTON_WEST,  /**< Left face button (e.g. Xbox X button) */
+  MG_GAMEPAD_BUTTON_NORTH, /**< Top face button (e.g. Xbox Y button) */
+  MG_GAMEPAD_BUTTON_EAST,  /**< Right face button (e.g. Xbox B button) */
+  MG_GAMEPAD_BUTTON_BACK,
+  MG_GAMEPAD_BUTTON_GUIDE,
   MG_GAMEPAD_BUTTON_START,
-  MG_GAMEPAD_BUTTON_MODE,
-  MG_GAMEPAD_BUTTON_THUMBL,
-  MG_GAMEPAD_BUTTON_THUMBR,
-  MG_GAMEPAD_BUTTON_DIGI,
-
+  MG_GAMEPAD_BUTTON_LEFT_STICK,
+  MG_GAMEPAD_BUTTON_RIGHT_STICK,
+  MG_GAMEPAD_BUTTON_LEFT_SHOULDER,
+  MG_GAMEPAD_BUTTON_RIGHT_SHOULDER,
+  MG_GAMEPAD_BUTTON_MISC1, /**< Additional button (e.g. Xbox Series X share
+                               button, PS5 microphone button, Nintendo Switch
+                               Pro capture button, Amazon Luna microphone
+                               button, Google Stadia capture button) */
+  MG_GAMEPAD_BUTTON_RIGHT_PADDLE1, /**< Upper or primary paddle, under your
+                                       right hand (e.g. Xbox Elite paddle P1) */
+  MG_GAMEPAD_BUTTON_LEFT_PADDLE1,  /**< Upper or primary paddle, under your left
+                                       hand (e.g. Xbox Elite paddle P3) */
+  MG_GAMEPAD_BUTTON_RIGHT_PADDLE2, /**< Lower or secondary paddle, under your
+                                       right hand (e.g. Xbox Elite paddle P2) */
+  MG_GAMEPAD_BUTTON_LEFT_PADDLE2,  /**< Lower or secondary paddle, under your
+                                       left hand (e.g. Xbox Elite paddle P4) */
+  MG_GAMEPAD_BUTTON_TOUCHPAD,      /**< PS4/PS5 touchpad button */
+  MG_GAMEPAD_BUTTON_MISC2,         /**< Additional button */
+  MG_GAMEPAD_BUTTON_MISC3,         /**< Additional button */
+  MG_GAMEPAD_BUTTON_MISC4,         /**< Additional button */
+  MG_GAMEPAD_BUTTON_MISC5,         /**< Additional button */
+  MG_GAMEPAD_BUTTON_MISC6,         /**< Additional button */
   MG_GAMEPAD_BUTTON_MAX
 } mg_gamepad_btn;
 
