@@ -34,7 +34,7 @@ mg_gamepads *mg_gamepads_get() {
     // open said full path with libevdev
     struct libevdev *dev = libevdev_new();
     if (libevdev_set_fd(dev, open(full_path, O_RDONLY))) {
-      // char err[256]
+      // char err[256];
       // snprintf(err, 256, "could not open %s", full_path);
       // perror(err);
       continue;

@@ -13,7 +13,7 @@ mg_gamepad *mg_gamepads_at(mg_gamepads *gamepads, size_t idx) {
   return NULL;
 };
 
-void mg_gamepads_free(mg_gamepads *gamepads) { free(gamepads); };
+void mg_gamepads_free(mg_gamepads *gamepads) {  };
 
 const char *mg_gamepad_get_name(mg_gamepad *gamepad) {
   return NULL;

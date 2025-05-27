@@ -1,4 +1,3 @@
-#include "../stb/stb_ds.h"
 #include "minigamepad.h"
 
 #ifndef __minigamepad_WINMM

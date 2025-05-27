@@ -33,5 +33,4 @@ mg_gamepad_btn get_gamepad_btn(int btn);
 mg_gamepad_axis get_gamepad_axis(int axis);
 int get_native_btn(mg_gamepad_btn btn);
 int get_native_axis(mg_gamepad_axis axis);
-
 #endif
