@@ -6,11 +6,12 @@
 #include <linux/input-event-codes.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-mg_gamepads *mg_gamepads_get() {
+mg_gamepads *mg_gamepads_get(void) {
   struct dirent *dp;
   DIR *dfd;
 
@@ -49,7 +50,7 @@ mg_gamepads *mg_gamepads_get() {
     size_t deadzones_len = 0;
     struct mg_gamepad_t gamepad;
     // go through any buttons a gamepad would have
-    for (int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
+    for (unsigned int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
       // if this device has one...
       if (libevdev_has_event_code(dev, EV_KEY, i)) {
         // On the first run, we're gonna save this device, and signify to the
@@ -67,7 +68,7 @@ mg_gamepads *mg_gamepads_get() {
       }
     }
     // go through any axises a gamepad would have
-    for (int i = ABS_X; i <= ABS_MAX; i++) {
+    for (unsigned int i = ABS_X; i <= ABS_MAX; i++) {
       if (libevdev_has_event_code(dev, EV_ABS, i)) {
         if (!good) {
           gamepad.dev = dev;
@@ -77,7 +78,7 @@ mg_gamepads *mg_gamepads_get() {
         // We want every axis except the hats (which are usually d-pads)
         // to have a deadzone of 5000. The idea is that programmer can override
         // this later, by a config file or something.
-        int deadzone = 0;
+        int16_t deadzone = 0;
         switch (i) {
         case ABS_HAT0X:
         case ABS_HAT0Y:
@@ -94,7 +95,7 @@ mg_gamepads *mg_gamepads_get() {
         }
 
         gamepad.axises[axis_len] =
-            (mg_gamepad_axis_map_type){.key = get_gamepad_axis(i), .value = 0};
+            (mg_gamepad_axis_map_type){.key = get_gamepad_axis(i), .value = -1};
 
         gamepad.deadzones[axis_len] = (mg_gamepad_axis_map_type){
             .key = get_gamepad_axis(i), .value = deadzone};
@@ -118,14 +119,14 @@ mg_gamepads *mg_gamepads_get() {
   gamepads->gamepads_list_len = gamepad_len;
 
   return gamepads;
-};
+}
 
 size_t mg_gamepads_num(mg_gamepads *gamepads) {
   return gamepads->gamepads_list_len;
-};
+}
 mg_gamepad *mg_gamepads_at(mg_gamepads *gamepads, size_t idx) {
   return &gamepads->gamepads_list[idx];
-};
+}
 
 void mg_gamepads_free(mg_gamepads *gamepads) { free(gamepads); };
 
@@ -147,7 +148,7 @@ void mg_gamepad_update(mg_gamepad *gamepad) {
   }
 
   // // take this opprutunity to reset every axis
-  // for (int i = 0; i < gamepad->axis_len; i++) {
+  // for(unsigned int i = 0; i < gamepad->axis_len; i++) {
   //   gamepad->axises[i].value = 0;
   // }
 
@@ -155,9 +156,9 @@ void mg_gamepad_update(mg_gamepad *gamepad) {
   case EV_KEY: {
     mg_gamepad_btn btn = get_gamepad_btn(ev.code);
 
-    for (int i = 0; i <= gamepad->button_len; i++) {
+    for (unsigned int i = 0; i <= gamepad->button_len; i++) {
       if (gamepad->buttons[i].key == btn) {
-        gamepad->buttons[i].value = ev.value;
+        gamepad->buttons[i].value = (int16_t)ev.value;
       }
     }
     break;
@@ -165,7 +166,7 @@ void mg_gamepad_update(mg_gamepad *gamepad) {
   case EV_ABS: {
     mg_gamepad_axis axis = get_gamepad_axis(ev.code);
 
-    for (int i = 0; i <= gamepad->axis_len; i++) {
+    for (unsigned int i = 0; i <= gamepad->axis_len; i++) {
       if (gamepad->axises[i].key == axis) {
         int deadzone = gamepad->deadzones[i].value;
         int event_val = 0;
@@ -187,7 +188,7 @@ void mg_gamepad_update(mg_gamepad *gamepad) {
 }
 
 int mg_gamepad_get_button_status(mg_gamepad *gamepad, mg_gamepad_btn btn) {
-  for (int i = 0; i < gamepad->button_len; i++) {
+  for(unsigned int i = 0; i < gamepad->button_len; i++) {
     if (gamepad->buttons[i].key == btn) {
       return gamepad->buttons[i].value;
     }
@@ -198,14 +199,14 @@ int mg_gamepad_get_button_status(mg_gamepad *gamepad, mg_gamepad_btn btn) {
 size_t mg_gamepad_btns_num(mg_gamepad *gamepad) { return gamepad->button_len; };
 mg_gamepad_btn mg_gamepad_btns_at(mg_gamepad *gamepad, size_t idx) {
   return gamepad->buttons[idx].key;
-};
+}
 
 size_t mg_gamepad_get_axis_num(mg_gamepad *gamepad) {
   return gamepad->axis_len;
 }
 
 int mg_gamepad_get_axis_status(mg_gamepad *gamepad, size_t axis) {
-  for (int i = 0; i < gamepad->axis_len; i++) {
+  for(unsigned int i = 0; i < gamepad->axis_len; i++) {
     if (gamepad->axises[i].key == axis) {
       return gamepad->axises[i].value;
     }
@@ -218,18 +219,18 @@ mg_gamepad_axis mg_gamepad_axis_at(mg_gamepad *gamepad, size_t idx) {
 }
 
 size_t mg_gamepad_get_axis_deadzone(mg_gamepad *gamepad, size_t axis) {
-  for (int i = 0; i < gamepad->axis_len; i++) {
+  for(unsigned int i = 0; i < gamepad->axis_len; i++) {
     if (gamepad->deadzones[i].key == axis) {
       return gamepad->deadzones[i].value;
     }
   }
-  return -1;
-};
+  return 0;
+}
 void mg_gamepad_set_axis_deadzone(mg_gamepad *gamepad, size_t axis,
-                                  size_t deadzone) {
-  for (int i = 0; i < gamepad->axis_len; i++) {
+                                  int16_t deadzone) {
+  for(unsigned int i = 0; i < gamepad->axis_len; i++) {
     if (gamepad->deadzones[i].key == axis) {
       gamepad->deadzones[i].value = deadzone;
     }
   }
-};
+}

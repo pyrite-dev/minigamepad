@@ -1,11 +1,20 @@
 #ifndef __minigamepad_H
 #define __minigamepad_H
 
-#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef MG_NO_STDINT
+typedef unsigned char uint8_t;
+typedef signed short int16_t;
+typedef uint8_t bool;
+#else
+#include <stdbool.h>
+#include <stdint.h>
 #endif
 
 typedef struct mg_gamepad_t mg_gamepad;
@@ -124,7 +133,7 @@ const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis);
 size_t mg_gamepad_get_axis_deadzone(mg_gamepad *gamepad, size_t axis);
 /// Set the deadzone for this controller axis
 void mg_gamepad_set_axis_deadzone(mg_gamepad *gamepad, size_t axis,
-                                  size_t deadzone);
+                                  int16_t deadzone);
 
 #ifdef __cplusplus
 }

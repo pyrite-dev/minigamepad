@@ -29,8 +29,8 @@ struct mg_gamepads_t {
   size_t gamepads_list_len;
 };
 
-mg_gamepad_btn get_gamepad_btn(int btn);
-mg_gamepad_axis get_gamepad_axis(int axis);
+mg_gamepad_btn get_gamepad_btn(unsigned int btn);
+mg_gamepad_axis get_gamepad_axis(unsigned int axis);
 int get_native_btn(mg_gamepad_btn btn);
 int get_native_axis(mg_gamepad_axis axis);
 #endif
