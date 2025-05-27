@@ -1,6 +1,6 @@
 project(minigamepad)
 
-FILE(GLOB_RECURSE sources src/common/*.c src/linux/*.c src/stb/*.c)
+FILE(GLOB_RECURSE sources src/common/*.c src/linux/*.c)
 
 add_library(${PROJECT_NAME} ${sources})
 
