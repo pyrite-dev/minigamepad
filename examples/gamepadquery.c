@@ -32,6 +32,15 @@ int main() {
       printf("     %-25d\n", state);
     }
 
+    size_t axis_num = mg_gamepad_get_axis_num(gamepad);
+    for (int i = 0; i < axis_num; i++) {
+
+      mg_gamepad_axis axis = mg_gamepad_axis_at(gamepad, i);
+
+      printf("     %25s:\t", mg_gamepad_axis_get_name(axis));
+      int state = mg_gamepad_get_axis_status(gamepad, axis);
+      printf("     %-25d\n", state);
+    }
     printf("\33[%d;%dH", 0, 0);
   }
 

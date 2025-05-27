@@ -84,3 +84,64 @@ const char *mg_gamepad_btn_get_name(mg_gamepad_btn btn) {
     return "DIGI Button";
   }
 };
+
+const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis) {
+  switch (axis) {
+  case MG_GAMEPAD_AXIS_UNKNOWN:
+    return "Unknown Axis";
+  case MG_GAMEPAD_AXIS_X:
+    return "X Axis";
+  case MG_GAMEPAD_AXIS_Y:
+    return "Y Axis";
+  case MG_GAMEPAD_AXIS_Z:
+    return "Z Axis";
+  case MG_GAMEPAD_AXIS_RX:
+    return "RX Axis";
+  case MG_GAMEPAD_AXIS_RY:
+    return "RY Axis";
+  case MG_GAMEPAD_AXIS_RZ:
+    return "RZ Axis";
+  case MG_GAMEPAD_AXIS_THROTTLE:
+    return "Throttle";
+  case MG_GAMEPAD_AXIS_RUDDER:
+    return "Rudder";
+  case MG_GAMEPAD_AXIS_WHEEL:
+    return "Wheel";
+  case MG_GAMEPAD_AXIS_GAS:
+    return "Gas";
+  case MG_GAMEPAD_AXIS_BRAKE:
+    return "Brake";
+  case MG_GAMEPAD_AXIS_HAT0X:
+    return "Hat 0 X Axis";
+  case MG_GAMEPAD_AXIS_HAT0Y:
+    return "Hat 0 Y Axis";
+  case MG_GAMEPAD_AXIS_HAT1X:
+    return "Hat 1 X Axis";
+  case MG_GAMEPAD_AXIS_HAT1Y:
+    return "Hat 1 Y Axis";
+  case MG_GAMEPAD_AXIS_HAT2X:
+    return "Hat 2 X Axis";
+  case MG_GAMEPAD_AXIS_HAT2Y:
+    return "Hat 2 Y Axis";
+  case MG_GAMEPAD_AXIS_HAT3X:
+    return "Hat 3 X Axis";
+  case MG_GAMEPAD_AXIS_HAT3Y:
+    return "Hat 3 Y Axis";
+  case MG_GAMEPAD_AXIS_PRESSURE:
+    return "Pressure Axis";
+  case MG_GAMEPAD_AXIS_DISTANCE:
+    return "Distance Axis";
+  case MG_GAMEPAD_AXIS_TILT_X:
+    return "Tilt X Axis";
+  case MG_GAMEPAD_AXIS_TILT_Y:
+    return "Tilt Y Axis";
+  case MG_GAMEPAD_AXIS_TOOL_WIDTH:
+    return "Tool Width Axis";
+  case MG_GAMEPAD_AXIS_VOLUME:
+    return "Volume Axis";
+  case MG_GAMEPAD_AXIS_PROFILE:
+    return "Profile Axis";
+  case MG_GAMEPAD_AXIS_MISC:
+    return "Misc Axis";
+  }
+}

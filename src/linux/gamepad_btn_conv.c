@@ -171,3 +171,123 @@ int get_native_btn(mg_gamepad_btn btn) {
     return BTN_MISC;
   }
 };
+
+mg_gamepad_axis get_gamepad_axis(int axis) {
+  switch (axis) {
+  case ABS_X:
+    return MG_GAMEPAD_AXIS_X;
+  case ABS_Y:
+    return MG_GAMEPAD_AXIS_Y;
+  case ABS_Z:
+    return MG_GAMEPAD_AXIS_Z;
+  case ABS_RX:
+    return MG_GAMEPAD_AXIS_RX;
+  case ABS_RY:
+    return MG_GAMEPAD_AXIS_RY;
+  case ABS_RZ:
+    return MG_GAMEPAD_AXIS_RZ;
+  case ABS_THROTTLE:
+    return MG_GAMEPAD_AXIS_THROTTLE;
+  case ABS_RUDDER:
+    return MG_GAMEPAD_AXIS_RUDDER;
+  case ABS_WHEEL:
+    return MG_GAMEPAD_AXIS_WHEEL;
+  case ABS_GAS:
+    return MG_GAMEPAD_AXIS_GAS;
+  case ABS_BRAKE:
+    return MG_GAMEPAD_AXIS_BRAKE;
+  case ABS_HAT0X:
+    return MG_GAMEPAD_AXIS_HAT0X;
+  case ABS_HAT0Y:
+    return MG_GAMEPAD_AXIS_HAT0Y;
+  case ABS_HAT1X:
+    return MG_GAMEPAD_AXIS_HAT1X;
+  case ABS_HAT1Y:
+    return MG_GAMEPAD_AXIS_HAT1Y;
+  case ABS_HAT2X:
+    return MG_GAMEPAD_AXIS_HAT2X;
+  case ABS_HAT2Y:
+    return MG_GAMEPAD_AXIS_HAT2Y;
+  case ABS_HAT3X:
+    return MG_GAMEPAD_AXIS_HAT3X;
+  case ABS_HAT3Y:
+    return MG_GAMEPAD_AXIS_HAT3Y;
+  case ABS_PRESSURE:
+    return MG_GAMEPAD_AXIS_PRESSURE;
+  case ABS_DISTANCE:
+    return MG_GAMEPAD_AXIS_DISTANCE;
+  case ABS_TILT_X:
+    return MG_GAMEPAD_AXIS_TILT_X;
+  case ABS_TILT_Y:
+    return MG_GAMEPAD_AXIS_TILT_Y;
+  case ABS_TOOL_WIDTH:
+    return MG_GAMEPAD_AXIS_TOOL_WIDTH;
+  case ABS_VOLUME:
+    return MG_GAMEPAD_AXIS_VOLUME;
+  case ABS_PROFILE:
+    return MG_GAMEPAD_AXIS_PROFILE;
+  case ABS_MISC:
+    return MG_GAMEPAD_AXIS_MISC;
+  default:
+    return MG_GAMEPAD_AXIS_UNKNOWN;
+  }
+}
+
+int get_native_axis(mg_gamepad_axis axis) {
+  switch (axis) {
+  case MG_GAMEPAD_AXIS_X:
+    return ABS_X;
+  case MG_GAMEPAD_AXIS_Y:
+    return ABS_Y;
+  case MG_GAMEPAD_AXIS_Z:
+    return ABS_Z;
+  case MG_GAMEPAD_AXIS_RX:
+    return ABS_RX;
+  case MG_GAMEPAD_AXIS_RY:
+    return ABS_RY;
+  case MG_GAMEPAD_AXIS_RZ:
+    return ABS_RZ;
+  case MG_GAMEPAD_AXIS_THROTTLE:
+    return ABS_THROTTLE;
+  case MG_GAMEPAD_AXIS_RUDDER:
+    return ABS_RUDDER;
+  case MG_GAMEPAD_AXIS_WHEEL:
+    return ABS_WHEEL;
+  case MG_GAMEPAD_AXIS_GAS:
+    return ABS_GAS;
+  case MG_GAMEPAD_AXIS_BRAKE:
+    return ABS_BRAKE;
+  case MG_GAMEPAD_AXIS_HAT0X:
+    return ABS_HAT0X;
+  case MG_GAMEPAD_AXIS_HAT0Y:
+    return ABS_HAT0Y;
+  case MG_GAMEPAD_AXIS_HAT1X:
+    return ABS_HAT1X;
+  case MG_GAMEPAD_AXIS_HAT1Y:
+    return ABS_HAT1Y;
+  case MG_GAMEPAD_AXIS_HAT2X:
+    return ABS_HAT2X;
+  case MG_GAMEPAD_AXIS_HAT2Y:
+    return ABS_HAT2Y;
+  case MG_GAMEPAD_AXIS_HAT3X:
+    return ABS_HAT3X;
+  case MG_GAMEPAD_AXIS_HAT3Y:
+    return ABS_HAT3Y;
+  case MG_GAMEPAD_AXIS_PRESSURE:
+    return ABS_PRESSURE;
+  case MG_GAMEPAD_AXIS_DISTANCE:
+    return ABS_DISTANCE;
+  case MG_GAMEPAD_AXIS_TILT_X:
+    return ABS_TILT_X;
+  case MG_GAMEPAD_AXIS_TILT_Y:
+    return ABS_TILT_Y;
+  case MG_GAMEPAD_AXIS_TOOL_WIDTH:
+    return ABS_TOOL_WIDTH;
+  case MG_GAMEPAD_AXIS_VOLUME:
+    return ABS_VOLUME;
+  case MG_GAMEPAD_AXIS_PROFILE:
+    return ABS_PROFILE;
+  default:
+    return ABS_MISC;
+  }
+}
