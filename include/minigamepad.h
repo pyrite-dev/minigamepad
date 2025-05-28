@@ -1,13 +1,24 @@
 #ifndef __minigamepad_H
 #define __minigamepad_H
 
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifdef MG_NO_STDINT
+typedef unsigned char uint8_t;
+typedef signed short int16_t;
+typedef uint8_t bool;
+#else
+#include <stdbool.h>
+#include <stdint.h>
+#endif
+
+typedef struct mg_gamepad_t mg_gamepad;
+typedef struct mg_gamepads_t mg_gamepads;
 
 /// A button on a gamepad
 typedef enum {
@@ -119,7 +130,11 @@ typedef struct mg_gamepads_t {
 void mg_gamepad_update(mg_gamepad *gamepad);
 
 /// Get the gamepads currently connected to the system.
-mg_gamepads *mg_gamepads_get();
+mg_gamepads *mg_gamepads_get(void);
+/// Get the number of gamepads attached to the system.
+size_t mg_gamepads_num(mg_gamepads *gamepads);
+/// Get the game pad at the given index.
+mg_gamepad *mg_gamepads_at(mg_gamepads *mj, size_t idx);
 /// Free the struct acquired by `mg_gamepads_get`.
 void mg_gamepads_free(mg_gamepads *gamepads);
 

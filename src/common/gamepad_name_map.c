@@ -51,7 +51,7 @@ const char *mg_gamepad_btn_get_name(mg_gamepad_btn btn) {
     return "Misc Button 6";
   }
   return NULL;
-};
+}
 
 const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis) {
   switch (axis) {
@@ -111,6 +111,7 @@ const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis) {
     return "Profile Axis";
   case MG_GAMEPAD_AXIS_MISC:
     return "Misc Axis";
+  default: break;
   }
   return NULL;
 }

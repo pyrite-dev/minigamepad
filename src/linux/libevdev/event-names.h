@@ -496,11 +496,13 @@ static const char *const key_map[KEY_MAX + 1] = {
     [KEY_KBD_LAYOUT_NEXT] = "KEY_KBD_LAYOUT_NEXT",
     [KEY_EMOJI_PICKER] = "KEY_EMOJI_PICKER",
     [KEY_DICTATE] = "KEY_DICTATE",
+#ifdef KEY_CAMERA_ACCESS_ENABLE 
     [KEY_CAMERA_ACCESS_ENABLE] = "KEY_CAMERA_ACCESS_ENABLE",
     [KEY_CAMERA_ACCESS_DISABLE] = "KEY_CAMERA_ACCESS_DISABLE",
     [KEY_CAMERA_ACCESS_TOGGLE] = "KEY_CAMERA_ACCESS_TOGGLE",
     [KEY_ACCESSIBILITY] = "KEY_ACCESSIBILITY",
     [KEY_DO_NOT_DISTURB] = "KEY_DO_NOT_DISTURB",
+#endif
     [KEY_BRIGHTNESS_MIN] = "KEY_BRIGHTNESS_MIN",
     [KEY_BRIGHTNESS_MAX] = "KEY_BRIGHTNESS_MAX",
     [KEY_KBDINPUTASSIST_PREV] = "KEY_KBDINPUTASSIST_PREV",
@@ -1025,7 +1027,9 @@ static const struct name_entry code_names[] = {
     {.name = "KEY_9", .value = KEY_9},
     {.name = "KEY_A", .value = KEY_A},
     {.name = "KEY_AB", .value = KEY_AB},
+#ifdef KEY_ACCESSIBILITY
     {.name = "KEY_ACCESSIBILITY", .value = KEY_ACCESSIBILITY},
+#endif
     {.name = "KEY_ADDRESSBOOK", .value = KEY_ADDRESSBOOK},
     {.name = "KEY_AGAIN", .value = KEY_AGAIN},
     {.name = "KEY_ALL_APPLICATIONS", .value = KEY_ALL_APPLICATIONS},
@@ -1077,9 +1081,11 @@ static const struct name_entry code_names[] = {
     {.name = "KEY_CALC", .value = KEY_CALC},
     {.name = "KEY_CALENDAR", .value = KEY_CALENDAR},
     {.name = "KEY_CAMERA", .value = KEY_CAMERA},
+#ifdef KEY_CAMERA_ACCESS_DISABLE 
     {.name = "KEY_CAMERA_ACCESS_DISABLE", .value = KEY_CAMERA_ACCESS_DISABLE},
     {.name = "KEY_CAMERA_ACCESS_ENABLE", .value = KEY_CAMERA_ACCESS_ENABLE},
     {.name = "KEY_CAMERA_ACCESS_TOGGLE", .value = KEY_CAMERA_ACCESS_TOGGLE},
+#endif
     {.name = "KEY_CAMERA_DOWN", .value = KEY_CAMERA_DOWN},
     {.name = "KEY_CAMERA_FOCUS", .value = KEY_CAMERA_FOCUS},
     {.name = "KEY_CAMERA_LEFT", .value = KEY_CAMERA_LEFT},
@@ -1126,7 +1132,9 @@ static const struct name_entry code_names[] = {
     {.name = "KEY_DOLLAR", .value = KEY_DOLLAR},
     {.name = "KEY_DOT", .value = KEY_DOT},
     {.name = "KEY_DOWN", .value = KEY_DOWN},
+#ifdef KEY_DO_NOT_DISTURB
     {.name = "KEY_DO_NOT_DISTURB", .value = KEY_DO_NOT_DISTURB},
+#endif
     {.name = "KEY_DUAL_RANGE_RADAR", .value = KEY_DUAL_RANGE_RADAR},
     {.name = "KEY_DVD", .value = KEY_DVD},
     {.name = "KEY_E", .value = KEY_E},

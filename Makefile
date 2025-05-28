@@ -20,25 +20,32 @@ else ifeq ($(PLATFORM),Linux)
 	LDFLAGS = -shared 
 	CFLAGS += -I./src/linux/ 
 	LIBS = 
+
+	LIBEVDEV_SOURCES = $(wildcard src/linux/libevdev/*.c)
+	LIBEVDEV_OBJECTS = $(LIBEVDEV_SOURCES:.c=.o)
+
 	SOURCES += $(wildcard src/linux/*.c)
-	SOURCES += $(wildcard src/linux/*/*.c)
-else ifeq ($(PLATFORM),Windows)
-   	EXT = dll
-	LDFLAGS = -shared 
-	CFLAGS += -I./src/winmm/ 
-    LIBS = -lwinmm
-	SOURCES += $(wildcard src/winmm/*.c)
-	SOURCES += $(wildcard src/winmm/*/*.c)
+	SOURCES += $(LIBEVDEV_SOURCES) 
 else ifeq ($(PLATFORM),Darwin)
 	EXT = dylib
 	LDFLAGS = -dynamiclib
 	LIBS =  -framework IOKit
 	IMPLIB = $(OUTDIR)/libminigamepad.a
 else
-	EXT = dll
-	LDFLAGS = -shared
-	LIBS = 
 	PLATFORM = Windows
+endif
+
+ifeq ($(PLATFORM),Windows)
+   	EXT = dll
+	LDFLAGS = -shared 
+	# change later
+	BACKEND ?= WINMM
+
+	ifeq ($(BACKEND),WINMM)
+		LIBS = -lwinmm	
+		CFLAGS += -I./src/winmm/ 
+		SOURCES += $(wildcard src/winmm/*.c)
+	endif
 endif
 
 TARGET = $(OUTDIR)/libminigamepad.$(EXT) \
@@ -64,13 +71,17 @@ $(OUTDIR)/%.o: $(SOURCES) | $(OUTDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXAMPLES): %: %.c		
-	$(CC) $(CFLAGS) -I. $< $(LIBS) -o $(OUTDIR)/$@ 
+	$(CC) $(CFLAGS) -I. $< $(LIBS) -L./build -lminigamepad -o $(OUTDIR)/$@ 
+
+$(LIBEVDEV_OBJECTS): %.o: %.c
+	$(CC) -fPIC  -c $< -o $@
 
 $(OUTDIR):
 	mkdir -p $(OUTDIR)
 	mkdir -p $(OUTDIR)/examples
 
 clean:
+	echo $(EXT) $(BACKEND) $(LIBS)
 	rm -rf $(OUTDIR) $(OBJECTS)
 
 .PHONY: all clean

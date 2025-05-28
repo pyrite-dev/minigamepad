@@ -1,15 +1,20 @@
 #include "minigamepad.h"
 #include <stdio.h>
+#include <stdlib.h>
 
-int main() {
+int main(void) {
   mg_gamepads *gamepads = mg_gamepads_get();
 
   size_t num = gamepads->num;
 
-  int idx = 0;
+  size_t idx = 0;
 
   // clear screen
-  printf("\e[1;1H\e[2J");
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
 
   for (;;) {
     if (idx >= num) {
@@ -21,7 +26,7 @@ int main() {
 
     printf("     Gamepad: %-25s\n", mg_gamepad_get_name(gamepad));
     size_t gamepad_button_num = gamepad->button_num;
-    for (int i = 0; i < gamepad_button_num; i++) {
+    for (size_t i = 0; i < gamepad_button_num; i++) {
       mg_gamepad_btn btn = gamepad->buttons[i].key;
 
       printf("     %25s:\t", mg_gamepad_btn_get_name(btn));
@@ -29,7 +34,7 @@ int main() {
     }
 
     size_t axis_num = gamepad->axis_num;
-    for (int i = 0; i < axis_num; i++) {
+    for (size_t i = 0; i < axis_num; i++) {
       mg_gamepad_axis axis = gamepad->axises[i].key;
 
       printf("     %25s:\t", mg_gamepad_axis_get_name(axis));
