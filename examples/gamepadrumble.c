@@ -20,7 +20,7 @@ double axis_value;
 pthread_t thread_id;
 void *rumble_thread(void *arg);
 #else
-HANDLE thread_handle;
+DWORD thread_handle;
 DWORD WINAPI rumble_thread(LPVOID lpParam);
 #endif
 
@@ -36,13 +36,12 @@ int main(void) {
 #ifndef __WIN32
   pthread_create(&thread_id, NULL, &rumble_thread, NULL);
 #else
-  thread_handle =
-      CreateThread(NULL,                 // default security attributes
-                   0,                    // use default stack size
-                   rumble_thread,        // thread function name
-                   pDataArray[i],        // argument to thread function
-                   0,                    // use default creation flags
-                   &dwThreadIdArray[i]); // returns the thread identifier
+  CreateThread(NULL,            // default security attributes
+               0,               // use default stack size
+               rumble_thread,   // thread function name
+               NULL,            // argument to thread function
+               0,               // use default creation flags
+               &thread_handle); // returns the thread identifier
 #endif
 
   for (;;) {
@@ -64,10 +63,13 @@ int main(void) {
 #ifndef __WIN32
 void *rumble_thread(void *arg) {
 #else
-DWORD WINAPI rumble_thread(LPVOID lpParam) {
+DWORD WINAPI rumble_thread(LPVOID arg) {
 #endif
+  (void)(arg); // Mute warnings/errors about arg being unused
+
   while (true) {
-    mg_gamepad_rumble(gamepad, axis_value / 2, axis_value, 100);
+    mg_gamepad_rumble(gamepad, (uint16_t)axis_value / 2, (uint16_t)axis_value,
+                      100);
     printf("\rVibration: %0.2f", axis_value);
 #ifndef __WIN32
     usleep(100000);
