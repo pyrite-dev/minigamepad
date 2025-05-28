@@ -229,7 +229,7 @@ mg_gamepad_axis mg_gamepad_axis_at(mg_gamepad *gamepad, size_t idx) {
 }
 
 void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
-                       uint16_t weak_vibration, int milliseconds) {
+                       uint16_t weak_vibration, uint16_t milliseconds) {
   // only continue if the controller does rumble
   if (!gamepad->ctx->supports_rumble) {
     return;
