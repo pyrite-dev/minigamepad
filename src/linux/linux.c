@@ -4,12 +4,14 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <linux/input-event-codes.h>
+#include <linux/input.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 mg_gamepads *mg_gamepads_get(void) {
   struct dirent *dp;
@@ -33,7 +35,7 @@ mg_gamepads *mg_gamepads_get(void) {
 
     // open said full path with libevdev
     struct libevdev *dev = libevdev_new();
-    if (libevdev_set_fd(dev, open(full_path, O_RDONLY))) {
+    if (libevdev_set_fd(dev, open(full_path, O_RDWR))) {
       // char err[256];
       // snprintf(err, 256, "could not open %s", full_path);
       // perror(err);
@@ -92,7 +94,12 @@ mg_gamepads *mg_gamepads_get(void) {
         gamepad.axises[axis_num].key = get_gamepad_axis(i);
         gamepad.axises[axis_num].value = 0;
         gamepad.axises[axis_num].deadzone = deadzone;
-
+        gamepad.ctx->effect = (struct ff_effect){
+            .type = FF_RUMBLE,
+            .id = -1,
+            .direction = 0,
+            .trigger = {0, 0},
+        };
         axis_num += 1;
       }
     }
@@ -165,13 +172,16 @@ void mg_gamepad_update(mg_gamepad *gamepad) {
     }
     break;
   }
+  case EV_FF: {
+    printf("EV_FF: %d\n", ev.value);
+  }
   default:
     break;
   }
 }
 
 int mg_gamepad_get_button_status(mg_gamepad *gamepad, mg_gamepad_btn btn) {
-  for(unsigned int i = 0; i < gamepad->button_num; i++) {
+  for (unsigned int i = 0; i < gamepad->button_num; i++) {
     if (gamepad->buttons[i].key == btn) {
       return gamepad->buttons[i].value;
     }
@@ -189,7 +199,7 @@ size_t mg_gamepad_get_axis_num(mg_gamepad *gamepad) {
 }
 
 int mg_gamepad_get_axis_status(mg_gamepad *gamepad, size_t axis) {
-  for(unsigned int i = 0; i < gamepad->axis_num; i++) {
+  for (unsigned int i = 0; i < gamepad->axis_num; i++) {
     if (gamepad->axises[i].key == axis) {
       return gamepad->axises[i].value;
     }
@@ -201,3 +211,52 @@ mg_gamepad_axis mg_gamepad_axis_at(mg_gamepad *gamepad, size_t idx) {
   return gamepad->axises[idx].key;
 }
 
+void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
+                       uint16_t weak_vibration, int milliseconds) {
+  // libevdev doesn't support rumble so we have to do it raw.
+
+  // get the fd that libevdev is holding for the input device
+  int fd = libevdev_get_fd(gamepad->ctx->dev);
+
+  //  if we currently have an event going, erase it
+  if (gamepad->ctx->effect.id != -1) {
+    if (ioctl(fd, EVIOCRMFF, gamepad->ctx->effect.id) == -1) {
+      perror("could not erase rumble");
+      return;
+    }
+    gamepad->ctx->effect.id = -1;
+  }
+
+  // construct the event.
+  gamepad->ctx->effect.replay.length = milliseconds;
+  gamepad->ctx->effect.replay.delay = 0;
+  gamepad->ctx->effect.u.rumble.weak_magnitude = weak_vibration;
+  gamepad->ctx->effect.u.rumble.strong_magnitude = strong_vibration;
+
+  // submit the event via ioctl
+  if (ioctl(fd, EVIOCSFF, &gamepad->ctx->effect) == -1) {
+    perror("could not set rumble");
+    return;
+  }
+
+  struct input_event play, stop;
+
+  memset(&play, 0, sizeof(play));
+  play.type = EV_FF;
+  play.code = gamepad->ctx->effect.id;
+  play.value = 1;
+
+  if (write(fd, (const void *)&play, sizeof(play)) == -1) {
+    perror("error writing rumble packet");
+    return;
+  }
+
+  // memset(&stop, 0, sizeof(stop));
+  // stop.type = EV_FF;
+  // stop.code = -1;
+  // stop.value = 0;
+
+  // if (write(fd, (const void *)&stop, sizeof(stop)) == -1) {
+  //   perror("");
+  // }
+}

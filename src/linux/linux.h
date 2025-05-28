@@ -8,6 +8,7 @@
 struct mg_gamepad_context_t {
   struct libevdev *dev;
   struct input_event input_event;
+  struct ff_effect effect;
 };
 
 mg_gamepad_btn get_gamepad_btn(unsigned int btn);

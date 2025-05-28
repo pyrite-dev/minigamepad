@@ -146,6 +146,10 @@ const char *mg_gamepad_btn_get_name(mg_gamepad_btn);
 /// Get the name of a gamepad axis.
 const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis);
 
+/// Rumble the controller
+void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
+                       uint16_t weak_vibration, int milliseconds);
+
 #ifdef __cplusplus
 }
 #endif
