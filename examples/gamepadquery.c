@@ -34,7 +34,7 @@ int main(void) {
     }
 
     size_t axis_num = gamepad->axis_num;
-    for (int i = 0; i < axis_num; i++) {
+    for (size_t i = 0; i < axis_num; i++) {
       mg_gamepad_axis axis = gamepad->axises[i].key;
 
       printf("     %25s:\t", mg_gamepad_axis_get_name(axis));

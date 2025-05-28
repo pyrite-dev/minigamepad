@@ -20,8 +20,12 @@ else ifeq ($(PLATFORM),Linux)
 	LDFLAGS = -shared 
 	CFLAGS += -I./src/linux/ 
 	LIBS = 
+
+	LIBEVDEV_SOURCES = $(wildcard src/linux/libevdev/*.c)
+	LIBEVDEV_OBJECTS = $(LIBEVDEV_SOURCES:.c=.o)
+
 	SOURCES += $(wildcard src/linux/*.c)
-	SOURCES += $(wildcard src/linux/*/*.c)
+	SOURCES += $(LIBEVDEV_SOURCES) 
 else ifeq ($(PLATFORM),Darwin)
 	EXT = dylib
 	LDFLAGS = -dynamiclib
@@ -68,6 +72,9 @@ $(OUTDIR)/%.o: $(SOURCES) | $(OUTDIR)
 
 $(EXAMPLES): %: %.c		
 	$(CC) $(CFLAGS) -I. $< $(LIBS) -L./build -lminigamepad -o $(OUTDIR)/$@ 
+
+$(LIBEVDEV_OBJECTS): %.o: %.c
+	$(CC) -fPIC  -c $< -o $@
 
 $(OUTDIR):
 	mkdir -p $(OUTDIR)
