@@ -95,8 +95,15 @@ mg_gamepads *mg_gamepads_get(void) {
         gamepad.axises[axis_num].value = 0;
         gamepad.axises[axis_num].deadzone = deadzone;
         axis_num += 1;
+      }
+    }
 
-        // this is a struct that gets passed to the rumble effect when
+    if (good) {
+
+      if (libevdev_has_event_code(
+              dev, EV_FF,
+              FF_RUMBLE)) { // this is a struct that gets passed to the rumble
+                            // effect when
         // activated. we have to "erase" the effect whenever we want to add a
         // new one, hence this gets put in the struct itself so that we can keep
         // track of the id. and while we're here we save some other values
@@ -111,10 +118,10 @@ mg_gamepads *mg_gamepads_get(void) {
                     .delay = 0,
                 },
         };
+        gamepad.ctx->supports_rumble = true;
+      } else {
+        gamepad.ctx->supports_rumble = false;
       }
-    }
-
-    if (good) {
       gamepad.button_num = button_num;
       gamepad.axis_num = axis_num;
 
@@ -223,6 +230,11 @@ mg_gamepad_axis mg_gamepad_axis_at(mg_gamepad *gamepad, size_t idx) {
 
 void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
                        uint16_t weak_vibration, int milliseconds) {
+  // only continue if the controller does rumble
+  if (!gamepad->ctx->supports_rumble) {
+    return;
+  }
+
   // libevdev doesn't support rumble so we have to do it raw.
 
   // get the fd that libevdev is holding for the input device

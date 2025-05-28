@@ -6,9 +6,10 @@
 #define __minigamepad_LINUX
 
 struct mg_gamepad_context_t {
-  struct libevdev *dev;
-  struct input_event input_event;
-  struct ff_effect effect;
+  struct libevdev *dev;           // libevdev context
+  struct input_event input_event; // input event used in the libevdev function
+  uint8_t supports_rumble;        // whether this controller does rumble
+  struct ff_effect effect;        // effect used in the rumble function
 };
 
 mg_gamepad_btn get_gamepad_btn(unsigned int btn);
