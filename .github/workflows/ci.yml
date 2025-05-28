@@ -1,10 +1,17 @@
 name: CI
+
 on:
   pull_request:
   push:
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
       - name: Make
-        run: make -j$(nproc)
+        run: make
