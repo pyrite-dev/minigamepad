@@ -1996,47 +1996,6 @@ int libevdev_event_is_code(const struct input_event *ev, unsigned int type, unsi
 /**
  * @ingroup misc
  *
- * @param type The event type to return the name for.
- *
- * @return The name of the given event type (e.g. EV_ABS) or NULL for an
- * invalid type
- *
- * @note The list of names is compiled into libevdev. If the kernel adds new
- * defines for new event types, libevdev will not automatically pick these up.
- */
-const char * libevdev_event_type_get_name(unsigned int type);
-/**
- * @ingroup misc
- *
- * @param type The event type for the code to query (EV_SYN, EV_REL, etc.)
- * @param code The event code to return the name for (e.g. ABS_X)
- *
- * @return The name of the given event code (e.g. ABS_X) or NULL for an
- * invalid type or code
- *
- * @note The list of names is compiled into libevdev. If the kernel adds new
- * defines for new event codes, libevdev will not automatically pick these up.
- */
-const char * libevdev_event_code_get_name(unsigned int type, unsigned int code);
-
-/**
- * @ingroup misc
- *
- * @param prop The input prop to return the name for (e.g. INPUT_PROP_BUTTONPAD)
- *
- * @return The name of the given input prop (e.g. INPUT_PROP_BUTTONPAD) or NULL for an
- * invalid property
- *
- * @note The list of names is compiled into libevdev. If the kernel adds new
- * defines for new properties libevdev will not automatically pick these up.
- * @note On older kernels input properties may not be defined and
- * libevdev_property_get_name() will always return NULL
- */
-const char* libevdev_property_get_name(unsigned int prop);
-
-/**
- * @ingroup misc
- *
  * @param type The event type to return the maximum for (EV_ABS, EV_REL, etc.). No max is defined for
  * EV_SYN.
  *
@@ -2047,40 +2006,6 @@ const char* libevdev_property_get_name(unsigned int prop);
  * max value, libevdev will not automatically pick these up.
  */
 int libevdev_event_type_get_max(unsigned int type);
-
-/**
- * @ingroup misc
- *
- * Look up an event-type by its name. Event-types start with "EV_" followed by
- * the name (eg., "EV_ABS"). The "EV_" prefix must be included in the name. It
- * returns the constant assigned to the event-type or -1 if not found.
- *
- * @param name A non-NULL string describing an input-event type ("EV_KEY",
- * "EV_ABS", ...), zero-terminated.
- *
- * @return The given type constant for the passed name or -1 if not found.
- *
- * @note EV_MAX is also recognized.
- */
-int libevdev_event_type_from_name(const char *name);
-
-/**
- * @ingroup misc
- *
- * Look up an event-type by its name. Event-types start with "EV_" followed by
- * the name (eg., "EV_ABS"). The "EV_" prefix must be included in the name. It
- * returns the constant assigned to the event-type or -1 if not found.
- *
- * @param name A non-NULL string describing an input-event type ("EV_KEY",
- * "EV_ABS", ...).
- * @param len The length of the passed string excluding any terminating 0
- * character.
- *
- * @return The given type constant for the passed name or -1 if not found.
- *
- * @note EV_MAX is also recognized.
- */
-int libevdev_event_type_from_name_n(const char *name, size_t len);
 
 /**
  * @ingroup misc

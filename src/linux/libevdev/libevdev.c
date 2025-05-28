@@ -30,7 +30,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "event-names.h"
 #include "libevdev-int.h"
 #include "libevdev-util.h"
 #include "libevdev.h"
@@ -1529,29 +1528,24 @@ LIBEVDEV_EXPORT int libevdev_event_is_code(const struct input_event *ev,
   return (max > -1 && code <= (unsigned int)max && ev->code == code);
 }
 
-LIBEVDEV_EXPORT const char *libevdev_event_type_get_name(unsigned int type) {
-  if (type > EV_MAX)
-    return NULL;
-
-  return ev_map[type];
-}
-
-LIBEVDEV_EXPORT const char *libevdev_event_code_get_name(unsigned int type,
-                                                         unsigned int code) {
-  int max = libevdev_event_type_get_max(type);
-
-  if (max == -1 || code > (unsigned int)max)
-    return NULL;
-
-  return event_type_map[type][code];
-}
-
-LIBEVDEV_EXPORT const char *libevdev_property_get_name(unsigned int prop) {
-  if (prop > INPUT_PROP_MAX)
-    return NULL;
-
-  return input_prop_map[prop];
-}
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winitializer-overrides"
+#else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverride-init"
+#endif
+static const int ev_max[EV_MAX + 1] = {
+    [0 ... EV_MAX] = -1, [EV_REL] = REL_MAX, [EV_ABS] = ABS_MAX,
+    [EV_KEY] = KEY_MAX,  [EV_LED] = LED_MAX, [EV_SND] = SND_MAX,
+    [EV_MSC] = MSC_MAX,  [EV_SW] = SW_MAX,   [EV_FF] = FF_MAX,
+    [EV_SYN] = SYN_MAX,  [EV_REP] = REP_MAX,
+};
+#if __clang__
+#pragma clang diagnostic pop /* "-Winitializer-overrides" */
+#else
+#pragma GCC diagnostic pop /* "-Woverride-init" */
+#endif
 
 LIBEVDEV_EXPORT int libevdev_event_type_get_max(unsigned int type) {
   if (type > EV_MAX)
