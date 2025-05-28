@@ -17,9 +17,6 @@ typedef uint8_t bool;
 #include <stdint.h>
 #endif
 
-typedef struct mg_gamepad_t mg_gamepad;
-typedef struct mg_gamepads_t mg_gamepads;
-
 /// A button on a gamepad
 typedef enum {
   MG_GAMEPAD_BUTTON_UNKNOWN = 0,
