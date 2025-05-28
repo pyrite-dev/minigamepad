@@ -18,10 +18,10 @@ double axis_value;
 
 #ifndef __WIN32
 pthread_t thread_id;
-void *rumble_thread(void *arg);
+__attribute__((__noreturn__)) void *rumble_thread(void *arg);
 #else
 DWORD thread_handle;
-DWORD WINAPI rumble_thread(LPVOID lpParam);
+__declspec(noreturn) DWORD WINAPI rumble_thread(LPVOID lpParam);
 #endif
 
 int main(void) {
@@ -61,22 +61,20 @@ int main(void) {
 }
 
 #ifndef __WIN32
-void *rumble_thread(void *arg) {
+__attribute__((__noreturn__)) void *rumble_thread(void *arg) {
 #else
-DWORD WINAPI rumble_thread(LPVOID arg) {
+__declspec(noreturn) DWORD WINAPI rumble_thread(LPVOID arg) {
 #endif
   (void)(arg); // Mute warnings/errors about arg being unused
 
   while (true) {
     mg_gamepad_rumble(gamepad, (uint16_t)axis_value / 2, (uint16_t)axis_value,
-                      100);
+                      1000);
     printf("\rVibration: %0.2f", axis_value);
 #ifndef __WIN32
-    usleep(100000);
+    sleep(1);
 #else
-    Sleep(100);
+    Sleep(1000);
 #endif
   }
-
-  return 0;
 }
