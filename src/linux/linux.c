@@ -94,13 +94,23 @@ mg_gamepads *mg_gamepads_get(void) {
         gamepad.axises[axis_num].key = get_gamepad_axis(i);
         gamepad.axises[axis_num].value = 0;
         gamepad.axises[axis_num].deadzone = deadzone;
+        axis_num += 1;
+
+        // this is a struct that gets passed to the rumble effect when
+        // activated. we have to "erase" the effect whenever we want to add a
+        // new one, hence this gets put in the struct itself so that we can keep
+        // track of the id. and while we're here we save some other values
+        // that'll never get changed.
         gamepad.ctx->effect = (struct ff_effect){
             .type = FF_RUMBLE,
             .id = -1,
             .direction = 0,
             .trigger = {0, 0},
+            .replay =
+                {
+                    .delay = 0,
+                },
         };
-        axis_num += 1;
       }
     }
 
@@ -218,7 +228,8 @@ void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
   // get the fd that libevdev is holding for the input device
   int fd = libevdev_get_fd(gamepad->ctx->dev);
 
-  //  if we currently have an event going, erase it
+  //  if we currently have an effect going on, erase it to make room for the new
+  //  one.
   if (gamepad->ctx->effect.id != -1) {
     if (ioctl(fd, EVIOCRMFF, gamepad->ctx->effect.id) == -1) {
       perror("could not erase rumble");
@@ -227,36 +238,27 @@ void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
     gamepad->ctx->effect.id = -1;
   }
 
-  // construct the event.
+  // configure the effect based on this function's parameters
   gamepad->ctx->effect.replay.length = milliseconds;
-  gamepad->ctx->effect.replay.delay = 0;
   gamepad->ctx->effect.u.rumble.weak_magnitude = weak_vibration;
   gamepad->ctx->effect.u.rumble.strong_magnitude = strong_vibration;
 
-  // submit the event via ioctl
+  // upload the effect to the device
   if (ioctl(fd, EVIOCSFF, &gamepad->ctx->effect) == -1) {
     perror("could not set rumble");
     return;
   }
 
-  struct input_event play, stop;
-
-  memset(&play, 0, sizeof(play));
+  // construct a "play" input event and write that to the device
+  struct input_event play = {};
   play.type = EV_FF;
   play.code = gamepad->ctx->effect.id;
   play.value = 1;
-
   if (write(fd, (const void *)&play, sizeof(play)) == -1) {
     perror("error writing rumble packet");
     return;
   }
 
-  // memset(&stop, 0, sizeof(stop));
-  // stop.type = EV_FF;
-  // stop.code = -1;
-  // stop.value = 0;
-
-  // if (write(fd, (const void *)&stop, sizeof(stop)) == -1) {
-  //   perror("");
-  // }
+  // Note that we don't erase the event after uploading it, because this causes
+  // the effect to cancel before it even starts.
 }
