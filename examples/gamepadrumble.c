@@ -44,6 +44,7 @@ int main(void) {
                    0,                    // use default creation flags
                    &dwThreadIdArray[i]); // returns the thread identifier
 #endif
+
   for (;;) {
     mg_gamepad_update(gamepad);
     axis_value += (double)gamepad->axises[0].value / 1000000000.0;
@@ -66,10 +67,13 @@ void *rumble_thread(void *arg) {
 DWORD WINAPI rumble_thread(LPVOID lpParam) {
 #endif
   while (true) {
-    usleep(100);
-
     mg_gamepad_rumble(gamepad, axis_value / 2, axis_value, 100);
     printf("\rVibration: %0.2f", axis_value);
+#ifndef __WIN32
+    usleep(100000);
+#else
+    Sleep(100);
+#endif
   }
 
   return 0;
