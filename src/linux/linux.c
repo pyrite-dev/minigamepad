@@ -264,7 +264,7 @@ void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
   // construct a "play" input event and write that to the device
   struct input_event play = {0};
   play.type = EV_FF;
-  play.code = gamepad->ctx->effect.id;
+  play.code = (uint16_t)gamepad->ctx->effect.id;
   play.value = 1;
   if (write(fd, (const void *)&play, sizeof(play)) == -1) {
     perror("error writing rumble packet");
