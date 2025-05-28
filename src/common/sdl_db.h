@@ -4,6 +4,6 @@
 // #include "minigamepad.h"
 #include <stdint.h>
 
-extern const char ** sdl_db;
+extern const char** sdl_db;
 
 #endif
