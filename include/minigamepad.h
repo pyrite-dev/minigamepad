@@ -17,9 +17,6 @@ typedef uint8_t bool;
 #include <stdint.h>
 #endif
 
-typedef struct mg_gamepad_t mg_gamepad;
-typedef struct mg_gamepads_t mg_gamepads;
-
 /// A button on a gamepad
 typedef enum {
   MG_GAMEPAD_BUTTON_UNKNOWN = 0,
@@ -145,6 +142,10 @@ const char *mg_gamepad_get_name(mg_gamepad *gamepad);
 const char *mg_gamepad_btn_get_name(mg_gamepad_btn);
 /// Get the name of a gamepad axis.
 const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis);
+
+/// Rumble the controller
+void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
+                       uint16_t weak_vibration, uint16_t milliseconds);
 
 #ifdef __cplusplus
 }

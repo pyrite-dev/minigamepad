@@ -1,3 +1,4 @@
+// clang-format off
 const char * sdl_db[] = { 
 #ifdef _WIN32
 "03000000300f00000a01000000000000,3 In 1 Conversion Box,a:b2,b:b1,back:b9,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b10,lefttrigger:b4,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b11,righttrigger:b5,rightx:a3,righty:a2,start:b8,x:b3,y:b0,",
@@ -2151,3 +2152,4 @@ const char * sdl_db[] = {
 "050000001727000044310000ffff3f00,XiaoMi Controller,a:b0,b:b1,back:b4,dpdown:b12,dpleft:b13,dpright:b14,dpup:b11,leftshoulder:b9,leftstick:b7,lefttrigger:a7,leftx:a0,lefty:a1,rightshoulder:b10,rightstick:b8,righttrigger:a6,rightx:a2,righty:a5,start:b6,x:b2,y:b3,"
 #endif
 };
+// clang-format on
