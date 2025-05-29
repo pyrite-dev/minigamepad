@@ -10,6 +10,7 @@ struct mg_gamepad_context_t {
   struct input_event input_event; // input event used in the libevdev function
   uint8_t supports_rumble;        // whether this controller does rumble
   struct ff_effect effect;        // effect used in the rumble function
+  char full_path[300];            // the path of the file
 };
 
 mg_gamepad_btn get_gamepad_btn(unsigned int btn);

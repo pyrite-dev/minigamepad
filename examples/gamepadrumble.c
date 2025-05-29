@@ -11,7 +11,7 @@
 #include <windows.h>
 #endif
 
-mg_gamepads *gamepads;
+mg_gamepads gamepads = {0};
 mg_gamepad *gamepad;
 
 double axis_value;
@@ -25,13 +25,13 @@ __declspec(noreturn) DWORD WINAPI rumble_thread(LPVOID lpParam);
 #endif
 
 int main(void) {
-  gamepads = mg_gamepads_get();
-  if (gamepads->num <= 0) {
+  mg_gamepads_fetch(&gamepads);
+  if (gamepads.num <= 0) {
     printf("no controllers connected\n");
     return 1;
   }
 
-  gamepad = gamepads->list[0];
+  gamepad = mg_gamepads_at(&gamepads, 0);
 
 #ifndef __WIN32
   pthread_create(&thread_id, NULL, &rumble_thread, NULL);
@@ -49,7 +49,7 @@ int main(void) {
     axis_value += (double)gamepad->axises[0].value / 1000000000.0;
   }
 
-  mg_gamepads_free(gamepads);
+  mg_gamepads_free(&gamepads);
 
 #ifndef __WIN32
   pthread_cancel(thread_id);

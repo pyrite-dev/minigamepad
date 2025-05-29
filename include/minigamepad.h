@@ -117,7 +117,7 @@ typedef struct mg_gamepad_t {
 
 /// A list of gamepads recognized by the system.
 typedef struct mg_gamepads_t {
-  struct mg_gamepad_t *list[16];
+  struct mg_gamepad_t __list[16];
   size_t num;
 } mg_gamepads;
 
@@ -127,16 +127,18 @@ typedef struct mg_gamepads_t {
 void mg_gamepad_update(mg_gamepad *gamepad);
 
 /// Get the gamepads currently connected to the system.
-mg_gamepads *mg_gamepads_get(void);
+void mg_gamepads_fetch(mg_gamepads *);
 /// Get the number of gamepads attached to the system.
 size_t mg_gamepads_num(mg_gamepads *gamepads);
 /// Get the game pad at the given index.
 mg_gamepad *mg_gamepads_at(mg_gamepads *mj, size_t idx);
-/// Free the struct acquired by `mg_gamepads_get`.
+/// Free the struct acquired by `mg_gamepads_fetch`.
 void mg_gamepads_free(mg_gamepads *gamepads);
 
 /// Get the gamepad's name.
 const char *mg_gamepad_get_name(mg_gamepad *gamepad);
+/// Check if this gamepad is connected.
+bool mg_gamepad_is_connected(mg_gamepad *gamepad);
 
 /// Get the name of a gamepad button.
 const char *mg_gamepad_btn_get_name(mg_gamepad_btn);
