@@ -290,5 +290,6 @@ void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
 }
 
 bool mg_gamepad_is_connected(mg_gamepad *gamepad) {
+  // Check if the file we opened the gamepad at still exists.
   return access(gamepad->ctx->full_path, F_OK) == 0;
 }
