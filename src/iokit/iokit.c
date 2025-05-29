@@ -86,4 +86,3 @@ int mg_gamepad_get_axis_status(mg_gamepad *gamepad, size_t axis) {
 mg_gamepad_axis mg_gamepad_axis_at(mg_gamepad *gamepad, size_t idx) {
   return gamepad->axises[idx].key;
 }
-

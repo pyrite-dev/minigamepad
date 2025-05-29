@@ -1,28 +1,37 @@
 #include "minigamepad.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+void clear(void) {
+  // clear screen
+#ifdef _WIN32
+  system("cls");
+#else
+  system("clear");
+#endif
+}
 
 int main(void) {
-  mg_gamepads *gamepads = mg_gamepads_get();
-
-  size_t num = gamepads->num;
+  mg_gamepads gamepads = {0};
 
   size_t idx = 0;
 
-  // clear screen
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
+  clear();
+
+  mg_gamepads_fetch(&gamepads);
+  mg_gamepad *gamepad = mg_gamepads_at(&gamepads, idx);
 
   for (;;) {
-    if (idx >= num) {
-      idx--;
-      continue;
-    }
-    mg_gamepad *gamepad = gamepads->list[idx];
     mg_gamepad_update(gamepad);
+
+    // This is not best practice!
+    // Checking if the controller is disconnected is not the only way you should check if you need to refresh the controller list! However, better ways of doing it are a bit complex and out of the scope of this example. 
+    if (!mg_gamepad_is_connected(gamepad)) {
+      clear();
+      mg_gamepads_fetch(&gamepads);
+      gamepad = mg_gamepads_at(&gamepads, idx);
+    }
 
     printf("     Gamepad: %-25s\n", mg_gamepad_get_name(gamepad));
     size_t gamepad_button_num = gamepad->button_num;
@@ -40,9 +49,9 @@ int main(void) {
       printf("     %25s:\t", mg_gamepad_axis_get_name(axis));
       printf("     %-25d\n", gamepad->axises[i].value);
     }
-    printf("\33[%d;%dH", 0, 0);
+    printf("\33[0;0H");
   }
 
-  mg_gamepads_free(gamepads);
+  mg_gamepads_free(&gamepads);
   return 0;
 }
