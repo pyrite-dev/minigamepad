@@ -72,6 +72,7 @@ __declspec(noreturn) DWORD WINAPI rumble_thread(LPVOID arg) {
                       1000);
     printf("\rVibration: %0.2f", axis_value);
 #ifndef __WIN32
+    fflush(stdout);
     sleep(1);
 #else
     Sleep(1000);
