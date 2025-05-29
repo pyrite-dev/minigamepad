@@ -291,5 +291,8 @@ void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
 
 bool mg_gamepad_is_connected(mg_gamepad *gamepad) {
   // Check if the file we opened the gamepad at still exists.
+  // Fun fact, this was done after an hour of trying other methods, including
+  // installing an inotify watcher and seeing if libevdev reports this. This is
+  // appearently the best way.
   return access(gamepad->ctx->full_path, F_OK) == 0;
 }
