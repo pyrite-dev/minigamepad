@@ -1,6 +1,5 @@
 # Microsoft Developer Studio Project File - Name="minigamepad" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
-# ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
 
@@ -27,9 +26,6 @@ CFG=minigamepad - Win32 Debug
 # PROP Scc_LocalPath "."
 CPP=cl.exe
 RSC=rc.exe
-
-
-
 !IF  "$(CFG)" == "minigamepad - Win32 Release"
 
 # PROP BASE Use_MFC 0
@@ -85,42 +81,22 @@ LIB32=link.exe -lib
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
-# Begin Source File
 
 SOURCE=.\src\common\common.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\src\common\common.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\src\common\gamepad_name_map.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\src\common\sdl_db.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\src\common\sdl_db.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\src\windows\windows.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\src\windows\windows.h
-# End Source File
+
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
 
 SOURCE=.\include\minigamepad.h
-# End Source File
+
 # End Group
 # End Target
 # End Project
