@@ -116,6 +116,9 @@ typedef struct mg_gamepad_t {
     // The number of axises on the controller.
     size_t axis_num;
 
+    bool connected;
+    char name[128];
+
     struct mg_gamepad_t* prev;
     struct mg_gamepad_t* next;
 } mg_gamepad;

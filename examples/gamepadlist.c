@@ -9,7 +9,7 @@ int main(void) {
 
   for (size_t i = 0; i < joystick_num; i++) {
     mg_gamepad *gamepad = mg_gamepads_at(&gamepads, i);
-    printf("%s\n", mg_gamepad_get_name(gamepad));
+    printf("%s\n", gamepad->name);
   }
 
   mg_gamepads_free(&gamepads);

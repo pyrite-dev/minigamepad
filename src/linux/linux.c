@@ -42,6 +42,13 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
         char full_path[300];
         snprintf(full_path, sizeof(full_path), "/dev/input/by-id/%s", dp->d_name);
 
+
+        for (struct mg_gamepad_t* cur = gamepads->head; cur != NULL; cur = cur->next) {
+            if (mg_gamepad_is_connected(cur) == false) {
+                mg_gamepad_remove(gamepads, cur);
+            }
+        }
+
         // TODO: there has to be a better way to do this 
         bool found = false;
         for (struct mg_gamepad_t* cur = gamepads->head; cur != NULL; cur = cur->next) {
@@ -116,6 +123,9 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
         }
 
         if (button_num || axis_num) {
+            const char* name = libevdev_get_name(gamepad->ctx->dev);
+            strncpy(gamepad->name, name, sizeof(gamepad->name) - 1);
+
             if (libevdev_has_event_code(
                 ctx->dev, EV_FF,
                 FF_RUMBLE)) { // this is a struct that gets passed to the
@@ -143,7 +153,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
             memcpy(gamepad->ctx->full_path, full_path, sizeof(full_path));
             ret = true;
         } else {
-            mg_gamepad_remove(gamepads, gamepad);
+            mg_gamepad_remove(gamepads, (struct mg_gamepad_t*)gamepad);
         }
     }
 
@@ -157,18 +167,20 @@ void mg_gamepad_free(mg_gamepad *gamepad) {
     free(gamepad->ctx);
 }
 
-const char *mg_gamepad_get_name(mg_gamepad *gamepad) {
-    return libevdev_get_name(gamepad->ctx->dev);
-}
+bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {    
+    // Check if the file we opened the gamepad at still exists.
+    // Fun fact, this was done after an hour of trying other methods, including
+    // installing an inotify watcher and seeing if libevdev reports this. This is
+    // appearently the best way.
+    bool can_access = access(gamepad->ctx->full_path, F_OK) == 0;
 
-#define INOTIFY_BUF_LEN (10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
-
-bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
-    if (mg_gamepad_is_connected(gamepad) == false) {
+    if (can_access == false) {
         if (event != NULL) {
             event->gamepad = gamepad;
             event->type = MG_GAMEPAD_DISCONNECT; 
         }
+
+        gamepad->connected = false;
         return true;
     }
 
@@ -279,12 +291,4 @@ void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
 
   // Note that we don't erase the event after uploading it, because this causes
   // the effect to cancel before it even starts.
-}
-
-bool mg_gamepad_is_connected(mg_gamepad *gamepad) {
-  // Check if the file we opened the gamepad at still exists.
-  // Fun fact, this was done after an hour of trying other methods, including
-  // installing an inotify watcher and seeing if libevdev reports this. This is
-  // appearently the best way.
-  return access(gamepad->ctx->full_path, F_OK) == 0;
 }

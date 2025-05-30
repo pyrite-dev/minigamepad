@@ -33,7 +33,7 @@ int main(void) {
       gamepad = mg_gamepads_at(&gamepads, idx);
     }
 
-    printf("     Gamepad: %-25s\n", mg_gamepad_get_name(gamepad));
+    printf("     Gamepad: %-25s\n", gamepad->name);
     size_t gamepad_button_num = gamepad->button_num;
     for (size_t i = 0; i < gamepad_button_num; i++) {
       mg_gamepad_btn btn = gamepad->buttons[i].key;

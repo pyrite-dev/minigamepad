@@ -90,6 +90,7 @@ struct mg_gamepad_t *mg_alloc(struct mg_gamepads_t *gamepads) {
 
   gamepads->cur->next = NULL;
 
+  data->connected = true;
   gamepads->num++;
   return gamepads->cur;
 }
@@ -146,4 +147,8 @@ bool mg_gamepads_update(mg_gamepads *gamepads, mg_gamepad_event *ev) {
   }
 
   return false;
+}
+
+bool mg_gamepad_is_connected(mg_gamepad *gamepad) {
+    return  gamepad->connected;
 }
