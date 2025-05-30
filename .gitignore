@@ -23,5 +23,6 @@ Release*/
 *.COM
 *.OBJ
 *.plg
+*.dsw
 *~
 .*~
