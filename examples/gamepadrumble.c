@@ -45,7 +45,7 @@ int main(void) {
 #endif
 
   for (;;) {
-    mg_gamepad_update(gamepad);
+    mg_gamepad_update(gamepad, NULL);
     axis_value += (double)gamepad->axises[0].value / 1000000000.0;
   }
 

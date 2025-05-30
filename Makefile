@@ -3,7 +3,7 @@ AR = ar
 
 WARNINGS = -Werror -Wall -Wextra -Wstrict-prototypes -Wold-style-definition -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wpointer-arith -Wvla -Wcast-align -Wstrict-overflow -Wnested-externs -Wstrict-aliasing -Wredundant-decls -Winit-self -Wmissing-noreturn 
 
-CFLAGS = $(WARNINGS) -fPIC -I./include -std=c99
+CFLAGS = $(WARNINGS) -fPIC -I./include -I./src/common -std=c99
 OUTDIR = build
 SOURCES = $(wildcard src/common/*.c)
 PLATFORM = $(shell uname -s)
