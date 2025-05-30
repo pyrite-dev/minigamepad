@@ -1,7 +1,24 @@
 #include "common.h"
 #include "minigamepad.h"
 
-void mg_gamepads_init(struct mg_gamepads_t *gamepads) {
+
+mg_gamepad* mg_gamepad_get_head(mg_gamepads* gamepads) {
+    return (mg_gamepad*)gamepads->head;
+}
+
+mg_gamepad* mg_gamepad_iterate(mg_gamepads *gamepads, mg_gamepad* cur) {
+    if (cur->prev == NULL && cur->next == NULL)
+        cur = gamepads->head;
+    
+    if (cur == NULL) {
+        return NULL;
+    }
+
+    cur = cur->next;
+    return (mg_gamepad*)cur;
+}
+
+void mg_gamepads_init(mg_gamepads *gamepads) {
   gamepads->head = NULL;
   gamepads->cur = NULL;
 
@@ -9,7 +26,7 @@ void mg_gamepads_init(struct mg_gamepads_t *gamepads) {
   mg_gamepads_fetch(gamepads);
 }
 
-void mg_gamepads_free(struct mg_gamepads_t *gamepads) {
+void mg_gamepads_free(mg_gamepads *gamepads) {
   mg_gamepad *cur;
 
   for (cur = gamepads->head; cur != NULL; cur = cur->next) {
@@ -22,7 +39,7 @@ void mg_gamepads_free(struct mg_gamepads_t *gamepads) {
   gamepads->cur = NULL;
 }
 
-int mg_gamepad_get_button_status(struct mg_gamepad_t *gamepad,
+int mg_gamepad_get_button_status(mg_gamepad *gamepad,
                                  mg_gamepad_btn btn) {
   unsigned int i;
   for (i = 0; i < gamepad->button_num; i++) {
@@ -33,18 +50,18 @@ int mg_gamepad_get_button_status(struct mg_gamepad_t *gamepad,
   return -1;
 }
 
-size_t mg_gamepad_btns_num(struct mg_gamepad_t *gamepad) {
+size_t mg_gamepad_btns_num(mg_gamepad *gamepad) {
   return gamepad->button_num;
 }
 mg_gamepad_btn mg_gamepad_btns_at(mg_gamepad *gamepad, size_t idx) {
   return gamepad->buttons[idx].key;
 }
 
-size_t mg_gamepad_get_axis_num(struct mg_gamepad_t *gamepad) {
+size_t mg_gamepad_get_axis_num(mg_gamepad *gamepad) {
   return gamepad->axis_num;
 }
 
-int mg_gamepad_get_axis_status(struct mg_gamepad_t *gamepad, size_t axis) {
+int mg_gamepad_get_axis_status(mg_gamepad *gamepad, size_t axis) {
   unsigned int i;
   for (i = 0; i < gamepad->axis_num; i++) {
     if (gamepad->axises[i].key == axis) {
@@ -54,9 +71,9 @@ int mg_gamepad_get_axis_status(struct mg_gamepad_t *gamepad, size_t axis) {
   return -1;
 }
 
-struct mg_gamepad_t *mg_alloc(struct mg_gamepads_t *gamepads) {
-  struct mg_gamepad_t *data;
-  struct mg_gamepad_t *cur;
+mg_gamepad *mg_alloc(mg_gamepads *gamepads) {
+  mg_gamepad *data;
+  mg_gamepad *cur;
 
   if (gamepads->num >= sizeof(gamepads->__list) / sizeof(gamepads->__list[0])) {
     return NULL;
@@ -95,8 +112,8 @@ struct mg_gamepad_t *mg_alloc(struct mg_gamepads_t *gamepads) {
   return gamepads->cur;
 }
 
-void mg_gamepad_remove(struct mg_gamepads_t *gamepads,
-                       struct mg_gamepad_t *gamepad) {
+void mg_gamepad_remove(mg_gamepads *gamepads,
+                       mg_gamepad *gamepad) {
   /* free the gamepad's backend API data */
   mg_gamepad_free(gamepad);
 
@@ -128,15 +145,15 @@ void mg_gamepad_remove(struct mg_gamepads_t *gamepads,
   gamepads->freed.cur->next = NULL;
 }
 
-size_t mg_gamepads_num(struct mg_gamepads_t *gamepads) { return gamepads->num; }
+size_t mg_gamepads_num(mg_gamepads *gamepads) { return gamepads->num; }
 
-struct mg_gamepad_t *mg_gamepads_at(struct mg_gamepads_t *gamepads,
+mg_gamepad *mg_gamepads_at(mg_gamepads *gamepads,
                                     size_t idx) {
   return &gamepads->__list[idx];
 }
 
 bool mg_gamepads_update(mg_gamepads *gamepads, mg_gamepad_event *ev) {
-  struct mg_gamepad_t *cur;
+  mg_gamepad *cur;
 
   mg_gamepads_fetch(gamepads);
 
@@ -150,5 +167,9 @@ bool mg_gamepads_update(mg_gamepads *gamepads, mg_gamepad_event *ev) {
 }
 
 bool mg_gamepad_is_connected(mg_gamepad *gamepad) {
-    return  gamepad->connected;
+    return gamepad->connected;
+}
+
+const char *mg_gamepad_get_name(mg_gamepad *gamepad) {
+    return gamepad->name;
 }
