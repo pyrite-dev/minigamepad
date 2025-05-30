@@ -43,7 +43,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
         snprintf(full_path, sizeof(full_path), "/dev/input/by-id/%s", dp->d_name);
 
 
-        for (struct mg_gamepad_t* cur = gamepads->head; cur != NULL; cur = cur->next) {
+        for (mg_gamepad* cur = gamepads->head; cur != NULL; cur = cur->next) {
             if (mg_gamepad_is_connected(cur) == false) {
                 mg_gamepad_remove(gamepads, cur);
             }
@@ -51,7 +51,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
 
         // TODO: there has to be a better way to do this 
         bool found = false;
-        for (struct mg_gamepad_t* cur = gamepads->head; cur != NULL; cur = cur->next) {
+        for (mg_gamepad* cur = gamepads->head; cur != NULL; cur = cur->next) {
             if (strncmp(cur->ctx->full_path, full_path, sizeof(full_path)) == 0) {
                 found = true;
                 break;
@@ -62,7 +62,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
             continue;
         }
 
-        struct mg_gamepad_t* gamepad = mg_alloc(gamepads);
+        mg_gamepad* gamepad = mg_alloc(gamepads);
         if (gamepad == NULL) {
             break; 
         }
@@ -153,7 +153,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
             memcpy(gamepad->ctx->full_path, full_path, sizeof(full_path));
             ret = true;
         } else {
-            mg_gamepad_remove(gamepads, (struct mg_gamepad_t*)gamepad);
+            mg_gamepad_remove(gamepads, (mg_gamepad*)gamepad);
         }
     }
 
