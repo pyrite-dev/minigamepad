@@ -93,46 +93,82 @@ typedef enum {
 struct mg_gamepad_context_t;
 
 typedef struct mg_gamepad_t {
-  // Internal context for platform dependent items.
-  struct mg_gamepad_context_t *ctx;
-  // Map of buttons that the controller has
-  struct {
-    mg_gamepad_btn key;
-    int16_t value;
-  } buttons[MAX_BUTTONS];
-  // The number of buttons on the controller.
-  size_t button_num;
-  // Map of axises that the controller has, + their deadzones
-  // By default, the deadzones are 5000 for any axis that isn't the d-pad; you
-  // are strongly encouraged to make this customizable in any program you make
-  // with this.
-  struct {
-    mg_gamepad_axis key;
-    int16_t value;
-    int16_t deadzone;
-  } axises[MAX_AXISES];
-  // The number of axises on the controller.
-  size_t axis_num;
+    // Internal context for platform dependent items.
+    struct mg_gamepad_context_t *ctx;
+    // Map of buttons that the controller has
+    struct {
+        mg_gamepad_btn key;
+        int16_t value;
+    } buttons[MAX_BUTTONS];
+    // The number of buttons on the controller.
+    size_t button_num;
+    // Map of axises that the controller has, + their deadzones
+    // By default, the deadzones are 5000 for any axis that isn't the d-pad; you
+    // are strongly encouraged to make this customizable in any program you make
+    // with this.
+    struct {
+        mg_gamepad_axis key;
+        int16_t value;
+        int16_t deadzone;
+    } axises[MAX_AXISES];
+    // The number of axises on the controller.
+    size_t axis_num;
+
+    struct mg_gamepad_t* prev;
+    struct mg_gamepad_t* next;
 } mg_gamepad;
 
 /// A list of gamepads recognized by the system.
 typedef struct mg_gamepads_t {
-  struct mg_gamepad_t __list[16];
-  size_t num;
+    struct mg_gamepad_t __list[16];
+    struct mg_gamepad_t* cur;
+    struct mg_gamepad_t* head;
+    
+    struct {
+        struct mg_gamepad_t* cur;
+        struct mg_gamepad_t* head;
+    } freed;
+
+    size_t num;
 } mg_gamepads;
+
+
+typedef enum mg_gamepad_event_type {
+    MG_GAMEPAD_NONE = 0,
+    MG_GAMEPAD_CONNECT,
+    MG_GAMEPAD_DISCONNECT,
+    MG_GAMEPAD_BTN_PRESS,
+    MG_GAMEPAD_BTN_RELEASE,
+    MG_GAMEPAD_AXIS_MOVE
+} mg_gamepad_event_type;
+
+typedef struct mg_gamepad_event {
+    mg_gamepad_event_type type;
+    mg_gamepad_btn btn;
+    mg_gamepad_axis axis;
+
+    mg_gamepad* gamepad;
+} mg_gamepad_event; 
+
+
+/// Init the gamepads internal structure.
+void mg_gamepads_init(mg_gamepads *gamepad);
+
+/// Fetch and update all gamepads and return the first event
+bool mg_gamepads_update(mg_gamepads* gamepads, mg_gamepad_event* ev);
 
 /// Update the gamepad's internal structure.
 /// This needs to be called before any gamepad buttons/axises are checked if you
 /// want the correct values.
-void mg_gamepad_update(mg_gamepad *gamepad);
+bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* ev);
 
-/// Get the gamepads currently connected to the system.
-void mg_gamepads_fetch(mg_gamepads *);
+/// Get the gamepads currently connected to the system. Returns true if a new gamepad was found
+bool mg_gamepads_fetch(mg_gamepads *);
 /// Get the number of gamepads attached to the system.
 size_t mg_gamepads_num(mg_gamepads *gamepads);
 /// Get the game pad at the given index.
 mg_gamepad *mg_gamepads_at(mg_gamepads *mj, size_t idx);
-/// Free the struct acquired by `mg_gamepads_fetch`.
+/// Free gamepads.
 void mg_gamepads_free(mg_gamepads *gamepads);
 
 /// Get the gamepad's name.

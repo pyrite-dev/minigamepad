@@ -16,230 +16,222 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-void mg_gamepads_fetch(mg_gamepads *gamepads) {
-  struct dirent *dp;
-  DIR *dfd;
+#include "common.h"
 
-  // open the directory where all the devices are gonna be
-  if ((dfd = opendir("/dev/input/by-id")) == NULL) {
-    fprintf(stderr, "Can't open /dev/input/by-id/\n");
-    closedir(dfd);
-    return;
-  }
+#define MG_UNUSED(x) (void)(x)
+void mg_gamepads_backend_init(mg_gamepads* gamepads) {
+    MG_UNUSED(gamepads);
+    // linux does not need an init function
+}
 
-  size_t gamepad_num = 0;
+bool mg_gamepads_fetch(mg_gamepads *gamepads) {
+    struct dirent *dp;
+    DIR *dfd;
 
-  // for each file found:
-  while ((dp = readdir(dfd)) != NULL) {
-    // get the full path of it
-    char full_path[300];
-    snprintf(full_path, sizeof(full_path), "/dev/input/by-id/%s", dp->d_name);
-
-    // open said full path with libevdev
-    struct libevdev *dev = libevdev_new();
-    if (libevdev_set_fd(dev, open(full_path, O_RDWR))) {
-      // char err[256];
-      // snprintf(err, 256, "could not open %s", full_path);
-      // perror(err);
-      libevdev_free(dev);
-      continue;
-    };
-
-    bool good = false;
-    size_t button_num = 0;
-    size_t axis_num = 0;
-    struct mg_gamepad_t *gamepad = &gamepads->__list[gamepad_num];
-
-    if (gamepad->ctx == NULL) {
-      gamepad->ctx = malloc(sizeof(struct mg_gamepad_context_t));
+    // open the directory where all the devices are gonna be
+    if ((dfd = opendir("/dev/input/by-id")) == NULL) {
+        fprintf(stderr, "Can't open /dev/input/by-id/\n");
+        return false;
     }
 
-    // go through any buttons a gamepad would have
-    for (unsigned int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
-      // if this device has one...
-      if (libevdev_has_event_code(dev, EV_KEY, i)) {
-        // On the first run, we're gonna save this device, and signify to the
-        // below code that we have something.
-        if (!good) {
-          gamepad->ctx->dev = dev;
-          good = true;
-        }
-        // and put the gamepad button we have down.
-        gamepad->buttons[button_num].key = get_gamepad_btn(i);
-        gamepad->buttons[button_num].value = 0;
-        button_num += 1;
-      }
-    }
-    // go through any axises a gamepad would have
-    for (unsigned int i = ABS_X; i <= ABS_MAX; i++) {
-      if (libevdev_has_event_code(dev, EV_ABS, i)) {
-        if (!good) {
-          gamepad->ctx->dev = dev;
-          good = true;
+    bool ret = false;
+
+    // for each file found:
+    while ((dp = readdir(dfd)) != NULL) {
+        // get the full path of it
+        char full_path[300];
+        snprintf(full_path, sizeof(full_path), "/dev/input/by-id/%s", dp->d_name);
+
+        // TODO: there has to be a better way to do this 
+        bool found = false;
+        for (struct mg_gamepad_t* cur = gamepads->head; cur != NULL; cur = cur->next) {
+            if (strncmp(cur->ctx->full_path, full_path, sizeof(full_path)) == 0) {
+                found = true;
+                break;
+            }
         }
 
-        // We want every axis except the hats (which are usually d-pads)
-        // to have a deadzone of 5000. The idea is that programmer can override
-        // this later, by a config file or something.
-        int16_t deadzone = 0;
-        switch (i) {
-        case ABS_HAT0X:
-        case ABS_HAT0Y:
-        case ABS_HAT1X:
-        case ABS_HAT1Y:
-        case ABS_HAT2X:
-        case ABS_HAT2Y:
-        case ABS_HAT3X:
-        case ABS_HAT3Y:
-          break;
-        default:
-          deadzone = 5000;
-          break;
+        if (found) {
+            continue;
         }
 
-        gamepad->axises[axis_num].key = get_gamepad_axis(i);
-        gamepad->axises[axis_num].value = 0;
-        gamepad->axises[axis_num].deadzone = deadzone;
-        axis_num += 1;
-      }
-    }
+        struct mg_gamepad_t* gamepad = mg_alloc(gamepads);
+        if (gamepad == NULL) {
+            break; 
+        }
+        
+        struct mg_gamepad_context_t* ctx = malloc(sizeof(struct mg_gamepad_context_t));
 
-    if (good) {
-      if (libevdev_has_event_code(
-              dev, EV_FF,
-              FF_RUMBLE)) { // this is a struct that gets passed to the
-                            // rumble effect when
-        // activated. we have to "erase" the effect whenever we want to add a
-        // new one, hence this gets put in the struct itself so that we can keep
-        // track of the id. and while we're here we save some other values
-        // that'll never get changed.
-        gamepad->ctx->effect = (struct ff_effect){
-            .type = FF_RUMBLE,
-            .id = -1,
-            .direction = 0,
-            .trigger = {0, 0},
-            .replay =
-                {
-                    .delay = 0,
-                },
+        gamepad->ctx = ctx;
+
+        // open said full path with libevdev
+        ctx->dev = libevdev_new();
+        if (libevdev_set_fd(ctx->dev, open(full_path, O_RDWR))) {
+            // char err[256];
+            // snprintf(err, 256, "could not open %s", full_path);
+            // perror(err);
+            libevdev_free(ctx->dev);
+            continue;
         };
-        gamepad->ctx->supports_rumble = true;
-      } else {
-        gamepad->ctx->supports_rumble = false;
-      }
-      gamepad->button_num = button_num;
-      gamepad->axis_num = axis_num;
-      memcpy(gamepad->ctx->full_path, full_path, sizeof(full_path));
 
-      gamepad_num += 1;
+        size_t button_num = 0;
+        size_t axis_num = 0;
 
-      if (gamepad_num >= 16) {
-        libevdev_free(dev);
-        break;
-      }
-    } else {
-      libevdev_free(dev);
+        // go through any buttons a gamepad would have
+        for (unsigned int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
+            // if this device has one...
+            if (libevdev_has_event_code(ctx->dev, EV_KEY, i)) {
+                gamepad->buttons[button_num].key = get_gamepad_btn(i);
+                gamepad->buttons[button_num].value = 0;
+                button_num += 1;
+            }
+        }
+        // go through any axises a gamepad would have
+        for (unsigned int i = ABS_X; i <= ABS_MAX; i++) {
+            if (libevdev_has_event_code(ctx->dev, EV_ABS, i)) {
+                // We want every axis except the hats (which are usually d-pads)
+                // to have a deadzone of 5000. The idea is that programmer can override
+                // this later, by a config file or something.
+                int16_t deadzone = 0;
+                switch (i) {
+                    case ABS_HAT0X:
+                    case ABS_HAT0Y:
+                    case ABS_HAT1X:
+                    case ABS_HAT1Y:
+                    case ABS_HAT2X:
+                    case ABS_HAT2Y:
+                    case ABS_HAT3X:
+                    case ABS_HAT3Y:
+                        break;
+                    default:
+                        deadzone = 5000;
+                        break;
+                }
+
+                gamepad->axises[axis_num].key = get_gamepad_axis(i);
+                gamepad->axises[axis_num].value = 0;
+                gamepad->axises[axis_num].deadzone = deadzone;
+                axis_num += 1;
+            }
+        }
+
+        if (button_num || axis_num) {
+            if (libevdev_has_event_code(
+                ctx->dev, EV_FF,
+                FF_RUMBLE)) { // this is a struct that gets passed to the
+                // rumble effect when
+                // activated. we have to "erase" the effect whenever we want to add a
+                // new one, hence this gets put in the struct itself so that we can keep
+                // track of the id. and while we're here we save some other values
+                // that'll never get changed.
+                gamepad->ctx->effect = (struct ff_effect){
+                    .type = FF_RUMBLE,
+                    .id = -1,
+                    .direction = 0,
+                    .trigger = {0, 0},
+                    .replay =
+                    {
+                        .delay = 0,
+                    },
+                };
+                gamepad->ctx->supports_rumble = true;
+            } else {
+                gamepad->ctx->supports_rumble = false;
+            }
+            gamepad->button_num = button_num;
+            gamepad->axis_num = axis_num;
+            memcpy(gamepad->ctx->full_path, full_path, sizeof(full_path));
+            ret = true;
+        } else {
+            mg_gamepad_remove(gamepads, gamepad);
+        }
     }
-  }
 
-  gamepads->num = gamepad_num;
+    closedir(dfd);
 
-  closedir(dfd);
-
-  return;
+    return ret;
 }
 
-mg_gamepad *mg_gamepads_at(mg_gamepads *gamepads, size_t idx) {
-  return &gamepads->__list[idx];
+void mg_gamepad_free(mg_gamepad *gamepad) { 
+    libevdev_free(gamepad->ctx->dev);
+    free(gamepad->ctx);
 }
-
-size_t mg_gamepads_num(mg_gamepads *gamepads) { return gamepads->num; }
-
-void mg_gamepads_free(mg_gamepads *gamepads) { free(gamepads); }
 
 const char *mg_gamepad_get_name(mg_gamepad *gamepad) {
-  return libevdev_get_name(gamepad->ctx->dev);
+    return libevdev_get_name(gamepad->ctx->dev);
 }
 
 #define INOTIFY_BUF_LEN (10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
 
-void mg_gamepad_update(mg_gamepad *gamepad) {
-  // go through libevdev events.
-  struct input_event ev;
-  int pending = libevdev_has_event_pending(gamepad->ctx->dev);
-  if (pending) {
-    int rc = libevdev_next_event(gamepad->ctx->dev, LIBEVDEV_READ_FLAG_BLOCKING,
-                                 &ev);
-    if (rc) {
-      return;
-    }
-  } else {
-    return;
-  }
-
-  switch (ev.type) {
-  case EV_KEY: {
-    mg_gamepad_btn btn = get_gamepad_btn(ev.code);
-
-    for (size_t i = 0; i <= gamepad->button_num; i++) {
-      if (gamepad->buttons[i].key == btn) {
-        gamepad->buttons[i].value = (int16_t)ev.value;
-      }
-    }
-    break;
-  }
-  case EV_ABS: {
-    mg_gamepad_axis axis = get_gamepad_axis(ev.code);
-
-    for (unsigned int i = 0; i <= gamepad->axis_num; i++) {
-      if (gamepad->axises[i].key == axis) {
-        int deadzone = gamepad->axises[i].deadzone;
-        int16_t event_val = 0;
-        if (abs(ev.value) >= deadzone) {
-          event_val = (int16_t)ev.value;
+bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
+    if (mg_gamepad_is_connected(gamepad) == false) {
+        if (event != NULL) {
+            event->gamepad = gamepad;
+            event->type = MG_GAMEPAD_DISCONNECT; 
         }
-        gamepad->axises[i].key = axis;
-        gamepad->axises[i].value = event_val;
-      }
+        return true;
     }
-    break;
-  }
-  case EV_FF: {
-  }
-  default:
-    break;
-  }
-}
 
-int mg_gamepad_get_button_status(mg_gamepad *gamepad, mg_gamepad_btn btn) {
-  for (unsigned int i = 0; i < gamepad->button_num; i++) {
-    if (gamepad->buttons[i].key == btn) {
-      return gamepad->buttons[i].value;
+
+    // go through libevdev events.
+    struct input_event ev;
+    int pending = libevdev_has_event_pending(gamepad->ctx->dev);
+    if (pending) {
+        int rc = libevdev_next_event(gamepad->ctx->dev, LIBEVDEV_READ_FLAG_BLOCKING,
+                                     &ev);
+        if (rc) {
+            return false;
+        }
+    } else {
+        return false;
     }
-  }
-  return -1;
-}
 
-size_t mg_gamepad_btns_num(mg_gamepad *gamepad) { return gamepad->button_num; }
-mg_gamepad_btn mg_gamepad_btns_at(mg_gamepad *gamepad, size_t idx) {
-  return gamepad->buttons[idx].key;
-}
+    switch (ev.type) {
+        case EV_KEY: {
+            mg_gamepad_btn btn = get_gamepad_btn(ev.code);
 
-size_t mg_gamepad_get_axis_num(mg_gamepad *gamepad) {
-  return gamepad->axis_num;
-}
+            for (size_t i = 0; i <= gamepad->button_num; i++) {
+                if (gamepad->buttons[i].key == btn) {
+                    gamepad->buttons[i].value = (int16_t)ev.value;
+                }
+            }
+           
+            if (event != NULL) {
+                event->gamepad = gamepad;
+                event->btn = btn;
+                event->type = ev.value ? MG_GAMEPAD_BTN_PRESS  : MG_GAMEPAD_BTN_RELEASE; 
+            }
+            return true;
+        }
+        case EV_ABS: {
+            mg_gamepad_axis axis = get_gamepad_axis(ev.code);
 
-int mg_gamepad_get_axis_status(mg_gamepad *gamepad, size_t axis) {
-  for (unsigned int i = 0; i < gamepad->axis_num; i++) {
-    if (gamepad->axises[i].key == axis) {
-      return gamepad->axises[i].value;
+            for (unsigned int i = 0; i <= gamepad->axis_num; i++) {
+                if (gamepad->axises[i].key == axis) {
+                    int deadzone = gamepad->axises[i].deadzone;
+                    int16_t event_val = 0;
+                    if (abs(ev.value) >= deadzone) {
+                        event_val = (int16_t)ev.value;
+                    }
+                    gamepad->axises[i].key = axis;
+                    gamepad->axises[i].value = event_val;
+                }
+            }
+           
+            if (event != NULL) {
+                event->type = MG_GAMEPAD_AXIS_MOVE;
+                event->gamepad = gamepad;
+                event->axis = axis;
+            }
+            return true;
+        }
+        case EV_FF: {
+        }
+        default:
+            break;
     }
-  }
-  return -1;
-}
 
-mg_gamepad_axis mg_gamepad_axis_at(mg_gamepad *gamepad, size_t idx) {
-  return gamepad->axises[idx].key;
+    return false;
 }
 
 void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
