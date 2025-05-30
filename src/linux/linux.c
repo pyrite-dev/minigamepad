@@ -31,7 +31,6 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
     // open the directory where all the devices are gonna be
     if ((dfd = opendir("/dev/input/by-id")) == NULL) {
         fprintf(stderr, "Can't open /dev/input/by-id/\n");
-        closedir(dfd);
         return false;
     }
 
@@ -82,9 +81,6 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
         for (unsigned int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
             // if this device has one...
             if (libevdev_has_event_code(ctx->dev, EV_KEY, i)) {
-                // On the first run, we're gonna save this device, and signify to the
-                // below code that we have something.
-                // and put the gamepad button we have down.
                 gamepad->buttons[button_num].key = get_gamepad_btn(i);
                 gamepad->buttons[button_num].value = 0;
                 button_num += 1;
@@ -168,7 +164,6 @@ const char *mg_gamepad_get_name(mg_gamepad *gamepad) {
 #define INOTIFY_BUF_LEN (10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
 
 bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
-    // go through libevdev events.
     if (mg_gamepad_is_connected(gamepad) == false) {
         if (event != NULL) {
             event->gamepad = gamepad;
@@ -177,6 +172,8 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
         return true;
     }
 
+
+    // go through libevdev events.
     struct input_event ev;
     int pending = libevdev_has_event_pending(gamepad->ctx->dev);
     if (pending) {
