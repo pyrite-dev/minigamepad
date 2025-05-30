@@ -7,11 +7,12 @@ mg_gamepad* mg_gamepad_get_head(mg_gamepads* gamepads) {
 }
 
 mg_gamepad* mg_gamepad_iterate(mg_gamepads *gamepads, mg_gamepad* cur) {
-    if (cur->prev == NULL && cur->next == NULL)
-        cur = gamepads->head;
-    
     if (cur == NULL) {
         return NULL;
+    }
+
+    if (cur->prev == NULL && cur->next == NULL) {
+        cur = gamepads->head;
     }
 
     cur = cur->next;
@@ -112,6 +113,8 @@ mg_gamepad *mg_alloc(mg_gamepads *gamepads) {
   return gamepads->cur;
 }
 
+#include <stdio.h>
+
 void mg_gamepad_remove(mg_gamepads *gamepads,
                        mg_gamepad *gamepad) {
   /* free the gamepad's backend API data */
@@ -124,9 +127,8 @@ void mg_gamepad_remove(mg_gamepads *gamepads,
     gamepads->cur = NULL;
     gamepads->head = NULL;
   }
-
-  if (gamepad->next != NULL) {
-    gamepad->next->prev = gamepad->prev;
+  if (gamepad->next != NULL) {  
+     gamepad->next->prev = gamepad->prev;
   }
 
   gamepads->num--;
@@ -135,11 +137,11 @@ void mg_gamepad_remove(mg_gamepads *gamepads,
   if (gamepads->freed.head == NULL) {
     gamepads->freed.head = gamepad;
     gamepads->freed.head->prev = NULL;
-    gamepads->freed.cur = gamepads->head;
+    gamepads->freed.cur = gamepads->freed.head;
   } else {
     gamepads->freed.cur->next = gamepad;
-    gamepads->freed.cur->next->prev = gamepads->head;
-    gamepads->freed.cur = gamepads->head;
+    gamepads->freed.cur->next->prev = gamepads->freed.head;
+    gamepads->freed.cur = gamepads->freed.head;
   }
 
   gamepads->freed.cur->next = NULL;

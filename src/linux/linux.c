@@ -42,7 +42,6 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
         char full_path[300];
         snprintf(full_path, sizeof(full_path), "/dev/input/by-id/%s", dp->d_name);
 
-
         for (mg_gamepad* cur = gamepads->head; cur != NULL; cur = cur->next) {
             if (mg_gamepad_is_connected(cur) == false) {
                 mg_gamepad_remove(gamepads, cur);
@@ -153,7 +152,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
             memcpy(gamepad->ctx->full_path, full_path, sizeof(full_path));
             ret = true;
         } else {
-            mg_gamepad_remove(gamepads, (mg_gamepad*)gamepad);
+            mg_gamepad_remove(gamepads, gamepad);
         }
     }
 
