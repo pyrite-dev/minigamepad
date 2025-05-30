@@ -4,7 +4,7 @@ FILE(GLOB_RECURSE sources src/common/*.c src/linux/*.c)
 
 add_library(${PROJECT_NAME} ${sources})
 
-include_directories(include)
+include_directories(include src/common)
 
 # go through each c file in the examples folder and compile it to an example
 make_directory(${CMAKE_BINARY_DIR}/examples)

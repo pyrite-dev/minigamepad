@@ -2,16 +2,18 @@
 #define __minigamepad_H
 
 #include <stddef.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifdef MG_NO_STDINT
+#ifdef MG_NO_STDTYPES
 typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
 typedef signed short int16_t;
 typedef uint8_t bool;
+#define false 0
+#define true 0
 #else
 #include <stdbool.h>
 #include <stdint.h>
@@ -133,7 +135,7 @@ typedef struct mg_gamepads_t {
 } mg_gamepads;
 
 
-typedef enum mg_gamepad_event_type {
+typedef enum mg_gamepad_event_type_t {
     MG_GAMEPAD_NONE = 0,
     MG_GAMEPAD_CONNECT,
     MG_GAMEPAD_DISCONNECT,
@@ -142,7 +144,7 @@ typedef enum mg_gamepad_event_type {
     MG_GAMEPAD_AXIS_MOVE
 } mg_gamepad_event_type;
 
-typedef struct mg_gamepad_event {
+typedef struct mg_gamepad_event_t {
     mg_gamepad_event_type type;
     mg_gamepad_btn btn;
     mg_gamepad_axis axis;
@@ -182,8 +184,7 @@ const char *mg_gamepad_btn_get_name(mg_gamepad_btn);
 const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis);
 
 /// Rumble the controller
-void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
-                       uint16_t weak_vibration, uint16_t milliseconds);
+void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration, uint16_t weak_vibration, uint16_t milliseconds);
 
 #ifdef __cplusplus
 }

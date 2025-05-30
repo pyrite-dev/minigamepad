@@ -1,10 +1,9 @@
 #include "minigamepad.h"
-#include <stdint.h>
 
 #ifndef __minigamepad_COMMON
 #define __minigamepad_COMMON
 
-struct mg_gamepad_t* mg_alloc(struct mg_gamepads_t* gamepads);
+mg_gamepad* mg_alloc(mg_gamepads* gamepads);
 void mg_gamepad_free(mg_gamepad* gamepad);
 
 void mg_gamepad_remove(mg_gamepads* gamepads, mg_gamepad* gamepad); 
