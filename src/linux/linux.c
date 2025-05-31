@@ -25,6 +25,14 @@ void mg_gamepads_backend_init(mg_gamepads* gamepads) {
 }
 
 bool mg_gamepads_fetch(mg_gamepads *gamepads) {
+    // remove disconnected devices
+    for (mg_gamepad* cur = gamepads->head; cur != NULL; cur = cur->next) {
+        if (mg_gamepad_is_connected(cur) == false) {
+            mg_gamepad_remove(gamepads, cur);
+        }
+    }
+
+
     struct dirent *dp;
     DIR *dfd;
 
@@ -38,20 +46,19 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
 
     // for each file found:
     while ((dp = readdir(dfd)) != NULL) {
-        // get the full path of it
-        char full_path[300];
+        // get the full path of it (size of path + size of file name)
+        char full_path[273];
         snprintf(full_path, sizeof(full_path), "/dev/input/by-id/%s", dp->d_name);
-
-        for (mg_gamepad* cur = gamepads->head; cur != NULL; cur = cur->next) {
-            if (mg_gamepad_is_connected(cur) == false) {
-                mg_gamepad_remove(gamepads, cur);
-            }
-        }
 
         // TODO: there has to be a better way to do this 
         bool found = false;
+
         for (mg_gamepad* cur = gamepads->head; cur != NULL; cur = cur->next) {
-            if (strncmp(cur->ctx->full_path, full_path, sizeof(full_path)) == 0) {
+//            printf("cur %s\n", &cur->ctx->full_path[17]);
+
+            if (cur->connected == false) continue;
+            printf("ctx %s\n", cur->ctx->full_path);
+            if (strncmp(&cur->ctx->full_path[17], dp->d_name, sizeof(dp->d_name)) == 0) {
                 found = true;
                 break;
             }
@@ -76,7 +83,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
             // char err[256];
             // snprintf(err, 256, "could not open %s", full_path);
             // perror(err);
-            libevdev_free(ctx->dev);
+            mg_gamepad_remove(gamepads, gamepad);
             continue;
         };
 
@@ -94,6 +101,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
         }
         // go through any axises a gamepad would have
         for (unsigned int i = ABS_X; i <= ABS_MAX; i++) {
+        
             if (libevdev_has_event_code(ctx->dev, EV_ABS, i)) {
                 // We want every axis except the hats (which are usually d-pads)
                 // to have a deadzone of 5000. The idea is that programmer can override
@@ -125,6 +133,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
             const char* name = libevdev_get_name(gamepad->ctx->dev);
             strncpy(gamepad->name, name, sizeof(gamepad->name) - 1);
 
+    printf("%s\n", gamepad->name);
             if (libevdev_has_event_code(
                 ctx->dev, EV_FF,
                 FF_RUMBLE)) { // this is a struct that gets passed to the
@@ -149,7 +158,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
             }
             gamepad->button_num = button_num;
             gamepad->axis_num = axis_num;
-            memcpy(gamepad->ctx->full_path, full_path, sizeof(full_path));
+            memcpy(gamepad->ctx->full_path, full_path, sizeof(full_path));            
             ret = true;
         } else {
             mg_gamepad_remove(gamepads, gamepad);
@@ -167,6 +176,7 @@ void mg_gamepad_free(mg_gamepad *gamepad) {
 }
 
 bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {    
+    if (gamepad->connected == false) return false;
     // Check if the file we opened the gamepad at still exists.
     // Fun fact, this was done after an hour of trying other methods, including
     // installing an inotify watcher and seeing if libevdev reports this. This is

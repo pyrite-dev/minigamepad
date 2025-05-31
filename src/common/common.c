@@ -3,7 +3,7 @@
 
 
 mg_gamepad* mg_gamepad_get_head(mg_gamepads* gamepads) {
-    return (mg_gamepad*)gamepads->head;
+    return gamepads->head;
 }
 
 mg_gamepad* mg_gamepad_iterate(mg_gamepads *gamepads, mg_gamepad* cur) {
@@ -27,11 +27,13 @@ void mg_gamepads_init(mg_gamepads *gamepads) {
   mg_gamepads_fetch(gamepads);
 }
 
+
+#include <stdio.h>
 void mg_gamepads_free(mg_gamepads *gamepads) {
   mg_gamepad *cur;
 
   for (cur = gamepads->head; cur != NULL; cur = cur->next) {
-    mg_gamepad_free(cur);
+    mg_gamepad_remove(gamepads, cur);
   }
 
   gamepads->freed.head = NULL;
@@ -117,13 +119,17 @@ mg_gamepad *mg_alloc(mg_gamepads *gamepads) {
 
 void mg_gamepad_remove(mg_gamepads *gamepads,
                        mg_gamepad *gamepad) {
+  if (gamepad->connected == false)
+     return;
+  
+  gamepad->connected = false;
   /* free the gamepad's backend API data */
   mg_gamepad_free(gamepad);
 
   /* remove the gamepad from the linked list */
   if (gamepad->prev != NULL) {
     gamepad->prev->next = gamepad->next;
-  } else {
+  } else if (gamepad == gamepads->head) {
     gamepads->cur = NULL;
     gamepads->head = NULL;
   }

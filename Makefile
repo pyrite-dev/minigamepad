@@ -77,7 +77,7 @@ $(OUTDIR)/%.o: $(SOURCES) | $(OUTDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXAMPLES): %: %.c		
-	$(CC) $(CFLAGS) -I. $< $(LIBS) -L./build -lminigamepad -o $(OUTDIR)/$@ 
+	$(CC) -static $(CFLAGS) -I. $< $(LIBS) -L./build -lminigamepad -o $(OUTDIR)/$@ 
 
 $(LIBEVDEV_OBJECTS): %.o: %.c
 	$(CC) -fPIC  -c $< -o $@
