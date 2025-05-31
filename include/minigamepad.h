@@ -107,36 +107,42 @@ typedef enum {
   MG_GAMEPAD_AXIS_MAX,
 } mg_gamepad_axis;
 
-#define MAX_BUTTONS MG_GAMEPAD_BUTTON_MAX
-#define MAX_AXISES MG_GAMEPAD_AXIS_MAX
+#define MG_MAX_BUTTONS MG_GAMEPAD_BUTTON_MAX
+#define MG_MAX_AXISES MG_GAMEPAD_AXIS_MAX
 
 /// Internal context of the gamepad, i.e. implementation details.
 struct mg_gamepad_context_t;
+
+typedef struct mg_buttons {
+    mg_gamepad_btn key;
+    int16_t value;
+} mg_buttons;
+
+typedef struct mg_axises {
+    mg_gamepad_axis key;
+    int16_t value;
+    int16_t deadzone;
+} mg_axises;
 
 typedef struct mg_gamepad {
     // Internal context for platform dependent items.
     struct mg_gamepad_context_t *ctx;
     // Map of buttons that the controller has
-    struct {
-        mg_gamepad_btn key;
-        int16_t value;
-    } buttons[MAX_BUTTONS];
+    mg_buttons buttons[MG_MAX_BUTTONS];
     // The number of buttons on the controller.
     size_t button_num;
     // Map of axises that the controller has, + their deadzones
     // By default, the deadzones are 5000 for any axis that isn't the d-pad; you
     // are strongly encouraged to make this customizable in any program you make
     // with this.
-    struct {
-        mg_gamepad_axis key;
-        int16_t value;
-        int16_t deadzone;
-    } axises[MAX_AXISES];
+
+    mg_axises axises[MG_MAX_AXISES];
     // The number of axises on the controller.
     size_t axis_num;
 
     bool connected;
     char name[128];
+    char guid[33];
 
     struct mg_gamepad* prev;
     struct mg_gamepad* next;

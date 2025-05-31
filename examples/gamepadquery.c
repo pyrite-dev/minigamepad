@@ -15,12 +15,10 @@ void clear(void) {
 int main(void) {
   mg_gamepads gamepads = {0};
 
-  size_t idx = 0;
-
   clear();
 
   mg_gamepads_init(&gamepads);
-  mg_gamepad *gamepad = mg_gamepads_at(&gamepads, idx);
+  mg_gamepad* gamepad = gamepads.head;
 
   for (;;) {
     while(mg_gamepads_update(&gamepads, NULL));
@@ -30,7 +28,10 @@ int main(void) {
     if (!mg_gamepad_is_connected(gamepad)) {
       clear();
       mg_gamepads_fetch(&gamepads);
-      gamepad = mg_gamepads_at(&gamepads, idx);
+
+      gamepad = gamepad->next;
+      if (gamepad == NULL)
+        break;
     }
 
     printf("     Gamepad: %-25s\n", gamepad->name);

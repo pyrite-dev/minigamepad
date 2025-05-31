@@ -36,6 +36,8 @@ void mg_gamepads_free(mg_gamepads *gamepads) {
   gamepads->freed.cur = NULL;
   gamepads->head = NULL;
   gamepads->cur = NULL;
+  
+  mg_gamepads_backend_free(gamepads);
 }
 
 int mg_gamepad_get_button_status(mg_gamepad *gamepad,
