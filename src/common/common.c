@@ -76,14 +76,14 @@ int mg_gamepad_get_axis_status(mg_gamepad *gamepad, size_t axis) {
 
 mg_gamepad *mg_alloc(mg_gamepads *gamepads) {
   mg_gamepad *data;
-  mg_gamepad *cur;
+//  mg_gamepad *cur;
 
   if (gamepads->num >= sizeof(gamepads->__list) / sizeof(gamepads->__list[0])) {
     return NULL;
   }
 
   data = &gamepads->__list[gamepads->num];
-
+/*
   for (cur = gamepads->freed.head; cur != NULL; cur = cur->next) {
     data = cur;
 
@@ -97,15 +97,15 @@ mg_gamepad *mg_alloc(mg_gamepads *gamepads) {
 
     break;
   }
-
+*/
   if (gamepads->head == NULL) {
     gamepads->head = data;
     gamepads->head->prev = NULL;
     gamepads->cur = gamepads->head;
   } else {
     gamepads->cur->next = data;
-    gamepads->cur->next->prev = gamepads->head;
-    gamepads->cur = gamepads->head;
+    data->prev = gamepads->cur;
+    gamepads->cur = gamepads->cur->next;
   }
 
   gamepads->cur->next = NULL;
@@ -130,13 +130,16 @@ void mg_gamepad_remove(mg_gamepads *gamepads,
   if (gamepad->prev != NULL) {
     gamepad->prev->next = gamepad->next;
   } else if (gamepad == gamepads->head) {
-    gamepads->cur = NULL;
-    gamepads->head = NULL;
+    gamepads->head = gamepad->next;
   }
   if (gamepad->next != NULL) {  
      gamepad->next->prev = gamepad->prev;
   }
-
+  
+  if (gamepad == gamepads->cur) {
+     gamepads->cur = gamepad->prev;
+  }
+  
   gamepads->num--;
 
   /* add the gamepad node to the freed nodes linked list */
