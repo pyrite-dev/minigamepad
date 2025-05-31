@@ -179,7 +179,7 @@ typedef struct mg_gamepad_event {
 MG_API mg_gamepad* mg_gamepad_get_head(mg_gamepads* gamepads);
 
 // iterates to the next node in the linked list of gamepads, returns `cur`, allowing you to check if cur == NULL 
-MG_API mg_gamepad* mg_gamepad_iterate(mg_gamepads*gamepads, mg_gamepad* cur);
+MG_API mg_gamepad* mg_gamepad_iterate(mg_gamepad* cur);
 
 /// Init the gamepads internal structure.
 MG_API void mg_gamepads_init(mg_gamepads *gamepad);
