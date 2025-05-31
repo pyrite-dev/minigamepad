@@ -54,7 +54,6 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
         bool found = false;
 
         for (mg_gamepad* cur = gamepads->head; cur != NULL; cur = cur->next) {
-            if (cur->connected == false) continue;
             if (strncmp(&cur->ctx->full_path[17], dp->d_name, sizeof(dp->d_name)) == 0) {
                 found = true;
                 break;
