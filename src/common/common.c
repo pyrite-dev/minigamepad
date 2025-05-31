@@ -6,13 +6,9 @@ mg_gamepad* mg_gamepad_get_head(mg_gamepads* gamepads) {
     return gamepads->head;
 }
 
-mg_gamepad* mg_gamepad_iterate(mg_gamepads *gamepads, mg_gamepad* cur) {
+mg_gamepad* mg_gamepad_iterate(mg_gamepad* cur) {
     if (cur == NULL) {
         return NULL;
-    }
-
-    if (cur->prev == NULL && cur->next == NULL) {
-        cur = gamepads->head;
     }
 
     cur = cur->next;
@@ -76,28 +72,23 @@ int mg_gamepad_get_axis_status(mg_gamepad *gamepad, size_t axis) {
 
 mg_gamepad *mg_alloc(mg_gamepads *gamepads) {
   mg_gamepad *data;
-//  mg_gamepad *cur;
 
   if (gamepads->num >= sizeof(gamepads->__list) / sizeof(gamepads->__list[0])) {
     return NULL;
   }
 
   data = &gamepads->__list[gamepads->num];
-/*
-  for (cur = gamepads->freed.head; cur != NULL; cur = cur->next) {
-    data = cur;
+  if (gamepads->freed.head) {
+    data = gamepads->freed.head;
 
-    if (cur->prev != NULL) {
-      cur->prev->next = cur->next;
+    gamepads->freed.head =  gamepads->freed.head->next;
+    if (gamepads->freed.head) {
+        gamepads->freed.head->prev = NULL;
+    } else {
+        gamepads->freed.cur = NULL;
     }
-
-    if (cur->next != NULL) {
-      cur->next->prev = cur->prev;
-    }
-
-    break;
   }
-*/
+
   if (gamepads->head == NULL) {
     gamepads->head = data;
     gamepads->head->prev = NULL;
@@ -114,8 +105,6 @@ mg_gamepad *mg_alloc(mg_gamepads *gamepads) {
   gamepads->num++;
   return gamepads->cur;
 }
-
-#include <stdio.h>
 
 void mg_gamepad_remove(mg_gamepads *gamepads,
                        mg_gamepad *gamepad) {
