@@ -54,10 +54,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
         bool found = false;
 
         for (mg_gamepad* cur = gamepads->head; cur != NULL; cur = cur->next) {
-//            printf("cur %s\n", &cur->ctx->full_path[17]);
-
             if (cur->connected == false) continue;
-            printf("ctx %s\n", cur->ctx->full_path);
             if (strncmp(&cur->ctx->full_path[17], dp->d_name, sizeof(dp->d_name)) == 0) {
                 found = true;
                 break;
@@ -133,7 +130,6 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
             const char* name = libevdev_get_name(gamepad->ctx->dev);
             strncpy(gamepad->name, name, sizeof(gamepad->name) - 1);
 
-    printf("%s\n", gamepad->name);
             if (libevdev_has_event_code(
                 ctx->dev, EV_FF,
                 FF_RUMBLE)) { // this is a struct that gets passed to the

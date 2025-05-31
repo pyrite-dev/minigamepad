@@ -5,9 +5,7 @@ int main(void) {
   mg_gamepads gamepads = {0};
   mg_gamepads_init(&gamepads);
 
-printf("\n\n");
-    mg_gamepads_fetch(&gamepads);
-printf("list:\n");
+  //mg_gamepads_fetch(&gamepads);
   for (mg_gamepad* cur = mg_gamepad_get_head(&gamepads); cur; cur = mg_gamepad_iterate(&gamepads, cur)) {
     printf("%s\n", cur->name);
   }
