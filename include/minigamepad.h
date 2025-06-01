@@ -52,6 +52,10 @@ typedef enum {
   MG_GAMEPAD_BUTTON_RIGHT_STICK,
   MG_GAMEPAD_BUTTON_LEFT_SHOULDER,
   MG_GAMEPAD_BUTTON_RIGHT_SHOULDER,
+  MG_GAMEPAD_BUTTON_DPAD_UP,
+  MG_GAMEPAD_BUTTON_DPAD_DOWN,
+  MG_GAMEPAD_BUTTON_DPAD_LEFT,
+  MG_GAMEPAD_BUTTON_DPAD_RIGHT,
   MG_GAMEPAD_BUTTON_MISC1, /**< Additional button (e.g. Xbox Series X share
                                button, PS5 microphone button, Nintendo Switch
                                Pro capture button, Amazon Luna microphone
@@ -124,6 +128,8 @@ typedef struct mg_axises {
     int16_t deadzone;
 } mg_axises;
 
+struct mg_mapping;
+
 typedef struct mg_gamepad {
     // Internal context for platform dependent items.
     struct mg_gamepad_context_t *ctx;
@@ -143,6 +149,8 @@ typedef struct mg_gamepad {
     bool connected;
     char name[128];
     char guid[33];
+
+    struct mg_mapping* mapping;
 
     struct mg_gamepad* prev;
     struct mg_gamepad* next;
@@ -192,6 +200,9 @@ MG_API void mg_gamepads_init(mg_gamepads *gamepad);
 
 /// Fetch and update all gamepads and return the first event
 MG_API bool mg_gamepads_update(mg_gamepads* gamepads, mg_gamepad_event* ev);
+
+/// Add another mapping to the gamepads mappings
+MG_API int mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string);
 
 /// Update the gamepad's internal structure.
 /// This needs to be called before any gamepad buttons/axises are checked if you

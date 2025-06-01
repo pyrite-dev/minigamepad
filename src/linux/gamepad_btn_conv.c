@@ -24,6 +24,14 @@ mg_gamepad_btn get_gamepad_btn(unsigned int btn) {
     return MG_GAMEPAD_BUTTON_RIGHT_STICK;
   case BTN_TL:
     return MG_GAMEPAD_BUTTON_LEFT_SHOULDER;
+  case BTN_DPAD_UP:
+    return MG_GAMEPAD_BUTTON_DPAD_UP;
+  case BTN_DPAD_DOWN: 
+    return MG_GAMEPAD_BUTTON_DPAD_DOWN;
+  case BTN_DPAD_LEFT:
+    return MG_GAMEPAD_BUTTON_DPAD_LEFT;
+  case BTN_DPAD_RIGHT: 
+    return MG_GAMEPAD_BUTTON_DPAD_RIGHT;
   case BTN_TR:
     return MG_GAMEPAD_BUTTON_RIGHT_SHOULDER;
   case BTN_TOUCH:
@@ -76,6 +84,14 @@ int get_native_btn(mg_gamepad_btn btn) {
     return BTN_THUMBL;
   case MG_GAMEPAD_BUTTON_RIGHT_STICK:
     return BTN_THUMBR;
+  case MG_GAMEPAD_BUTTON_DPAD_UP: 
+     return BTN_DPAD_UP;
+  case MG_GAMEPAD_BUTTON_DPAD_DOWN: 
+    return BTN_DPAD_DOWN; 
+  case MG_GAMEPAD_BUTTON_DPAD_LEFT: 
+     return BTN_DPAD_LEFT;
+  case MG_GAMEPAD_BUTTON_DPAD_RIGHT: 
+     return BTN_DPAD_RIGHT; 
   case MG_GAMEPAD_BUTTON_LEFT_SHOULDER:
     return BTN_TL;
   case MG_GAMEPAD_BUTTON_RIGHT_SHOULDER:

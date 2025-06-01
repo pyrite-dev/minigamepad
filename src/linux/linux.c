@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include "common.h"
+#include "sdl_db.h"
 
 #define MG_UNUSED(x) (void)(x)
 
@@ -201,6 +202,8 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
                      name[4], name[5], name[6], name[7],
                      name[8], name[9], name[10]);
         } 
+
+        gamepad->mapping = mg_gamepad_find_valid_mapping(gamepad);
 
         return true;
     }

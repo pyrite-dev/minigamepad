@@ -20,7 +20,6 @@ void mg_gamepads_init(mg_gamepads *gamepads) {
   gamepads->cur = NULL;
 
   mg_gamepads_backend_init(gamepads);
-  mg_gamepads_fetch(gamepads);
 }
 
 
@@ -120,15 +119,22 @@ void mg_gamepad_remove(mg_gamepads *gamepads,
   /* remove the gamepad from the linked list */
   if (gamepad->prev != NULL) {
     gamepad->prev->next = gamepad->next;
-  } else if (gamepad == gamepads->head) {
-    gamepads->head = gamepad->next;
-  }
+  } 
+  
   if (gamepad->next != NULL) {  
      gamepad->next->prev = gamepad->prev;
   }
   
+  if (gamepad == gamepads->head) {
+    gamepads->head = gamepad->next;
+  }
+
   if (gamepad == gamepads->cur) {
-     gamepads->cur = gamepad->prev;
+    if (gamepad->prev == NULL) {
+        gamepads->cur = gamepad->next;
+    } else {
+        gamepads->cur = gamepad->prev;
+    }
   }
   
   gamepads->num--;
@@ -169,6 +175,7 @@ bool mg_gamepads_update(mg_gamepads *gamepads, mg_gamepad_event *ev) {
 }
 
 bool mg_gamepad_is_connected(mg_gamepad *gamepad) {
+    if (gamepad == NULL) return false;
     return gamepad->connected;
 }
 
