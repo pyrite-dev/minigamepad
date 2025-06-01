@@ -23,6 +23,14 @@ const char *mg_gamepad_btn_get_name(mg_gamepad_btn btn) {
     return "Left Stick Button";
   case MG_GAMEPAD_BUTTON_RIGHT_STICK:
     return "Right Stick Button";
+  case MG_GAMEPAD_BUTTON_DPAD_UP: 
+     return "D-pad Up";
+  case MG_GAMEPAD_BUTTON_DPAD_DOWN: 
+    return "D-pad Down"; 
+  case MG_GAMEPAD_BUTTON_DPAD_LEFT: 
+     return "D-pad Left";
+  case MG_GAMEPAD_BUTTON_DPAD_RIGHT: 
+     return "D-pad Right"; 
   case MG_GAMEPAD_BUTTON_LEFT_SHOULDER:
     return "Left Shoulder Button";
   case MG_GAMEPAD_BUTTON_RIGHT_SHOULDER:

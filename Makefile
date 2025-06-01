@@ -39,13 +39,19 @@ ifeq ($(PLATFORM),Windows)
    	EXT = dll
 	LDFLAGS = -shared 
 	# change later
-	BACKEND ?= WINMM
+	BACKEND ?= windows
 
-	ifeq ($(BACKEND),WINMM)
+	ifeq ($(BACKEND),windows)
+		LIBS = 	
+		CFLAGS += -I./src/windows/ 
+		SOURCES += $(wildcard src/windows/*.c)	
+	else ifeq ($(BACKEND),WINMM)
 		LIBS = -lwinmm	
 		CFLAGS += -I./src/winmm/ 
 		SOURCES += $(wildcard src/winmm/*.c)
 	endif
+
+	CFLAGS += -D BUILD_LIBTYPE_SHARED
 endif
 
 TARGET = $(OUTDIR)/libminigamepad.$(EXT) \
@@ -71,7 +77,7 @@ $(OUTDIR)/%.o: $(SOURCES) | $(OUTDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXAMPLES): %: %.c		
-	$(CC) $(CFLAGS) -I. $< $(LIBS) -L./build -lminigamepad -o $(OUTDIR)/$@ 
+	$(CC) -static $(CFLAGS) -I. $< $(LIBS) -L./build -lminigamepad -o $(OUTDIR)/$@ 
 
 $(LIBEVDEV_OBJECTS): %.o: %.c
 	$(CC) -fPIC  -c $< -o $@

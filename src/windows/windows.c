@@ -17,11 +17,6 @@ void mg_gamepad_free(mg_gamepad *gamepad) {
     MG_UNUSED(gamepad);
 }
 
-const char *mg_gamepad_get_name(mg_gamepad *gamepad) {
-    MG_UNUSED(gamepad);
-	return "";
-}
-
 bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
     MG_UNUSED(gamepad);
 	MG_UNUSED(event);
@@ -31,11 +26,8 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
 void mg_gamepad_rumble(mg_gamepad *gamepad, uint16_t strong_vibration,
                        uint16_t weak_vibration, uint16_t milliseconds) {
 	MG_UNUSED(gamepad);
-	MG_UNUSED(gamepad);
-
+	MG_UNUSED(strong_vibration);
+	MG_UNUSED(weak_vibration);
+	MG_UNUSED(milliseconds);
 }
 
-bool mg_gamepad_is_connected(mg_gamepad *gamepad) {
-
-  return false;
-}
