@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define MG_JOYSTICK_AXIS     1
 #define MG_JOYSTICK_BUTTON   2
