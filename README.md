@@ -28,5 +28,7 @@ We support three build systems: Makefile, CMake, and premake. CMake in particula
 There are no external libraries and minimal internal ones. So there's no extra setup to build, other then running the relevant commands:
 
 Make: `make` (from the root directory or any other)
+
 CMake: `mkdir build && cd build && cmake .. # followed by the command relevant to whatever it generates`
+
 premake5: `premake5 --file=build.lua gmake # Does not build examples`
