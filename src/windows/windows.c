@@ -8,6 +8,10 @@ void mg_gamepads_backend_init(mg_gamepads* gamepads) {
     MG_UNUSED(gamepads);
 }
 
+void mg_gamepads_backend_free(mg_gamepads* gamepads) {
+    MG_UNUSED(gamepads);
+}
+
 bool mg_gamepads_fetch(mg_gamepads *gamepads) {
     MG_UNUSED(gamepads);
 	return false;

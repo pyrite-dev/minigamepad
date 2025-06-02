@@ -3,9 +3,11 @@
 
 int main(void) {
   mg_gamepads gamepads = {0};
+  mg_gamepad* cur;
+  
   mg_gamepads_init(&gamepads);
 
-  for (mg_gamepad* cur = mg_gamepad_get_head(&gamepads); cur; cur = mg_gamepad_iterate(cur)) {
+  for (cur = mg_gamepad_get_head(&gamepads); cur; cur = mg_gamepad_iterate(cur)) {
     printf("%s\n", cur->name);
   }
 
