@@ -3,13 +3,10 @@
 
 int main(void) {
   mg_gamepads gamepads = {0};
-  mg_gamepads_fetch(&gamepads);
+  mg_gamepads_init(&gamepads);
 
-  size_t joystick_num = gamepads.num;
-
-  for (size_t i = 0; i < joystick_num; i++) {
-    mg_gamepad *gamepad = mg_gamepads_at(&gamepads, i);
-    printf("%s\n", mg_gamepad_get_name(gamepad));
+  for (mg_gamepad* cur = mg_gamepad_get_head(&gamepads); cur; cur = mg_gamepad_iterate(cur)) {
+    printf("%s\n", cur->name);
   }
 
   mg_gamepads_free(&gamepads);
