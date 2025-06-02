@@ -1,7 +1,10 @@
 #include "minigamepad.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 void clear(void) {
   // clear screen
@@ -14,11 +17,17 @@ void clear(void) {
 
 int main(void) {
   mg_gamepads gamepads = {0};
+  size_t gamepad_button_num;
+  size_t axis_num;
+  mg_gamepad_btn btn;
+  mg_gamepad_axis axis;
+  mg_gamepad* gamepad;
+  size_t i;
 
   clear();
 
   mg_gamepads_init(&gamepads);
-  mg_gamepad* gamepad = gamepads.head;
+  gamepad = gamepads.head;
 
   for (;;) {
     while(mg_gamepads_update(&gamepads, NULL));
@@ -35,17 +44,17 @@ int main(void) {
     }
 
     printf("     Gamepad: %-25s\n", gamepad->name);
-    size_t gamepad_button_num = gamepad->button_num;
-    for (size_t i = 0; i < gamepad_button_num; i++) {
-      mg_gamepad_btn btn = gamepad->buttons[i].key;
+    gamepad_button_num = gamepad->button_num;
+    for (i = 0; i < gamepad_button_num; i++) {
+      btn = gamepad->buttons[i].key;
 
       printf("     %25s:\t", mg_gamepad_btn_get_name(btn));
       printf("     %-25d\n", gamepad->buttons[i].value);
     }
 
-    size_t axis_num = gamepad->axis_num;
-    for (size_t i = 0; i < axis_num; i++) {
-      mg_gamepad_axis axis = gamepad->axises[i].key;
+    axis_num = gamepad->axis_num;
+    for (i = 0; i < axis_num; i++) {
+      axis = gamepad->axises[i].key;
 
       printf("     %25s:\t", mg_gamepad_axis_get_name(axis));
       printf("     %-25d\n", gamepad->axises[i].value);

@@ -1,17 +1,16 @@
 #include "minigamepad.h"
-#include <stdint.h>
 #include <stdio.h>
-#include <sys/time.h>
 #include <time.h>
-#include <unistd.h>
 
 #ifndef _WIN32
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/time.h>
 #else
 #include <windows.h>
-#include <processthreadsapi.h>
-#include <handleapi.h>
-#include <synchapi.h>
+// #include <processthreadsapi.h>
+// #include <handleapi.h>
+// #include <synchapi.h>
 #endif
 
 mg_gamepads gamepads = {0};
