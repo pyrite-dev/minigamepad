@@ -2,7 +2,7 @@
 #include "minigamepad.h"
 #include <linux/input-event-codes.h>
 
-mg_gamepad_btn get_gamepad_btn(unsigned int btn) {
+mg_gamepad_btn mg_get_gamepad_btn_backend(unsigned int btn) {
   switch (btn) {
   case BTN_WEST:
     return MG_GAMEPAD_BUTTON_WEST;
@@ -115,7 +115,7 @@ int get_native_btn(mg_gamepad_btn btn) {
   }
 }
 
-mg_gamepad_axis get_gamepad_axis(unsigned int axis) {
+mg_gamepad_axis mg_get_gamepad_axis_backend(unsigned int axis) {
   switch (axis) {
   case ABS_X:
     return MG_GAMEPAD_AXIS_X;

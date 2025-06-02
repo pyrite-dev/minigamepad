@@ -114,6 +114,26 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
     }
     #undef isBitSet
 
+    // Generate a joystick GUID that matches the SDL 2.0.5+ one (sourced from GLFW)
+    const char* name = libevdev_get_name(gamepad->ctx->dev);
+    if (id.vendor && id.product && id.version) {
+        snprintf(gamepad->guid, sizeof(gamepad->guid), "%02x%02x0000%02x%02x0000%02x%02x0000%02x%02x0000",
+                 id.bustype & 0xff, id.bustype >> 8,
+                 id.vendor & 0xff,  id.vendor >> 8,
+                 id.product & 0xff, id.product >> 8,
+                 id.version & 0xff, id.version >> 8);
+    } else {
+        snprintf(gamepad->guid, sizeof(gamepad->guid), "%02x%02x0000%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x00",
+                 id.bustype & 0xff, id.bustype >> 8,
+                 name[0], name[1], name[2], name[3],
+                 name[4], name[5], name[6], name[7],
+                 name[8], name[9], name[10]);
+    } 
+
+        gamepad->mapping = mg_gamepad_find_valid_mapping(gamepad);
+
+
+
     size_t button_num = 0;
     size_t axis_num = 0;
 
@@ -121,7 +141,7 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
     for (unsigned int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
         // if this device has one...
         if (libevdev_has_event_code(ctx->dev, EV_KEY, i)) {
-            gamepad->buttons[button_num].key = get_gamepad_btn(i);
+            gamepad->buttons[button_num].key = mg_get_gamepad_btn(gamepad, i);
             gamepad->buttons[button_num].value = 0;
             button_num += 1;
         }
@@ -149,15 +169,12 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
                     break;
             }
 
-            gamepad->axises[axis_num].key = get_gamepad_axis(i);
+            gamepad->axises[axis_num].key = mg_get_gamepad_axis(gamepad, i);
             gamepad->axises[axis_num].value = 0;
             gamepad->axises[axis_num].deadzone = deadzone;
             axis_num += 1;
         }
     }
-
-
-    const char* name = libevdev_get_name(gamepad->ctx->dev);
     
     if ((button_num || axis_num) && button_num <= MG_GAMEPAD_BUTTON_MAX + 10) {
         strncpy(gamepad->name, name, sizeof(gamepad->name) - 1);
@@ -187,24 +204,6 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
         gamepad->button_num = button_num;
         gamepad->axis_num = axis_num;
         memcpy(gamepad->ctx->full_path, full_path, sizeof(gamepad->ctx->full_path));            
-
-        // Generate a joystick GUID that matches the SDL 2.0.5+ one (sourced from GLFW)
-        if (id.vendor && id.product && id.version) {
-            snprintf(gamepad->guid, sizeof(gamepad->guid), "%02x%02x0000%02x%02x0000%02x%02x0000%02x%02x0000",
-                     id.bustype & 0xff, id.bustype >> 8,
-                     id.vendor & 0xff,  id.vendor >> 8,
-                     id.product & 0xff, id.product >> 8,
-                     id.version & 0xff, id.version >> 8);
-        } else {
-            snprintf(gamepad->guid, sizeof(gamepad->guid), "%02x%02x0000%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x00",
-                     id.bustype & 0xff, id.bustype >> 8,
-                     name[0], name[1], name[2], name[3],
-                     name[4], name[5], name[6], name[7],
-                     name[8], name[9], name[10]);
-        } 
-
-        gamepad->mapping = mg_gamepad_find_valid_mapping(gamepad);
-
         return true;
     }
     
@@ -299,7 +298,7 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
 
     switch (ev.type) {
         case EV_KEY: {
-            mg_gamepad_btn btn = get_gamepad_btn(ev.code);
+            mg_gamepad_btn btn = mg_get_gamepad_btn(gamepad, ev.code);
 
             for (size_t i = 0; i <= gamepad->button_num; i++) {
                 if (gamepad->buttons[i].key == btn) {
@@ -315,7 +314,7 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
             return true;
         }
         case EV_ABS: {
-            mg_gamepad_axis axis = get_gamepad_axis(ev.code);
+            mg_gamepad_axis axis = mg_get_gamepad_axis(gamepad, ev.code);
 
             for (unsigned int i = 0; i <= gamepad->axis_num; i++) {
                 if (gamepad->axises[i].key == axis) {

@@ -3,6 +3,7 @@
 #include "sdl_db.h"
 
 #include "minigamepad.h"
+#include "common.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -19,6 +20,19 @@ typedef struct mappings_data {
 
 mappings_data mappings = {0, 0};
 
+mg_gamepad_btn mg_get_gamepad_btn(mg_gamepad* gamepad, unsigned int btn) {
+    if (gamepad->mapping == NULL || btn > sizeof(gamepad->mapping->buttons))
+        return mg_get_gamepad_btn_backend(btn);    
+        
+    return gamepad->mapping->buttons[btn].index;
+}
+
+mg_gamepad_axis mg_get_gamepad_axis(mg_gamepad* gamepad, unsigned int axis) {
+    if (gamepad->mapping == NULL || axis > sizeof(gamepad->mapping->axes[axis])) 
+        return mg_get_gamepad_axis(gamepad, axis);
+    
+    return gamepad->mapping->axes[axis].index;
+}
 
 void updateGamepadGUID(char* guid) {
 #ifdef __APPLE__

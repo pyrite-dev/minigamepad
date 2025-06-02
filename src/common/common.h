@@ -12,4 +12,12 @@ void mg_gamepad_remove(mg_gamepads* gamepads, mg_gamepad* gamepad);
 void mg_gamepads_backend_init(mg_gamepads* gamepads);
 void mg_gamepads_backend_free(mg_gamepads* gamepads);
 
+mg_gamepad_btn mg_get_gamepad_btn(mg_gamepad* gamepad, unsigned int btn);
+mg_gamepad_axis mg_get_gamepad_axis(mg_gamepad* gamepad, unsigned int axis);
+
+mg_gamepad_btn mg_get_gamepad_btn_backend(unsigned int btn);
+mg_gamepad_axis mg_get_gamepad_axis_backend(unsigned int axis);
+//int mg_get_native_btn(mg_gamepad_btn btn);
+// int mg_get_native_axis(mg_gamepad_axis axis);
+
 #endif
