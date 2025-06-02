@@ -1,17 +1,16 @@
 #include "minigamepad.h"
-#include <stdint.h>
 #include <stdio.h>
-#include <sys/time.h>
 #include <time.h>
-#include <unistd.h>
 
 #ifndef _WIN32
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/time.h>
 #else
 #include <windows.h>
-#include <processthreadsapi.h>
-#include <handleapi.h>
-#include <synchapi.h>
+// #include <processthreadsapi.h>
+// #include <handleapi.h>
+// #include <synchapi.h>
 #endif
 
 mg_gamepads gamepads = {0};
@@ -49,7 +48,7 @@ int main(void) {
 
   for (;;) {
     mg_gamepad_update(gamepad, NULL);
-    axis_value += (double)gamepad->axises[0].value / 1000000000.0;
+    axis_value += (double)gamepad->axises[0].value / 10000000.0;
   }
 
   mg_gamepads_free(&gamepads);

@@ -230,17 +230,19 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
 
 int mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string) {
     const char* c = string;
+	mg_gamepad* cur;
+	mg_mapping mapping;
+	size_t length;
+	char line[1024];
 
     while (*c) {
         if ((*c >= '0' && *c <= '9') ||
             (*c >= 'a' && *c <= 'f') ||
             (*c >= 'A' && *c <= 'F')) {
-            char line[1024];
 
-            const size_t length = strcspn(c, "\r\n");
+            length = strcspn(c, "\r\n");
             if (length < sizeof(line)) {
-                mg_mapping mapping = (mg_mapping){0};
-
+				memset(&mapping, 0, sizeof(mapping));
                 memcpy(line, c, length);
                 line[length] = '\0';
 
@@ -267,7 +269,7 @@ int mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string) {
         }
     }
     
-    for (mg_gamepad* cur = mg_gamepad_get_head(gamepads); cur; cur = mg_gamepad_iterate(cur)) {
+    for (cur = mg_gamepad_get_head(gamepads); cur; cur = mg_gamepad_iterate(cur)) {
         cur->mapping = mg_gamepad_find_valid_mapping(cur);
     }
 
