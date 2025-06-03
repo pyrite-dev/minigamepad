@@ -148,6 +148,8 @@ typedef struct mg_gamepad {
     mg_axises axises[MG_MAX_AXISES];
     // The number of axises on the controller.
     size_t axis_num;
+    // The number of hats
+    size_t hat_num;
 
     bool connected;
     char name[128];
@@ -205,7 +207,7 @@ MG_API void mg_gamepads_init(mg_gamepads *gamepad);
 MG_API bool mg_gamepads_update(mg_gamepads* gamepads, mg_gamepad_event* ev);
 
 /// Add another mapping to the gamepads mappings
-MG_API int mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string);
+MG_API bool mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string);
 
 /// Update the gamepad's internal structure.
 /// This needs to be called before any gamepad buttons/axises are checked if you

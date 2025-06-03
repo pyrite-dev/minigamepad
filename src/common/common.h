@@ -20,4 +20,6 @@ mg_gamepad_axis mg_get_gamepad_axis_backend(unsigned int axis);
 //int mg_get_native_btn(mg_gamepad_btn btn);
 // int mg_get_native_axis(mg_gamepad_axis axis);
 
+void mg_mappings_init(void);
+
 #endif

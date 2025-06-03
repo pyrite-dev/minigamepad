@@ -97,6 +97,26 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
         return false;
     }
 
+    // go through any buttons a gamepad would have
+    for (unsigned int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
+        // if this device has one...
+        if (libevdev_has_event_code(ctx->dev, EV_KEY, i)) {
+           gamepad->button_num += 1;
+        }
+    }
+    // go through any axises a gamepad would have
+    for (unsigned int i = ABS_X; i <= ABS_MAX; i++) {
+        if (libevdev_has_event_code(ctx->dev, EV_ABS, i)) {
+            gamepad->axis_num += 1;
+        }
+    }
+
+
+    if ((gamepad->button_num == 0 && gamepad->axis_num == 0) || gamepad->button_num <= MG_GAMEPAD_BUTTON_MAX + 10) {
+        mg_gamepad_remove(gamepads, gamepad);
+        return false;
+    }
+
     struct input_id id = {0};
 
     char evBits[(EV_CNT + 7) / 8] = {0};
@@ -114,6 +134,7 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
     }
     #undef isBitSet
 
+    memcpy(gamepad->ctx->full_path, full_path, sizeof(gamepad->ctx->full_path));            
     // Generate a joystick GUID that matches the SDL 2.0.5+ one (sourced from GLFW)
     const char* name = libevdev_get_name(gamepad->ctx->dev);
     if (id.vendor && id.product && id.version) {
@@ -130,85 +151,77 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
                  name[8], name[9], name[10]);
     } 
 
-        gamepad->mapping = mg_gamepad_find_valid_mapping(gamepad);
+    strncpy(gamepad->name, name, sizeof(gamepad->name) - 1);
+    gamepad->mapping = mg_gamepad_find_valid_mapping(gamepad);
 
 
-
-    size_t button_num = 0;
-    size_t axis_num = 0;
-
-    // go through any buttons a gamepad would have
-    for (unsigned int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
-        // if this device has one...
-        if (libevdev_has_event_code(ctx->dev, EV_KEY, i)) {
-            gamepad->buttons[button_num].key = mg_get_gamepad_btn(gamepad, i);
-            gamepad->buttons[button_num].value = 0;
-            button_num += 1;
+    unsigned int i = 0;
+    for (unsigned int btn = BTN_MISC; btn <= BTN_TRIGGER_HAPPY6; btn++) {
+        if (libevdev_has_event_code(ctx->dev, EV_KEY, btn)) {
+            continue;
         }
+        
+        gamepad->buttons[i].key = mg_get_gamepad_btn(gamepad, btn);
+        gamepad->buttons[i].value = 0;
+        i += 1;
     }
-    // go through any axises a gamepad would have
-    for (unsigned int i = ABS_X; i <= ABS_MAX; i++) {
 
+    i = 0;
+    for (unsigned int axis = ABS_X; axis <= ABS_MAX; axis++) {
         if (libevdev_has_event_code(ctx->dev, EV_ABS, i)) {
-            // We want every axis except the hats (which are usually d-pads)
-            // to have a deadzone of 5000. The idea is that programmer can override
-            // this later, by a config file or something.
-            int16_t deadzone = 0;
-            switch (i) {
-                case ABS_HAT0X:
-                case ABS_HAT0Y:
-                case ABS_HAT1X:
-                case ABS_HAT1Y:
-                case ABS_HAT2X:
-                case ABS_HAT2Y:
-                case ABS_HAT3X:
-                case ABS_HAT3Y:
-                    break;
-                default:
-                    deadzone = 5000;
-                    break;
-            }
-
-            gamepad->axises[axis_num].key = mg_get_gamepad_axis(gamepad, i);
-            gamepad->axises[axis_num].value = 0;
-            gamepad->axises[axis_num].deadzone = deadzone;
-            axis_num += 1;
+            continue;
         }
-    }
-    
-    if ((button_num || axis_num) && button_num <= MG_GAMEPAD_BUTTON_MAX + 10) {
-        strncpy(gamepad->name, name, sizeof(gamepad->name) - 1);
-
-        if (libevdev_has_event_code(
-            ctx->dev, EV_FF,
-            FF_RUMBLE)) { // this is a struct that gets passed to the
-            // rumble effect when
-            // activated. we have to "erase" the effect whenever we want to add a
-            // new one, hence this gets put in the struct itself so that we can keep
-            // track of the id. and while we're here we save some other values
-            // that'll never get changed.
-            gamepad->ctx->effect = (struct ff_effect){
-                .type = FF_RUMBLE,
-                .id = -1,
-                .direction = 0,
-                .trigger = {0, 0},
-                .replay =
-                {
-                    .delay = 0,
-                },
-            };
-            gamepad->ctx->supports_rumble = true;
-        } else {
-            gamepad->ctx->supports_rumble = false;
+ 
+        // We want every axis except the hats (which are usually d-pads)
+        // to have a deadzone of 5000. The idea is that programmer can override
+        // this later, by a config file or something.
+        int16_t deadzone = 0;
+        switch (axis) {
+            case ABS_HAT0X:
+            case ABS_HAT0Y:
+            case ABS_HAT1X:
+            case ABS_HAT1Y:
+            case ABS_HAT2X:
+            case ABS_HAT2Y:
+            case ABS_HAT3X:
+            case ABS_HAT3Y:
+                gamepad->hat_num += 1;
+                break;
+            default:
+                deadzone = 5000;
+                break;
         }
-        gamepad->button_num = button_num;
-        gamepad->axis_num = axis_num;
-        memcpy(gamepad->ctx->full_path, full_path, sizeof(gamepad->ctx->full_path));            
-        return true;
+
+        gamepad->axises[i].key = mg_get_gamepad_axis(gamepad, axis);
+        gamepad->axises[i].value = 0;
+        gamepad->axises[i].deadzone = deadzone;
+        i += 1;
     }
-    
-    mg_gamepad_remove(gamepads, gamepad);
-    return false; 
+
+    if (libevdev_has_event_code(
+        ctx->dev, EV_FF,
+        FF_RUMBLE)) { // this is a struct that gets passed to the
+        // rumble effect when
+        // activated. we have to "erase" the effect whenever we want to add a
+        // new one, hence this gets put in the struct itself so that we can keep
+        // track of the id. and while we're here we save some other values
+        // that'll never get changed.
+        gamepad->ctx->effect = (struct ff_effect){
+            .type = FF_RUMBLE,
+            .id = -1,
+            .direction = 0,
+            .trigger = {0, 0},
+            .replay =
+            {
+                .delay = 0,
+            },
+        };
+        gamepad->ctx->supports_rumble = true;
+    } else {
+        gamepad->ctx->supports_rumble = false;
+    }
+
+    return true;
 }
 
 bool mg_gamepads_fetch(mg_gamepads *gamepads) {

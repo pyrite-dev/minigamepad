@@ -19,6 +19,7 @@ void mg_gamepads_init(mg_gamepads *gamepads) {
   gamepads->head = NULL;
   gamepads->cur = NULL;
 
+  mg_mappings_init();
   mg_gamepads_backend_init(gamepads);
 }
 

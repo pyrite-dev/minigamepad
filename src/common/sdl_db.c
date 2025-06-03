@@ -14,24 +14,43 @@
 #define MG_JOYSTICK_HATBIT   3
 
 typedef struct mappings_data {
-    mg_mapping*       mappings;
+    mg_mapping       mappings[1300];
     int               mappingCount;
+    int               mappingMax;
 } mappings_data;
 
-mappings_data mappings = {0, 0};
+mappings_data mappings;
 
 mg_gamepad_btn mg_get_gamepad_btn(mg_gamepad* gamepad, unsigned int btn) {
-    if (gamepad->mapping == NULL || btn > sizeof(gamepad->mapping->buttons))
-        return mg_get_gamepad_btn_backend(btn);    
-        
-    return gamepad->mapping->buttons[btn].index;
+    mg_gamepad_btn backendBtn = mg_get_gamepad_btn_backend(btn);
+
+    if (gamepad->mapping == NULL) {
+        return backendBtn;
+    }
+
+    mg_element e = gamepad->mapping->buttons[backendBtn];
+
+    if (e.type != MG_JOYSTICK_BUTTON || e.index == MG_GAMEPAD_BUTTON_UNKNOWN) {
+        return backendBtn;
+    }
+
+    return e.index;
 }
 
 mg_gamepad_axis mg_get_gamepad_axis(mg_gamepad* gamepad, unsigned int axis) {
-    if (gamepad->mapping == NULL || axis > sizeof(gamepad->mapping->axes[axis])) 
-        return mg_get_gamepad_axis(gamepad, axis);
-    
-    return gamepad->mapping->axes[axis].index;
+    mg_gamepad_axis backendAxis = mg_get_gamepad_axis_backend(axis);
+
+    if (!gamepad->mapping || backendAxis >= 15) {
+        return backendAxis;
+    }
+
+    mg_element e = gamepad->mapping->buttons[backendAxis];
+
+    if (e.type != MG_JOYSTICK_AXIS || e.index == MG_GAMEPAD_AXIS_UNKNOWN) {
+        return backendAxis;
+    }
+
+    return e.index;
 }
 
 void updateGamepadGUID(char* guid) {
@@ -58,40 +77,54 @@ void updateGamepadGUID(char* guid) {
 }
 
 static mg_mapping* findMapping(const char* guid) {
-    int i;
-
-    for (i = 0;  i < mappings.mappingCount;  i++)
-    {
-        if (strcmp(mappings.mappings[i].guid, guid) == 0)
-            return mappings.mappings + i;
+    int i; 
+    for (i = 0;  i < mappings.mappingCount;  i++) {
+        if (strncmp(mappings.mappings[i].guid, guid, sizeof(mappings.mappings[i].guid)) == 0) {
+            return &mappings.mappings[i];
+        }
     }
 
     return NULL;
 }
-static bool isValidElementForJoystick(const mg_element* e,
-                                          const mg_gamepad* js) {
-//    if (e->type == MG_JOYSTICK_HATBIT && (e->index >> 4) >= js->hat_num)
-  //      return false;
-    if (e->type == MG_JOYSTICK_BUTTON && e->index >= js->button_num)
-        return false;
-    if (e->type == MG_JOYSTICK_AXIS && e->index >= js->axis_num)
-        return false;
 
+static mg_mapping* findMappingPermisive(const char* guid) {
+    int i; 
+    for (i = 0;  i < mappings.mappingCount;  i++) {
+        if (strncmp(mappings.mappings[i].guid, guid, sizeof(mappings.mappings[i].guid) - 8) == 0) {
+            return &mappings.mappings[i];
+        }
+    }
+
+    return NULL;
+}
+
+static bool isValidElementForJoystick(const mg_element e,
+                                          const mg_gamepad* js) {
+    if (e.type == MG_JOYSTICK_HATBIT && e.index >= js->hat_num) {
+        return false;
+    }
+    if (e.type == MG_JOYSTICK_BUTTON && e.index >= js->button_num) {
+        return false;
+    }
+    if (e.type == MG_JOYSTICK_AXIS && e.index >= js->axis_num)
+        return false;
     return true;
 }
 
 mg_mapping* mg_gamepad_find_valid_mapping(mg_gamepad* js) {
     mg_mapping* mapping = findMapping(js->guid);
+    if (mapping == NULL)
+        mapping = findMappingPermisive(js->guid);
+    
     if (mapping) {
         int i;
-
         for (i = 0;  i <= MG_GAMEPAD_BUTTON_MAX;  i++) {
-            if (!isValidElementForJoystick(mapping->buttons + i, js))
+            if (!isValidElementForJoystick(mapping->buttons[i], js))
                 return NULL;
         }
 
         for (i = 0;  i <= MG_GAMEPAD_AXIS_MAX; i++) {
-            if (!isValidElementForJoystick(mapping->axes + i, js))
+            if (!isValidElementForJoystick(mapping->axes[i], js))
                 return NULL;
         }
     }
@@ -242,7 +275,11 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
     return true;
 }
 
-int mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string) {
+bool mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string) {
+    if (mappings.mappingCount >= mappings.mappingMax) {
+        return false;
+    }
+
     const char* c = string;
 	mg_gamepad* cur;
 	mg_mapping mapping;
@@ -266,9 +303,9 @@ int mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string) {
                         *previous = mapping;
                     else {
                         mappings.mappingCount++;
-                        mappings.mappings =
+                        /*mappings.mappings =
                             realloc(mappings.mappings,
-                                          sizeof(mg_mapping) * (size_t)mappings.mappingCount);
+                                          sizeof(mg_mapping) * (size_t)mappings.mappingCount);*/
                         mappings.mappings[mappings.mappingCount - 1] = mapping;
                     }
                 }
@@ -2443,4 +2480,19 @@ const char * sdl_db[] = {
 "050000001727000044310000ffff3f00,XiaoMi Controller,a:b0,b:b1,back:b4,dpdown:b12,dpleft:b13,dpright:b14,dpup:b11,leftshoulder:b9,leftstick:b7,lefttrigger:a7,leftx:a0,lefty:a1,rightshoulder:b10,rightstick:b8,righttrigger:a6,rightx:a2,righty:a5,start:b6,x:b2,y:b3,"
 #endif
 };
+
+
+void mg_mappings_init(void) {
+    size_t i;
+    mappings.mappingCount = 0;
+    mappings.mappingMax = 1300;
+    memset(mappings.mappings, 0, sizeof(mappings.mappings));
+
+    for (i = 0;  i < (sizeof(sdl_db) / sizeof(char*));  i++) {
+        if (parseMapping(&mappings.mappings[mappings.mappingCount], sdl_db[i]))
+            mappings.mappingCount++;
+    }
+}
+
+
 // clang-format on
