@@ -35,7 +35,7 @@ void mg_gamepads_backend_init(mg_gamepads* gamepads) {
             // HACK: Register for IN_ATTRIB to get notified when udev is done
             //       This works well in practice but the true way is libudev
 
-            global.watch = inotify_add_watch(global.inotify, "/dev/input/by-id/", IN_CREATE | IN_ATTRIB | IN_DELETE);
+            global.watch = inotify_add_watch(global.inotify, "/dev/input/", IN_CREATE | IN_ATTRIB | IN_DELETE);
         }
     }
 
@@ -43,16 +43,15 @@ void mg_gamepads_backend_init(mg_gamepads* gamepads) {
     DIR *dfd;
 
     // open the directory where all the devices are gonna be
-    if ((dfd = opendir("/dev/input/by-id")) == NULL) {
-        fprintf(stderr, "Can't open /dev/input/by-id/\n");
+    if ((dfd = opendir("/dev/input/")) == NULL) {
+        fprintf(stderr, "Can't open /dev/input/\n");
         return;
     }
-
     char full_path[273];
     // for each file found:
     while ((dp = readdir(dfd)) != NULL) {
         // get the full path of it (size of path + size of file name)
-        snprintf(full_path, sizeof(full_path), "/dev/input/by-id/%s", dp->d_name);
+        snprintf(full_path, sizeof(full_path), "/dev/input/%s", dp->d_name);
  
         setup_gamepad(gamepads, (char*)full_path);
     }
@@ -112,7 +111,7 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
     }
 
 
-    if ((gamepad->button_num == 0 && gamepad->axis_num == 0) || gamepad->button_num <= MG_GAMEPAD_BUTTON_MAX + 10) {
+    if ((gamepad->button_num == 0 && gamepad->axis_num == 0) || gamepad->button_num > MG_GAMEPAD_BUTTON_MAX + 10) {
         mg_gamepad_remove(gamepads, gamepad);
         return false;
     }
@@ -154,10 +153,9 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
     strncpy(gamepad->name, name, sizeof(gamepad->name) - 1);
     gamepad->mapping = mg_gamepad_find_valid_mapping(gamepad);
 
-
     unsigned int i = 0;
     for (unsigned int btn = BTN_MISC; btn <= BTN_TRIGGER_HAPPY6; btn++) {
-        if (libevdev_has_event_code(ctx->dev, EV_KEY, btn)) {
+        if (libevdev_has_event_code(ctx->dev, EV_KEY, btn) == false) {
             continue;
         }
         
@@ -168,7 +166,7 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
 
     i = 0;
     for (unsigned int axis = ABS_X; axis <= ABS_MAX; axis++) {
-        if (libevdev_has_event_code(ctx->dev, EV_ABS, i)) {
+        if (libevdev_has_event_code(ctx->dev, EV_ABS, i) == false) {
             continue;
         }
  
@@ -233,7 +231,7 @@ bool mg_gamepads_fetch(mg_gamepads *gamepads) {
     const ssize_t size = read(global.inotify, buffer, sizeof(buffer));
 
     char full_path[273];
-    const char path[] = "/dev/input/by-id/";
+    const char path[] = "/dev/input/";
 
     bool ret = false;
     while (size > offset) {

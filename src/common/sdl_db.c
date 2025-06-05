@@ -24,31 +24,22 @@ mappings_data mappings;
 mg_gamepad_btn mg_get_gamepad_btn(mg_gamepad* gamepad, unsigned int btn) {
     mg_gamepad_btn backendBtn = mg_get_gamepad_btn_backend(btn);
 
-    if (gamepad->mapping == NULL) {
+    if (gamepad->mapping == NULL && btn >= 15) {
         return backendBtn;
     }
 
     mg_element e = gamepad->mapping->buttons[backendBtn];
-
-    if (e.type != MG_JOYSTICK_BUTTON || e.index == MG_GAMEPAD_BUTTON_UNKNOWN) {
-        return backendBtn;
-    }
-
     return e.index;
 }
 
 mg_gamepad_axis mg_get_gamepad_axis(mg_gamepad* gamepad, unsigned int axis) {
     mg_gamepad_axis backendAxis = mg_get_gamepad_axis_backend(axis);
 
-    if (!gamepad->mapping || backendAxis >= 15) {
+    if (!gamepad->mapping || backendAxis >= 6) {
         return backendAxis;
     }
 
     mg_element e = gamepad->mapping->buttons[backendAxis];
-
-    if (e.type != MG_JOYSTICK_AXIS || e.index == MG_GAMEPAD_AXIS_UNKNOWN) {
-        return backendAxis;
-    }
 
     return e.index;
 }
@@ -94,20 +85,18 @@ static mg_mapping* findMappingPermisive(const char* guid) {
             return &mappings.mappings[i];
         }
     }
-
     return NULL;
 }
 
 static bool isValidElementForJoystick(const mg_element e,
                                           const mg_gamepad* js) {
-    if (e.type == MG_JOYSTICK_HATBIT && e.index >= js->hat_num) {
+
+    if (e.type == MG_JOYSTICK_BUTTON && e.index > js->button_num) {
         return false;
     }
-    if (e.type == MG_JOYSTICK_BUTTON && e.index >= js->button_num) {
+    if (e.type == MG_JOYSTICK_AXIS && e.index > js->axis_num)
         return false;
-    }
-    if (e.type == MG_JOYSTICK_AXIS && e.index >= js->axis_num)
-        return false;
+
     return true;
 }
 
@@ -150,7 +139,7 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
         { "guide",         mapping->buttons + MG_GAMEPAD_BUTTON_GUIDE },
         { "leftshoulder",  mapping->buttons + MG_GAMEPAD_BUTTON_LEFT_SHOULDER },
         { "rightshoulder", mapping->buttons + MG_GAMEPAD_BUTTON_RIGHT_SHOULDER },
-        { "leftstick",     mapping->buttons + MG_GAMEPAD_BUTTON_RIGHT_STICK },
+        { "leftstick",     mapping->buttons + MG_GAMEPAD_BUTTON_LEFT_STICK },
         { "rightstick",    mapping->buttons + MG_GAMEPAD_BUTTON_RIGHT_STICK },
         { "dpup",          mapping->buttons + MG_GAMEPAD_BUTTON_DPAD_UP },
         { "dpright",       mapping->buttons + MG_GAMEPAD_BUTTON_DPAD_RIGHT },
@@ -1503,7 +1492,12 @@ const char * sdl_db[] = {
 #endif
 #endif
 #ifdef __linux__
-"03000000c82d00000031000011010000,8BitDo Adapter,a:b0,b:b1,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b2,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a2,righty:a3,start:b11,x:b3,y:b4,",
+// custom by ColleagueRiley
+    "030000005e040000ea02000017050000,Xbox One S Controller,a:b0,b:b4,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b10,leftstick:b8,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b11,rightstick:b9,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b3,y:b2,",
+
+ 
+
+    "03000000c82d00000031000011010000,8BitDo Adapter,a:b0,b:b1,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b2,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a2,righty:a3,start:b11,x:b3,y:b4,",
 "03000000c82d00000631000000010000,8BitDo Adapter 2,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
 "03000000c82d00000951000000010000,8BitDo Dogbone,a:b1,b:b0,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftx:a0,lefty:a1,rightx:a2,righty:a3,start:b11,",
 "03000000021000000090000011010000,8BitDo FC30 Pro,a:b1,b:b0,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a2,righty:a3,start:b11,x:b4,y:b3,",
@@ -2144,7 +2138,7 @@ const char * sdl_db[] = {
 "050000005e040000220b000013050000,Xbox One Elite 2 Controller,a:b0,b:b1,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b12,leftshoulder:b6,leftstick:b13,lefttrigger:a5,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b14,righttrigger:a4,rightx:a2,righty:a3,start:b11,x:b3,y:b4,",
 "050000005e040000050b000002090000,Xbox One Elite Series 2,a:b0,b:b1,back:b136,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b6,leftstick:b13,lefttrigger:a6,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b14,righttrigger:a5,rightx:a2,righty:a3,start:b11,x:b3,y:b4,",
 "030000005e040000ea02000011050000,Xbox One S Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
-"030000005e040000ea02000015050000,Xbox One S Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
+   "030000005e040000ea02000015050000,Xbox One S Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
 "060000005e040000ea0200000b050000,Xbox One S Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
 "060000005e040000ea0200000d050000,Xbox One S Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
 "060000005e040000ea02000016050000,Xbox One S Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
