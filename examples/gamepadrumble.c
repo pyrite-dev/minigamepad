@@ -8,9 +8,9 @@
 #include <sys/time.h>
 #else
 #include <windows.h>
-// #include <processthreadsapi.h>
-// #include <handleapi.h>
-// #include <synchapi.h>
+#include <processthreadsapi.h>
+#include <handleapi.h>
+#include <synchapi.h>
 #endif
 
 mg_gamepads gamepads = {0};
@@ -22,7 +22,7 @@ double axis_value;
 pthread_t thread_id;
 __attribute__((__noreturn__)) void *rumble_thread(void *arg);
 #else
-DWORD thread_handle;
+HANDLE thread_handle;
 __declspec(noreturn) DWORD WINAPI rumble_thread(LPVOID lpParam);
 #endif
 
@@ -38,12 +38,12 @@ int main(void) {
 #ifndef _WIN32
   pthread_create(&thread_id, NULL, &rumble_thread, NULL);
 #else
-  CreateThread(NULL,            // default security attributes
+  thread_handle = CreateThread(NULL,            // default security attributes
                0,               // use default stack size
                rumble_thread,   // thread function name
                NULL,            // argument to thread function
                0,               // use default creation flags
-               &thread_handle); // returns the thread identifier
+               NULL); // returns the thread identifier
 #endif
 
   for (;;) {

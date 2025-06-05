@@ -24,7 +24,7 @@ mappings_data mappings;
 mg_gamepad_btn mg_get_gamepad_btn(mg_gamepad* gamepad, unsigned int btn) {
     mg_gamepad_btn backendBtn = mg_get_gamepad_btn_backend(btn);
 
-    if (gamepad->mapping == NULL && btn >= 15) {
+    if (gamepad->mapping == NULL || backendBtn >= 16) {
         return backendBtn;
     }
 
@@ -46,8 +46,8 @@ mg_gamepad_axis mg_get_gamepad_axis(mg_gamepad* gamepad, unsigned int axis) {
 
 void updateGamepadGUID(char* guid) {
 #ifdef __APPLE__
-    if ((strncmp(guid + 4, "000000000000", 12) == 0) &&
-        (strncmp(guid + 20, "000000000000", 12) == 0))
+    if ((strncmp(&guid[4], "000000000000", 12) == 0) &&
+        (strncmp(&guid[20], "000000000000", 12) == 0))
     {
         char original[33];
         strncpy(original, guid, sizeof(original) - 1);
@@ -55,8 +55,7 @@ void updateGamepadGUID(char* guid) {
                 original, original + 16);
     }
 #elif defined(_WIN32)
-    if (strcmp(guid + 20, "504944564944") == 0)
-    {
+    if (strncmp(&guid[20], "504944564944", 12) == 0) {
         char original[33];
         strncpy(original, guid, sizeof(original) - 1);
         sprintf(guid, "03000000%.4s0000%.4s000000000000",
@@ -88,69 +87,62 @@ static mg_mapping* findMappingPermisive(const char* guid) {
     return NULL;
 }
 
-static bool isValidElementForJoystick(const mg_element e,
-                                          const mg_gamepad* js) {
-
-    if (e.type == MG_JOYSTICK_BUTTON && e.index > js->button_num) {
-        return false;
-    }
-    if (e.type == MG_JOYSTICK_AXIS && e.index > js->axis_num)
-        return false;
-
-    return true;
-}
-
 mg_mapping* mg_gamepad_find_valid_mapping(mg_gamepad* js) {
     mg_mapping* mapping = findMapping(js->guid);
-    if (mapping == NULL)
+    if (mapping == NULL) {
         mapping = findMappingPermisive(js->guid);
-    
-    if (mapping) {
-        int i;
-        for (i = 0;  i <= MG_GAMEPAD_BUTTON_MAX;  i++) {
-            if (!isValidElementForJoystick(mapping->buttons[i], js))
-                return NULL;
-        }
+        if (mapping == NULL)
+            return NULL;
+    }
 
-        for (i = 0;  i <= MG_GAMEPAD_AXIS_MAX; i++) {
-            if (!isValidElementForJoystick(mapping->axes[i], js))
-                return NULL;
+    int i;
+    for (i = 0; i <= MG_GAMEPAD_BUTTON_MAX;  i++) {
+        if (mapping->buttons[i].type != MG_JOYSTICK_BUTTON || mapping->buttons[i].index > js->button_num) {
+            return NULL;
+        }
+    }
+
+    for (i = 0;  i <= MG_GAMEPAD_AXIS_MAX; i++) {
+        if (mapping->axes[i].type != MG_JOYSTICK_AXIS || mapping->axes[i].index > js->axis_num) {
+            return NULL;
         }
     }
 
     return mapping;
 }
 
+typedef struct mg_field {
+    const char* name;
+    size_t len;
+    mg_element* element;
+} mg_field;
+
 static bool parseMapping(mg_mapping* mapping, const char* string) {
     const char* c = string;
     size_t i, length;
-    struct {
-        const char* name;
-        mg_element* element;
-    } fields[] =
-    {
-        { "platform",      NULL },
-        { "a",             mapping->buttons + MG_GAMEPAD_BUTTON_SOUTH },
-        { "b",             mapping->buttons + MG_GAMEPAD_BUTTON_EAST },
-        { "x",             mapping->buttons + MG_GAMEPAD_BUTTON_WEST },
-        { "y",             mapping->buttons + MG_GAMEPAD_BUTTON_NORTH },
-        { "back",          mapping->buttons + MG_GAMEPAD_BUTTON_BACK },
-        { "start",         mapping->buttons + MG_GAMEPAD_BUTTON_START },
-        { "guide",         mapping->buttons + MG_GAMEPAD_BUTTON_GUIDE },
-        { "leftshoulder",  mapping->buttons + MG_GAMEPAD_BUTTON_LEFT_SHOULDER },
-        { "rightshoulder", mapping->buttons + MG_GAMEPAD_BUTTON_RIGHT_SHOULDER },
-        { "leftstick",     mapping->buttons + MG_GAMEPAD_BUTTON_LEFT_STICK },
-        { "rightstick",    mapping->buttons + MG_GAMEPAD_BUTTON_RIGHT_STICK },
-        { "dpup",          mapping->buttons + MG_GAMEPAD_BUTTON_DPAD_UP },
-        { "dpright",       mapping->buttons + MG_GAMEPAD_BUTTON_DPAD_RIGHT },
-        { "dpdown",        mapping->buttons + MG_GAMEPAD_BUTTON_DPAD_DOWN },
-        { "dpleft",        mapping->buttons + MG_GAMEPAD_BUTTON_DPAD_LEFT },
-        { "lefttrigger",   mapping->axes + MG_GAMEPAD_AXIS_Z },
-        { "righttrigger",  mapping->axes + MG_GAMEPAD_AXIS_RZ },
-        { "leftx",         mapping->axes + MG_GAMEPAD_AXIS_X },
-        { "lefty",         mapping->axes + MG_GAMEPAD_AXIS_Y } ,
-        { "rightx",        mapping->axes + MG_GAMEPAD_AXIS_RX },
-        { "righty",        mapping->axes + MG_GAMEPAD_AXIS_RY }
+    mg_field fields[] = {
+        { "platform", 8,      NULL },
+        { "a", 1,             &mapping->buttons[MG_GAMEPAD_BUTTON_SOUTH] },
+        { "b", 1,           &mapping->buttons[MG_GAMEPAD_BUTTON_EAST] },
+        { "x", 1,            &mapping->buttons[MG_GAMEPAD_BUTTON_WEST] },
+        { "y", 1,            &mapping->buttons[MG_GAMEPAD_BUTTON_NORTH] },
+        { "back", 4,          &mapping->buttons[MG_GAMEPAD_BUTTON_BACK] },
+        { "start", 5,         &mapping->buttons[MG_GAMEPAD_BUTTON_START] },
+        { "guide", 5,         &mapping->buttons[MG_GAMEPAD_BUTTON_GUIDE] },
+        { "leftshoulder", 12,  &mapping->buttons[MG_GAMEPAD_BUTTON_LEFT_SHOULDER] },
+        { "rightshoulder", 13, &mapping->buttons[MG_GAMEPAD_BUTTON_RIGHT_SHOULDER] },
+        { "leftstick", 9,     &mapping->buttons[MG_GAMEPAD_BUTTON_LEFT_STICK] },
+        { "rightstick", 10,    &mapping->buttons[MG_GAMEPAD_BUTTON_RIGHT_STICK] },
+        { "dpup",   4,       &mapping->buttons[MG_GAMEPAD_BUTTON_DPAD_UP] },
+        { "dpright", 7,       &mapping->buttons[MG_GAMEPAD_BUTTON_DPAD_RIGHT] },
+        { "dpdown", 6,       &mapping->buttons[MG_GAMEPAD_BUTTON_DPAD_DOWN] },
+        { "dpleft", 6,        &mapping->buttons[MG_GAMEPAD_BUTTON_DPAD_LEFT] },
+        { "lefttrigger", 11,   &mapping->axes[MG_GAMEPAD_AXIS_Z] },
+        { "righttrigger", 12,  &mapping->axes[MG_GAMEPAD_AXIS_RZ] },
+        { "leftx",  5,       &mapping->axes[MG_GAMEPAD_AXIS_X] },
+        { "lefty",  5,       &mapping->axes[MG_GAMEPAD_AXIS_Y] } ,
+        { "rightx", 6,       &mapping->axes[MG_GAMEPAD_AXIS_RX] },
+        { "righty", 6,        &mapping->axes[MG_GAMEPAD_AXIS_RY] }
     };
 
     length = strcspn(c, ",");
@@ -174,63 +166,14 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
         if (*c == '+' || *c == '-')
             return false;
 
-        for (i = 0;  i < sizeof(fields) / sizeof(fields[0]);  i++)
-        {
-            length = strlen(fields[i].name);
+        for (i = 0;  i < sizeof(fields) / sizeof(fields[0]);  i++) {
+            length = fields[i].len;
             if (strncmp(c, fields[i].name, length) != 0 || c[length] != ':')
                 continue;
 
             c += length + 1;
 
-            if (fields[i].element)
-            {
-                mg_element* e = fields[i].element;
-                int8_t minimum = -1;
-                int8_t maximum = 1;
-
-                if (*c == '+')
-                {
-                    minimum = 0;
-                    c += 1;
-                }
-                else if (*c == '-')
-                {
-                    maximum = 0;
-                    c += 1;
-                }
-
-                if (*c == 'a')
-                    e->type = MG_JOYSTICK_AXIS;
-                else if (*c == 'b')
-                    e->type = MG_JOYSTICK_BUTTON;
-                else if (*c == 'h')
-                    e->type = MG_JOYSTICK_HATBIT;
-                else
-                    break;
-
-                if (e->type == MG_JOYSTICK_HATBIT)
-                {
-                    const unsigned long hat = strtoul(c + 1, (char**) &c, 10);
-                    const unsigned long bit = strtoul(c + 1, (char**) &c, 10);
-                    e->index = (uint8_t) ((hat << 4) | bit);
-                }
-                else
-                    e->index = (uint8_t) strtoul(c + 1, (char**) &c, 10);
-
-                if (e->type == MG_JOYSTICK_AXIS)
-                {
-                    e->axisScale = (signed char)(2 / (maximum - minimum));
-                    e->axisOffset = (signed char)(-(maximum + minimum));
-
-                    if (*c == '~')
-                    {
-                        e->axisScale = -e->axisScale;
-                        e->axisOffset = -e->axisOffset;
-                    }
-                }
-            }
-            else
-            {
+            if (fields[i].element == NULL) {
                 #if defined(_WIN32)
                     const char name[] = "Windows";
                 #elif defined(__APPLE__)
@@ -242,11 +185,50 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
                 #else
                     const char name[] = "";
                 #endif
-                length = sizeof(name);
-                if (strncmp(c, name, length) != 0)
+                if (strncmp(c, name, sizeof(name)) != 0)
                     return false;
+                
+                break;
             }
+            
+            mg_element* e = fields[i].element;
+            int8_t minimum = -1;
+            int8_t maximum = 1;
+            
+            switch (*c) {
+                case '+':
+                    minimum = 0;
+                    c += 1;
+                    break;
+                case '-':
+                    maximum = 0;
+                    c += 1;
+                    break;
+                case 'a':
+                    e->type = MG_JOYSTICK_AXIS;
+                    e->axisScale = (signed char)(2 / (maximum - minimum));
+                    e->axisOffset = (signed char)(-(maximum + minimum));
 
+                    if (*c == '~')
+                    {
+                        e->axisScale = -e->axisScale;
+                        e->axisOffset = -e->axisOffset;
+                    }
+                    e->index = (uint8_t) strtoul(c + 1, (char**) &c, 10);
+                    break;
+                case 'b':
+                    e->type = MG_JOYSTICK_BUTTON;
+                    e->index = (uint8_t) strtoul(c + 1, (char**) &c, 10);
+                    break;
+                case 'h':
+                    e->type = MG_JOYSTICK_HATBIT;
+                    const unsigned long hat = strtoul(c + 1, (char**) &c, 10);
+                    const unsigned long bit = strtoul(c + 1, (char**) &c, 10);
+                    e->index = (uint8_t) ((hat << 4) | bit);
+
+                    break;
+                default: break;
+            }
             break;
         }
 
@@ -276,37 +258,35 @@ bool mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string) {
 	char line[1024];
 
     while (*c) {
-        if ((*c >= '0' && *c <= '9') ||
-            (*c >= 'a' && *c <= 'f') ||
-            (*c >= 'A' && *c <= 'F')) {
+        if (!(*c >= '0' && *c <= '9') &&
+            !(*c >= 'a' && *c <= 'f') &&
+            !(*c >= 'A' && *c <= 'F')) {
+                c += strcspn(c, "\r\n");
+                c += strspn(c, "\r\n");
+                break;
+        }
 
-            length = strcspn(c, "\r\n");
-            if (length < sizeof(line)) {
-				memset(&mapping, 0, sizeof(mapping));
-                memcpy(line, c, length);
-                line[length] = '\0';
+        length = strcspn(c, "\r\n");
+        if (length < sizeof(line)) {
+            memset(&mapping, 0, sizeof(mapping));
+            memcpy(line, c, length);
+            line[length] = '\0';
 
-                if (parseMapping(&mapping, line)) {
-                    mg_mapping* previous = findMapping(mapping.guid);
-                    if (previous)
-                        *previous = mapping;
-                    else {
-                        mappings.mappingCount++;
-                        /*mappings.mappings =
+            if (parseMapping(&mapping, line)) {
+                mg_mapping* previous = findMapping(mapping.guid);
+                if (previous)
+                    *previous = mapping;
+                else {
+                    mappings.mappingCount++;
+                    /*mappings.mappings =
                             realloc(mappings.mappings,
                                           sizeof(mg_mapping) * (size_t)mappings.mappingCount);*/
-                        mappings.mappings[mappings.mappingCount - 1] = mapping;
-                    }
+                    mappings.mappings[mappings.mappingCount - 1] = mapping;
                 }
             }
+        }
 
-            c += length;
-        }
-        else
-        {
-            c += strcspn(c, "\r\n");
-            c += strspn(c, "\r\n");
-        }
+        c += length;
     }
     
     for (cur = mg_gamepad_get_head(gamepads); cur; cur = mg_gamepad_iterate(cur)) {
