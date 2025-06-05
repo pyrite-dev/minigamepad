@@ -118,7 +118,7 @@ typedef struct mg_field {
 } mg_field;
 
 static bool parseMapping(mg_mapping* mapping, const char* string) {
-    const char* c = string;
+    const char* substr = string;
     size_t i, length;
     mg_field fields[] = {
         { "platform", 8,      NULL },
@@ -145,33 +145,33 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
         { "righty", 6,        &mapping->axes[MG_GAMEPAD_AXIS_RY] }
     };
 
-    length = strcspn(c, ",");
-    if (length != 32 || c[length] != ',') {
+    length = strcspn(substr, ",");
+    if (length != 32 || substr[length] != ',') {
         return false;
     }
 
-    memcpy(mapping->guid, c, length);
-    c += length + 1;
+    memcpy(mapping->guid, substr, length);
+    substr += length + 1;
 
-    length = strcspn(c, ",");
-    if (length >= sizeof(mapping->name) || c[length] != ',') {
+    length = strcspn(substr, ",");
+    if (length >= sizeof(mapping->name) || substr[length] != ',') {
         return false;
     }
 
-    memcpy(mapping->name, c, length);
-    c += length + 1;
+    memcpy(mapping->name, substr, length);
+    substr += length + 1;
 
-    while (*c) {
+    while (substr[0]) {
         // TODO: Implement output modifiers
-        if (*c == '+' || *c == '-')
+        if (substr[0] == '+' || substr[0] == '-')
             return false;
 
         for (i = 0;  i < sizeof(fields) / sizeof(fields[0]);  i++) {
             length = fields[i].len;
-            if (strncmp(c, fields[i].name, length) != 0 || c[length] != ':')
+            if (strncmp(substr, fields[i].name, length) != 0 || substr[length] != ':')
                 continue;
 
-            c += length + 1;
+            substr += length + 1;
 
             if (fields[i].element == NULL) {
                 #if defined(_WIN32)
@@ -185,7 +185,7 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
                 #else
                     const char name[] = "";
                 #endif
-                if (strncmp(c, name, sizeof(name)) != 0)
+                if (strncmp(substr, name, sizeof(name)) != 0)
                     return false;
                 
                 break;
@@ -195,35 +195,34 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
             int8_t minimum = -1;
             int8_t maximum = 1;
             
-            switch (*c) {
+            switch (substr[0]) {
                 case '+':
                     minimum = 0;
-                    c += 1;
+                    substr += 1;
                     break;
                 case '-':
                     maximum = 0;
-                    c += 1;
+                    substr += 1;
                     break;
                 case 'a':
                     e->type = MG_JOYSTICK_AXIS;
                     e->axisScale = (signed char)(2 / (maximum - minimum));
                     e->axisOffset = (signed char)(-(maximum + minimum));
 
-                    if (*c == '~')
-                    {
+                    if (substr[0] == '~') {
                         e->axisScale = -e->axisScale;
                         e->axisOffset = -e->axisOffset;
                     }
-                    e->index = (uint8_t) strtoul(c + 1, (char**) &c, 10);
+                    e->index = (uint8_t) strtoul(&substr[1], (char**) &substr, 10);
                     break;
                 case 'b':
                     e->type = MG_JOYSTICK_BUTTON;
-                    e->index = (uint8_t) strtoul(c + 1, (char**) &c, 10);
+                    e->index = (uint8_t) strtoul(&substr[1], (char**) &substr, 10);
                     break;
                 case 'h':
                     e->type = MG_JOYSTICK_HATBIT;
-                    const unsigned long hat = strtoul(c + 1, (char**) &c, 10);
-                    const unsigned long bit = strtoul(c + 1, (char**) &c, 10);
+                    const unsigned long hat = strtoul(&substr[1], (char**) &substr, 10);
+                    const unsigned long bit = strtoul(&substr[1], (char**) &substr, 10);
                     e->index = (uint8_t) ((hat << 4) | bit);
 
                     break;
@@ -232,12 +231,11 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
             break;
         }
 
-        c += strcspn(c, ",");
-        c += strspn(c, ",");
+        substr += strcspn(substr, ",");
+        substr += strspn(substr, ",");
     }
 
-    for (i = 0;  i < 32;  i++)
-    {
+    for (i = 0;  i < 32;  i++) {
         if (mapping->guid[i] >= 'A' && mapping->guid[i] <= 'F')
             mapping->guid[i] += 'a' - 'A';
     }
@@ -251,25 +249,25 @@ bool mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string) {
         return false;
     }
 
-    const char* c = string;
+    const char* substr = string;
 	mg_gamepad* cur;
 	mg_mapping mapping;
 	size_t length;
 	char line[1024];
 
-    while (*c) {
-        if (!(*c >= '0' && *c <= '9') &&
-            !(*c >= 'a' && *c <= 'f') &&
-            !(*c >= 'A' && *c <= 'F')) {
-                c += strcspn(c, "\r\n");
-                c += strspn(c, "\r\n");
+    while (*substr) {
+        if (!(*substr >= '0' && *substr <= '9') &&
+            !(*substr >= 'a' && *substr <= 'f') &&
+            !(*substr >= 'A' && *substr <= 'F')) {
+                substr += strcspn(substr, "\r\n");
+                substr += strspn(substr, "\r\n");
                 break;
         }
 
-        length = strcspn(c, "\r\n");
+        length = strcspn(substr, "\r\n");
         if (length < sizeof(line)) {
             memset(&mapping, 0, sizeof(mapping));
-            memcpy(line, c, length);
+            memcpy(line, substr, length);
             line[length] = '\0';
 
             if (parseMapping(&mapping, line)) {
@@ -286,7 +284,7 @@ bool mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string) {
             }
         }
 
-        c += length;
+        substr += length;
     }
     
     for (cur = mg_gamepad_get_head(gamepads); cur; cur = mg_gamepad_iterate(cur)) {
