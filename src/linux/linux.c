@@ -154,7 +154,7 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
     gamepad->mapping = mg_gamepad_find_valid_mapping(gamepad);
 
     unsigned int i = 0;
-    for (unsigned int btn = BTN_MISC; btn <= BTN_TRIGGER_HAPPY6; btn++) {
+    for (unsigned int btn = BTN_MISC; btn < KEY_CNT; btn++) {
         if (libevdev_has_event_code(ctx->dev, EV_KEY, btn) == false) {
             continue;
         }

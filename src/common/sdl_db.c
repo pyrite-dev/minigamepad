@@ -39,7 +39,7 @@ mg_gamepad_axis mg_get_gamepad_axis(mg_gamepad* gamepad, unsigned int axis) {
         return backendAxis;
     }
 
-    mg_element e = gamepad->mapping->buttons[backendAxis];
+    mg_element e = gamepad->mapping->axes[backendAxis];
 
     return e.index;
 }
@@ -93,19 +93,6 @@ mg_mapping* mg_gamepad_find_valid_mapping(mg_gamepad* js) {
         mapping = findMappingPermisive(js->guid);
         if (mapping == NULL)
             return NULL;
-    }
-
-    int i;
-    for (i = 0; i <= MG_GAMEPAD_BUTTON_MAX;  i++) {
-        if (mapping->buttons[i].type != MG_JOYSTICK_BUTTON || mapping->buttons[i].index > js->button_num) {
-            return NULL;
-        }
-    }
-
-    for (i = 0;  i <= MG_GAMEPAD_AXIS_MAX; i++) {
-        if (mapping->axes[i].type != MG_JOYSTICK_AXIS || mapping->axes[i].index > js->axis_num) {
-            return NULL;
-        }
     }
 
     return mapping;
@@ -1471,7 +1458,7 @@ const char * sdl_db[] = {
 #endif
 #ifdef __linux__
 // custom by ColleagueRiley
-    "030000005e040000ea02000017050000,Xbox One S Controller,a:b0,b:b4,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b10,leftstick:b8,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b11,rightstick:b9,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b3,y:b2,",
+    "030000005e040000ea02000017050000,Xbox One S Controller,a:b1,b:b4,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b10,leftstick:b8,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b11,rightstick:b9,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b3,y:b2,",
 
  
 
@@ -1727,8 +1714,11 @@ const char * sdl_db[] = {
 "030000006d040000d1ca000011010000,Logitech Chillstream,a:b1,b:b2,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b0,y:b3,",
 "030000006d04000019c2000010010000,Logitech Cordless RumblePad 2,a:b1,b:b2,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b0,y:b3,",
 "030000006d04000016c2000010010000,Logitech Dual Action,a:b1,b:b2,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b0,y:b3,",
-"030000006d04000016c2000011010000,Logitech Dual Action,a:b1,b:b2,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b0,y:b3,",
-"030000006d0400001dc2000014400000,Logitech F310,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
+
+    "030000006d04000016c2000011010000,Logitech Dual Action,a:b1,b:b2,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b0,y:b3,platform:Linux,",
+//    "030000006d04000016c2000011010000,Logitech Dual Action,a:b1,b:b2,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b0,y:b3,",
+
+    "030000006d0400001dc2000014400000,Logitech F310,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
 "030000006d0400001ec2000019200000,Logitech F510,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
 "030000006d0400001ec2000020200000,Logitech F510,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
 "030000006d04000019c2000011010000,Logitech F710,a:b1,b:b2,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b0,y:b3,",
