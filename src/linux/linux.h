@@ -13,6 +13,7 @@ struct mg_gamepad_context_t {
   char full_path[267];            // the path of the file
   unsigned int keyMap[KEY_CNT - BTN_MISC];
   unsigned int  absMap[ABS_CNT];
+  struct input_absinfo absInfo[ABS_CNT];
 };
 
 mg_gamepad_btn get_gamepad_btn(unsigned int btn);

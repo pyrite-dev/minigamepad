@@ -133,17 +133,17 @@ int get_native_btn(mg_gamepad_btn btn) {
 mg_gamepad_axis mg_get_gamepad_axis_backend(unsigned int axis) {
   switch (axis) {
   case ABS_X:
-    return MG_GAMEPAD_AXIS_X;
+    return MG_GAMEPAD_AXIS_LEFT_X;
   case ABS_Y:
-    return MG_GAMEPAD_AXIS_Y;
+    return MG_GAMEPAD_AXIS_LEFT_Y;
   case ABS_Z:
-    return MG_GAMEPAD_AXIS_Z;
+    return MG_GAMEPAD_AXIS_LEFT_TRIGGER;
   case ABS_RX:
-    return MG_GAMEPAD_AXIS_RX;
+    return MG_GAMEPAD_AXIS_RIGHT_X;
   case ABS_RY:
-    return MG_GAMEPAD_AXIS_RY;
+    return MG_GAMEPAD_AXIS_RIGHT_Y;
   case ABS_RZ:
-    return MG_GAMEPAD_AXIS_RZ;
+    return MG_GAMEPAD_AXIS_RIGHT_TRIGGER;
   case ABS_THROTTLE:
     return MG_GAMEPAD_AXIS_THROTTLE;
   case ABS_RUDDER:
@@ -193,17 +193,17 @@ mg_gamepad_axis mg_get_gamepad_axis_backend(unsigned int axis) {
 
 int get_native_axis(mg_gamepad_axis axis) {
   switch (axis) {
-  case MG_GAMEPAD_AXIS_X:
+  case MG_GAMEPAD_AXIS_LEFT_X:
     return ABS_X;
-  case MG_GAMEPAD_AXIS_Y:
+  case MG_GAMEPAD_AXIS_LEFT_Y:
     return ABS_Y;
-  case MG_GAMEPAD_AXIS_Z:
+  case MG_GAMEPAD_AXIS_LEFT_TRIGGER:
     return ABS_Z;
-  case MG_GAMEPAD_AXIS_RX:
+  case MG_GAMEPAD_AXIS_RIGHT_X:
     return ABS_RX;
-  case MG_GAMEPAD_AXIS_RY:
+  case MG_GAMEPAD_AXIS_RIGHT_Y:
     return ABS_RY;
-  case MG_GAMEPAD_AXIS_RZ:
+  case MG_GAMEPAD_AXIS_RIGHT_TRIGGER:
     return ABS_RZ;
   case MG_GAMEPAD_AXIS_THROTTLE:
     return ABS_THROTTLE;

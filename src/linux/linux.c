@@ -138,6 +138,9 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
             // Skip the Y axis
             i++;
         } else {
+            if (ioctl(fd, EVIOCGABS(i), &gamepad->ctx->absInfo[i]) < 0)
+                continue;
+
             gamepad->ctx->absMap[i] = (unsigned int)gamepad->axis_num;
             gamepad->axis_num++;
         }
@@ -176,6 +179,8 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
         }
 
         gamepad->buttons[i].key = mg_get_gamepad_btn(gamepad, gamepad->ctx->keyMap[btn - BTN_MISC]); 
+        if (gamepad->buttons[i].key == MG_GAMEPAD_BUTTON_UNKNOWN) 
+            gamepad->buttons[i].key = mg_get_gamepad_btn_backend(btn); 
         gamepad->buttons[i].value = 0;
         i += 1;
     }
@@ -298,23 +303,7 @@ void mg_gamepad_free(mg_gamepad *gamepad) {
 
 bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {    
     if (gamepad->connected == false) return false;
-    // Check if the file we opened the gamepad at still exists.
-    // Fun fact, this was done after an hour of trying other methods, including
-    // installing an inotify watcher and seeing if libevdev reports this. This is
-    // appearently the best way.
-    bool can_access = access(gamepad->ctx->full_path, F_OK) == 0;
-
-    if (can_access == false) {
-        if (event != NULL) {
-            event->gamepad = gamepad;
-            event->type = MG_GAMEPAD_DISCONNECT; 
-        }
-
-        gamepad->connected = false;
-        return true;
-    }
-
-
+ 
     // go through libevdev events.
     struct input_event ev;
     int pending = libevdev_has_event_pending(gamepad->ctx->dev);
@@ -330,8 +319,9 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
 
     switch (ev.type) {
         case EV_KEY: {
-
             mg_gamepad_btn btn = mg_get_gamepad_btn(gamepad, (unsigned int) gamepad->ctx->keyMap[ev.code - BTN_MISC]); 
+//            if (btn == MG_GAMEPAD_BUTTON_UNKNOWN) 
+  //              btn = mg_get_gamepad_btn_backend(ev.code); 
 
             for (size_t i = 0; i <= gamepad->button_num; i++) {
                 if (gamepad->buttons[i].key == btn) {
@@ -348,14 +338,29 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
         }
         case EV_ABS: {
             mg_gamepad_axis axis = mg_get_gamepad_axis(gamepad, ev.code);
-            
+//            if (axis == MG_GAMEPAD_AXIS_UNKNOWN) 
+  //              axis = mg_get_gamepad_axis_backend(ev.code); 
+
+           
+            const struct input_absinfo info = gamepad->ctx->absInfo[ev.code];
+            float normalized = (float)ev.value;
+
+            const float range = (float)(info.maximum - info.minimum);
+            if (range) {
+                // Normalize to 0.0 -> 1.0
+                normalized = (normalized - (float)info.minimum) / range;
+                // Normalize to -1.0 -> 1.0
+                normalized = normalized * 2.0f - 1.0f;
+            }
+
             for (unsigned int i = 0; i <= gamepad->axis_num; i++) {
                 if (gamepad->axises[i].key == axis) {
                     int deadzone = gamepad->axises[i].deadzone;
                     int16_t event_val = 0;
                     if (abs(ev.value) >= deadzone) {
-                        event_val = (int16_t)ev.value;
+                        event_val = (int16_t)(normalized * 100);
                     }
+
                     gamepad->axises[i].key = axis;
                     gamepad->axises[i].value = event_val;
                 }

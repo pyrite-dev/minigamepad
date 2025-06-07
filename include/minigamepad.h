@@ -55,6 +55,8 @@ typedef enum {
   MG_GAMEPAD_BUTTON_RIGHT_STICK,
   MG_GAMEPAD_BUTTON_LEFT_SHOULDER,
   MG_GAMEPAD_BUTTON_RIGHT_SHOULDER,
+  MG_GAMEPAD_BUTTON_LEFT_TRIGGER,
+  MG_GAMEPAD_BUTTON_RIGHT_TRIGGER,
   MG_GAMEPAD_BUTTON_DPAD_UP,
   MG_GAMEPAD_BUTTON_DPAD_DOWN,
   MG_GAMEPAD_BUTTON_DPAD_LEFT,
@@ -83,12 +85,12 @@ typedef enum {
 /// An axis on a gamepad
 typedef enum {
   MG_GAMEPAD_AXIS_UNKNOWN = -1,
-  MG_GAMEPAD_AXIS_X,
-  MG_GAMEPAD_AXIS_Y,
-  MG_GAMEPAD_AXIS_Z,
-  MG_GAMEPAD_AXIS_RX,
-  MG_GAMEPAD_AXIS_RY,
-  MG_GAMEPAD_AXIS_RZ,
+  MG_GAMEPAD_AXIS_LEFT_X,
+  MG_GAMEPAD_AXIS_LEFT_Y,
+  MG_GAMEPAD_AXIS_RIGHT_X,
+  MG_GAMEPAD_AXIS_RIGHT_Y,
+  MG_GAMEPAD_AXIS_LEFT_TRIGGER,
+  MG_GAMEPAD_AXIS_RIGHT_TRIGGER,
   MG_GAMEPAD_AXIS_THROTTLE,
   MG_GAMEPAD_AXIS_RUDDER,
   MG_GAMEPAD_AXIS_WHEEL,
@@ -114,6 +116,15 @@ typedef enum {
   MG_GAMEPAD_AXIS_MAX,
 } mg_gamepad_axis;
 
+typedef enum {
+    MG_HAT_CENTERED = 0,
+    MG_HAT_UP = 1,  
+    MG_HAT_RIGHT = 2,
+    MG_HAT_DOWN = 4,
+    MG_HAT_LEFT = 8
+} mg_gamepad_hat;
+
+#define MG_MAX_HATS 2
 #define MG_MAX_BUTTONS MG_GAMEPAD_BUTTON_MAX
 #define MG_MAX_AXISES MG_GAMEPAD_AXIS_MAX
 
@@ -124,6 +135,11 @@ typedef struct mg_buttons {
     mg_gamepad_btn key;
     int16_t value;
 } mg_buttons;
+
+typedef struct mg_hats {
+    mg_gamepad_hat key;
+    int16_t value;
+} mg_hats;
 
 typedef struct mg_axises {
     mg_gamepad_axis key;
@@ -148,6 +164,8 @@ typedef struct mg_gamepad {
     mg_axises axises[MG_MAX_AXISES];
     // The number of axises on the controller.
     size_t axis_num;
+
+    mg_hats hats[MG_MAX_HATS]; 
     // The number of hats
     size_t hat_num;
 

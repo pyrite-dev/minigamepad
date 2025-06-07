@@ -14,8 +14,8 @@ typedef struct mg_element {
 typedef struct mg_mapping {
     char            name[128];
     char            guid[33];
-    mg_element buttons[15];
-    mg_element axes[6];
+    mg_element buttons[MG_GAMEPAD_BUTTON_MAX];
+    mg_element axes[MG_GAMEPAD_AXIS_MAX];
 } mg_mapping;
 
 

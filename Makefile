@@ -8,8 +8,10 @@ OUTDIR = build
 SOURCES = $(wildcard src/common/*.c)
 PLATFORM = $(shell uname -s)
 
-EXAMPLES_SOURCES = $(wildcard examples/*.c)
+EXAMPLES_SOURCES = $(filter-out examples/gamepadapp.c, $(wildcard examples/*.c))
 EXAMPLES  = $(EXAMPLES_SOURCES:.c=)
+
+EXTRA_EXAMPLES = examples/gamepadapp
 
 ifeq ($(CC), emcc)
 	EXT = so
@@ -21,6 +23,7 @@ else ifeq ($(PLATFORM),Linux)
 	CFLAGS += -I./src/linux/ 
 	LIBS = 
 
+	RGFW_LIBS = -lX11 -lXrandr -lGL -lm 
 	LIBEVDEV_SOURCES = $(wildcard src/linux/libevdev/*.c)
 	LIBEVDEV_OBJECTS = $(LIBEVDEV_SOURCES:.c=.o)
 
@@ -29,7 +32,8 @@ else ifeq ($(PLATFORM),Linux)
 else ifeq ($(PLATFORM),Darwin)
 	EXT = dylib
 	LDFLAGS = -dynamiclib
-	LIBS =  -framework IOKit
+	LIBS =  -framework IOKit -lm
+	RGFW_LIBS = -framework IOKit -framework Cocoa 
 	IMPLIB = $(OUTDIR)/libminigamepad.a
 else
 	PLATFORM = Windows
@@ -40,6 +44,8 @@ ifeq ($(PLATFORM),Windows)
 	LDFLAGS = -shared 
 	# change later
 	BACKEND ?= windows
+	
+	RGFW_LIBS = -lopengl32 -lgdi32 -lm
 
 	ifeq ($(BACKEND),windows)
 		LIBS = 	
@@ -59,7 +65,7 @@ TARGET = $(OUTDIR)/libminigamepad.$(EXT) \
 
 OBJECTS = $(SOURCES:.c=.o)
 
-all: $(TARGET) $(EXAMPLES) 
+all: $(TARGET) $(EXAMPLES) $(EXTRA_EXAMPLES) 
 $(OUTDIR)/libminigamepad.a: $(OBJECTS) | $(OUTDIR)
 	$(AR) rcs $@ $(OBJECTS)
 
@@ -76,6 +82,9 @@ $(OUTDIR)/%.o: $(SOURCES) | $(OUTDIR)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+examples/gamepadapp: examples/gamepadapp.c
+	$(CC) -I./include $< $(LIBS) $(RGFW_LIBS) ./build/libminigamepad.a -o $(OUTDIR)/$@ 
+
 $(EXAMPLES): %: %.c		
 	$(CC) -static $(CFLAGS) -I. $< $(LIBS) -L./build -lminigamepad -o $(OUTDIR)/$@ 
 
@@ -85,6 +94,7 @@ $(LIBEVDEV_OBJECTS): %.o: %.c
 $(OUTDIR):
 	mkdir -p $(OUTDIR)
 	mkdir -p $(OUTDIR)/examples
+	cp DejaVuSans.ttf ./$(OUTDIR)/examples
 
 clean:
 	echo $(EXT) $(BACKEND) $(LIBS)
