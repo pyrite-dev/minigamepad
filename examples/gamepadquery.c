@@ -24,10 +24,14 @@ int main(void) {
   mg_gamepad* gamepad;
   size_t i;
 
-  clear();
-
   mg_gamepads_init(&gamepads);
+  if (gamepads.head == NULL) {
+     printf("no controller connected\n");
+     return 0;
+  }
+
   gamepad = gamepads.head;
+  clear();
 
   for (;;) {
     while(mg_gamepads_update(&gamepads, NULL));

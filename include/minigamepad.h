@@ -43,7 +43,7 @@ typedef uint8_t bool;
 
 /// A button on a gamepad
 typedef enum {
-  MG_GAMEPAD_BUTTON_UNKNOWN = 0,
+  MG_GAMEPAD_BUTTON_UNKNOWN = -1,
   MG_GAMEPAD_BUTTON_SOUTH, /**< Bottom face button (e.g. Xbox A button) */
   MG_GAMEPAD_BUTTON_WEST,  /**< Left face button (e.g. Xbox X button) */
   MG_GAMEPAD_BUTTON_NORTH, /**< Top face button (e.g. Xbox Y button) */
@@ -82,7 +82,7 @@ typedef enum {
 
 /// An axis on a gamepad
 typedef enum {
-  MG_GAMEPAD_AXIS_UNKNOWN = 0,
+  MG_GAMEPAD_AXIS_UNKNOWN = -1,
   MG_GAMEPAD_AXIS_X,
   MG_GAMEPAD_AXIS_Y,
   MG_GAMEPAD_AXIS_Z,
@@ -148,6 +148,8 @@ typedef struct mg_gamepad {
     mg_axises axises[MG_MAX_AXISES];
     // The number of axises on the controller.
     size_t axis_num;
+    // The number of hats
+    size_t hat_num;
 
     bool connected;
     char name[128];
@@ -205,7 +207,7 @@ MG_API void mg_gamepads_init(mg_gamepads *gamepad);
 MG_API bool mg_gamepads_update(mg_gamepads* gamepads, mg_gamepad_event* ev);
 
 /// Add another mapping to the gamepads mappings
-MG_API int mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string);
+MG_API bool mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string);
 
 /// Update the gamepad's internal structure.
 /// This needs to be called before any gamepad buttons/axises are checked if you

@@ -2,7 +2,9 @@
 #include "minigamepad.h"
 #include <linux/input-event-codes.h>
 
-mg_gamepad_btn get_gamepad_btn(unsigned int btn) {
+#include <stdio.h>
+
+mg_gamepad_btn mg_get_gamepad_btn_backend(unsigned int btn) {
   switch (btn) {
   case BTN_WEST:
     return MG_GAMEPAD_BUTTON_WEST;
@@ -56,8 +58,21 @@ mg_gamepad_btn get_gamepad_btn(unsigned int btn) {
   case BTN_TRIGGER_HAPPY10:
     return MG_GAMEPAD_BUTTON_MISC6;
 
-  default:
-    return MG_GAMEPAD_BUTTON_UNKNOWN;
+    case BTN_TRIGGER:     return MG_GAMEPAD_BUTTON_WEST;       // maybe map trigger as "A"
+    case BTN_THUMB:       return MG_GAMEPAD_BUTTON_SOUTH;
+    case BTN_THUMB2:      return MG_GAMEPAD_BUTTON_EAST;
+    case BTN_TOP:         return MG_GAMEPAD_BUTTON_NORTH;
+    case BTN_TOP2:        return MG_GAMEPAD_BUTTON_START;       // or whatever fits your layout
+    case BTN_PINKIE:      return MG_GAMEPAD_BUTTON_LEFT_SHOULDER;
+    case BTN_BASE:        return MG_GAMEPAD_BUTTON_RIGHT_SHOULDER;
+    case BTN_BASE2:       return MG_GAMEPAD_BUTTON_BACK;
+
+    case BTN_BASE3: return MG_GAMEPAD_BUTTON_BACK;
+    case BTN_BASE4: return MG_GAMEPAD_BUTTON_START;
+    case BTN_BASE5: return MG_GAMEPAD_BUTTON_START;
+    case BTN_BASE6: return MG_GAMEPAD_BUTTON_RIGHT_STICK;
+    default: 
+            return MG_GAMEPAD_BUTTON_UNKNOWN;
   }
 }
 
@@ -115,7 +130,7 @@ int get_native_btn(mg_gamepad_btn btn) {
   }
 }
 
-mg_gamepad_axis get_gamepad_axis(unsigned int axis) {
+mg_gamepad_axis mg_get_gamepad_axis_backend(unsigned int axis) {
   switch (axis) {
   case ABS_X:
     return MG_GAMEPAD_AXIS_X;

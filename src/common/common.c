@@ -19,6 +19,7 @@ void mg_gamepads_init(mg_gamepads *gamepads) {
   gamepads->head = NULL;
   gamepads->cur = NULL;
 
+  mg_mappings_init();
   mg_gamepads_backend_init(gamepads);
 }
 
@@ -64,7 +65,7 @@ size_t mg_gamepad_get_axis_num(mg_gamepad *gamepad) {
 int mg_gamepad_get_axis_status(mg_gamepad *gamepad, size_t axis) {
   unsigned int i;
   for (i = 0; i < gamepad->axis_num; i++) {
-    if (gamepad->axises[i].key == axis) {
+    if (gamepad->axises[i].key == (int)axis) {
       return gamepad->axises[i].value;
     }
   }
