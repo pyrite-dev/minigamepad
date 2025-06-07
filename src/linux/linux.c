@@ -123,18 +123,26 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
         if (!isBitSet(i, keyBits))
             continue;
 
-        gamepad->ctx->keyMap[i - BTN_MISC] = (int)gamepad->button_num;
+        gamepad->ctx->keyMap[i - BTN_MISC] = (unsigned int)gamepad->button_num;
         gamepad->button_num++;
     }
 
-    #undef isBitSet
     // go through any axises a gamepad would have
-    for (unsigned int i = ABS_X; i <= ABS_MAX; i++) {
-        if (libevdev_has_event_code(ctx->dev, EV_ABS, i)) {
-            gamepad->axis_num += 1;
+    for (unsigned int i = 0; i < ABS_CNT; i++) {
+        if (!isBitSet(i, absBits))
+            continue;
+
+        if (i >= ABS_HAT0X && i <= ABS_HAT3Y) {
+            gamepad->ctx->absMap[i] = (unsigned int)gamepad->hat_num;
+            gamepad->hat_num++;
+            // Skip the Y axis
+            i++;
+        } else {
+            gamepad->ctx->absMap[i] = (unsigned int)gamepad->axis_num;
+            gamepad->axis_num++;
         }
     }
-
+    #undef isBitSet
 
     if ((gamepad->button_num == 0 && gamepad->axis_num == 0) || gamepad->button_num > MG_GAMEPAD_BUTTON_MAX + 10) {
         mg_gamepad_remove(gamepads, gamepad);
@@ -167,13 +175,13 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
             continue;
         }
 
-         gamepad->buttons[i].key = mg_get_gamepad_btn(gamepad, (unsigned int) gamepad->ctx->keyMap[btn - BTN_MISC]); 
+        gamepad->buttons[i].key = mg_get_gamepad_btn(gamepad, gamepad->ctx->keyMap[btn - BTN_MISC]); 
         gamepad->buttons[i].value = 0;
         i += 1;
     }
 
     i = 0;
-    for (unsigned int axis = ABS_X; axis <= ABS_MAX; axis++) {
+    for (unsigned int axis = ABS_X; axis < ABS_CNT; axis++) {
         if (libevdev_has_event_code(ctx->dev, EV_ABS, i) == false) {
             continue;
         }
@@ -198,7 +206,7 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
                 break;
         }
 
-        gamepad->axises[i].key = mg_get_gamepad_axis(gamepad, axis);
+        gamepad->axises[i].key = mg_get_gamepad_axis(gamepad, gamepad->ctx->absMap[i]);
         gamepad->axises[i].value = 0;
         gamepad->axises[i].deadzone = deadzone;
         i += 1;
@@ -335,7 +343,7 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
         }
         case EV_ABS: {
             mg_gamepad_axis axis = mg_get_gamepad_axis(gamepad, ev.code);
-
+            
             for (unsigned int i = 0; i <= gamepad->axis_num; i++) {
                 if (gamepad->axises[i].key == axis) {
                     int deadzone = gamepad->axises[i].deadzone;

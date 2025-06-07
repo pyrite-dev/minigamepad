@@ -43,7 +43,7 @@ typedef uint8_t bool;
 
 /// A button on a gamepad
 typedef enum {
-  MG_GAMEPAD_BUTTON_UNKNOWN = 0,
+  MG_GAMEPAD_BUTTON_UNKNOWN = -1,
   MG_GAMEPAD_BUTTON_SOUTH, /**< Bottom face button (e.g. Xbox A button) */
   MG_GAMEPAD_BUTTON_WEST,  /**< Left face button (e.g. Xbox X button) */
   MG_GAMEPAD_BUTTON_NORTH, /**< Top face button (e.g. Xbox Y button) */
@@ -82,7 +82,7 @@ typedef enum {
 
 /// An axis on a gamepad
 typedef enum {
-  MG_GAMEPAD_AXIS_UNKNOWN = 0,
+  MG_GAMEPAD_AXIS_UNKNOWN = -1,
   MG_GAMEPAD_AXIS_X,
   MG_GAMEPAD_AXIS_Y,
   MG_GAMEPAD_AXIS_Z,

@@ -22,7 +22,7 @@ typedef struct mappings_data {
 mappings_data mappings;
 
 mg_gamepad_btn mg_get_gamepad_btn(mg_gamepad* gamepad, unsigned int btn) {
-    for (size_t i = 1; i < 16; i++) {
+    for (size_t i = 0; i < 16; i++) {
         mg_element e = gamepad->mapping->buttons[i];
         if (e.index == btn) {
             return i;
@@ -33,15 +33,14 @@ mg_gamepad_btn mg_get_gamepad_btn(mg_gamepad* gamepad, unsigned int btn) {
 }
 
 mg_gamepad_axis mg_get_gamepad_axis(mg_gamepad* gamepad, unsigned int axis) {
-    mg_gamepad_axis backendAxis = mg_get_gamepad_axis_backend(axis);
-
-    if (!gamepad->mapping || backendAxis >= 6) {
-        return backendAxis;
+    for (size_t i = 0; i < 16; i++) {
+        mg_element e = gamepad->mapping->axes[i];
+        if (e.index == axis) {
+            return i;
+        }
     }
 
-    mg_element e = gamepad->mapping->axes[backendAxis];
-
-    return e.index;
+    return MG_GAMEPAD_AXIS_UNKNOWN;
 }
 
 void updateGamepadGUID(char* guid) {
@@ -1457,9 +1456,6 @@ const char * sdl_db[] = {
 #endif
 #endif
 #ifdef __linux__
-// custom by ColleagueRiley
-//    "030000005e040000ea02000011050000,Xbox One S Controller,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",
- 
 "030000005e040000ea02000017050000,Xbox One S Controller (Linux),a:b0,b:b1,x:b2,y:b3,back:b6,guide:b8,start:b7,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,platform:Linux",
     "03000000c82d00000031000011010000,8BitDo Adapter,a:b0,b:b1,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b2,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a2,righty:a3,start:b11,x:b3,y:b4,",
 "03000000c82d00000631000000010000,8BitDo Adapter 2,a:b0,b:b1,back:b6,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b8,leftshoulder:b4,leftstick:b9,lefttrigger:a2,leftx:a0,lefty:a1,rightshoulder:b5,rightstick:b10,righttrigger:a5,rightx:a3,righty:a4,start:b7,x:b2,y:b3,",

@@ -11,7 +11,8 @@ struct mg_gamepad_context_t {
   uint8_t supports_rumble;        // whether this controller does rumble
   struct ff_effect effect;        // effect used in the rumble function
   char full_path[267];            // the path of the file
-  int keyMap[KEY_CNT - BTN_MISC];
+  unsigned int keyMap[KEY_CNT - BTN_MISC];
+  unsigned int  absMap[ABS_CNT];
 };
 
 mg_gamepad_btn get_gamepad_btn(unsigned int btn);
