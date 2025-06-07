@@ -198,8 +198,13 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
             case ABS_HAT2X:
             case ABS_HAT2Y:
             case ABS_HAT3X:
-            case ABS_HAT3Y:
+            case ABS_HAT3Y: 
                 gamepad->hat_num += 1;
+                deadzone = 0;
+                break;
+            case ABS_Z:
+            case ABS_RZ:
+                deadzone = 0;
                 break;
             default:
                 deadzone = 5000;
