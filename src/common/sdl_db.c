@@ -22,7 +22,7 @@ typedef struct mappings_data {
 mappings_data mappings;
 
 mg_gamepad_btn mg_get_gamepad_btn(mg_gamepad* gamepad, unsigned int btn) {
-    for (size_t i = 0; i < 16; i++) {
+    for (size_t i = 1; i < 16; i++) {
         mg_element e = gamepad->mapping->buttons[i];
         if (e.index == btn) {
             return i;
