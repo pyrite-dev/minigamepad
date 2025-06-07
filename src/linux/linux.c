@@ -84,6 +84,7 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
     struct mg_gamepad_context_t* ctx = malloc(sizeof(struct mg_gamepad_context_t));
 
     gamepad->ctx = ctx;
+    gamepad->button_num = 0;
 
     // open said full path with libevdev
     ctx->dev = libevdev_new();
@@ -95,14 +96,38 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
         mg_gamepad_remove(gamepads, gamepad);
         return false;
     }
+    
+    struct input_id id = {0};
+    char evBits[(EV_CNT + 7) / 8] = {0};
+    char keyBits[(KEY_CNT + 7) / 8] = {0};
+    char absBits[(ABS_CNT + 7) / 8] = {0};
+
+    int fd = libevdev_get_fd(gamepad->ctx->dev);
+    if (ioctl(fd, EVIOCGBIT(0, sizeof(evBits)), evBits) < 0 ||
+        ioctl(fd, EVIOCGID, &id) < 0 || 
+        ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keyBits)), keyBits) < 0 ||
+        ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(absBits)), absBits) < 0
+    ) {
+        mg_gamepad_remove(gamepads, gamepad);
+        return false;
+    }
+
+    #define isBitSet(bit, arr) (arr[(bit) / 8] & (1 << ((bit) % 8)))
+    if (!isBitSet(EV_ABS, evBits)) {
+        mg_gamepad_remove(gamepads, gamepad);
+        return false;
+    }
 
     // go through any buttons a gamepad would have
-    for (unsigned int i = BTN_MISC; i <= BTN_TRIGGER_HAPPY6; i++) {
-        // if this device has one...
-        if (libevdev_has_event_code(ctx->dev, EV_KEY, i)) {
-           gamepad->button_num += 1;
-        }
+    for (unsigned int i = BTN_MISC; i < KEY_CNT; i++) {
+        if (!isBitSet(i, keyBits))
+            continue;
+
+        gamepad->ctx->keyMap[i - BTN_MISC] = (int)gamepad->button_num;
+        gamepad->button_num++;
     }
+
+    #undef isBitSet
     // go through any axises a gamepad would have
     for (unsigned int i = ABS_X; i <= ABS_MAX; i++) {
         if (libevdev_has_event_code(ctx->dev, EV_ABS, i)) {
@@ -115,23 +140,6 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
         mg_gamepad_remove(gamepads, gamepad);
         return false;
     }
-
-    struct input_id id = {0};
-
-    char evBits[(EV_CNT + 7) / 8] = {0};
-    int fd = libevdev_get_fd(gamepad->ctx->dev);
-    if (ioctl(fd, EVIOCGBIT(0, sizeof(evBits)), evBits) < 0 ||
-        ioctl(fd, EVIOCGID, &id) < 0) {
-        mg_gamepad_remove(gamepads, gamepad);
-        return false;
-    }
-
-    #define isBitSet(bit, arr) (arr[(bit) / 8] & (1 << ((bit) % 8)))
-    if (!isBitSet(EV_ABS, evBits)) {
-        mg_gamepad_remove(gamepads, gamepad);
-        return false;
-    }
-    #undef isBitSet
 
     memcpy(gamepad->ctx->full_path, full_path, sizeof(gamepad->ctx->full_path));            
     // Generate a joystick GUID that matches the SDL 2.0.5+ one (sourced from GLFW)
@@ -158,8 +166,8 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
         if (libevdev_has_event_code(ctx->dev, EV_KEY, btn) == false) {
             continue;
         }
-        
-        gamepad->buttons[i].key = mg_get_gamepad_btn(gamepad, btn);
+
+         gamepad->buttons[i].key = mg_get_gamepad_btn(gamepad, (unsigned int) gamepad->ctx->keyMap[btn - BTN_MISC]); 
         gamepad->buttons[i].value = 0;
         i += 1;
     }
@@ -309,7 +317,8 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
 
     switch (ev.type) {
         case EV_KEY: {
-            mg_gamepad_btn btn = mg_get_gamepad_btn(gamepad, ev.code);
+
+            mg_gamepad_btn btn = mg_get_gamepad_btn(gamepad, (unsigned int) gamepad->ctx->keyMap[ev.code - BTN_MISC]); 
 
             for (size_t i = 0; i <= gamepad->button_num; i++) {
                 if (gamepad->buttons[i].key == btn) {
