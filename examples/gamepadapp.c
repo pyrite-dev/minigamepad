@@ -43,7 +43,7 @@ int main(void) {
         }
 
         mg_gamepad_event ev;
-        if (mg_gamepads_update(&gamepads, &ev)) {
+        while (mg_gamepads_update(&gamepads, &ev)) {
             switch (ev.type) {
                 case MG_GAMEPAD_CONNECT:
                     log = (char*)RSGL_strFmt("new gamepad connected");
@@ -166,20 +166,26 @@ int main(void) {
                     case MG_GAMEPAD_AXIS_LEFT_X:
                         RSGL_drawCircle(RSGL_CIRCLE(gamepadRect.x + (gamepadRect.w * (2.0f / 8.0f)), gamepadRect.y + gamepadRect.h - 100, 80), RSGL_RGB(100, 100, 100));
 
-                        RSGL_drawCircle(RSGL_CIRCLE(gamepadRect.x + (gamepadRect.w * (2.15f / 8.0f)) + point.x, gamepadRect.y + gamepadRect.h - 90 + point.y, 60), RSGL_RGB(50, 50, 50));
+                        if (gamepad->buttons[MG_GAMEPAD_BUTTON_LEFT_STICK].value == 0)
+                            RSGL_drawCircle(RSGL_CIRCLE(gamepadRect.x + (gamepadRect.w * (2.15f / 8.0f)) + point.x, gamepadRect.y + gamepadRect.h - 90 + point.y, 60), RSGL_RGB(50, 50, 50));
+                        else 
+                            RSGL_drawCircle(RSGL_CIRCLE(gamepadRect.x + (gamepadRect.w * (2.15f / 8.0f)) + point.x, gamepadRect.y + gamepadRect.h - 90 + point.y, 60), RSGL_RGB(200, 0, 0));
                         i++;
                         break;
                     case MG_GAMEPAD_AXIS_RIGHT_X: 
                         RSGL_drawCircle(RSGL_CIRCLE(gamepadRect.x + (gamepadRect.w * (5.0f / 8.0f)), gamepadRect.y + gamepadRect.h - 100, 80), RSGL_RGB(100, 100, 100));
                         
-                        RSGL_drawCircle(RSGL_CIRCLE(gamepadRect.x + (gamepadRect.w * (5.15f / 8.0f)) + point.x , gamepadRect.y + gamepadRect.h - 90 + point.y, 60), RSGL_RGB(50, 50, 50));
+                        if (gamepad->buttons[MG_GAMEPAD_BUTTON_RIGHT_STICK].value == 0) 
+                            RSGL_drawCircle(RSGL_CIRCLE(gamepadRect.x + (gamepadRect.w * (5.15f / 8.0f)) + point.x , gamepadRect.y + gamepadRect.h - 90 + point.y, 60),  RSGL_RGB(50, 50, 50));
+                        else
+                            RSGL_drawCircle(RSGL_CIRCLE(gamepadRect.x + (gamepadRect.w * (5.15f / 8.0f)) + point.x , gamepadRect.y + gamepadRect.h - 90 + point.y, 60), RSGL_RGB(200, 0, 0)); 
                         i++;
                         break;
                     case MG_GAMEPAD_AXIS_LEFT_TRIGGER:
-                        RSGL_drawRect(RSGL_RECT(gamepadRect.x - 40, gamepadRect.y - 40, 20, 100), RSGL_RGB(100, 100, 100));
+                        RSGL_drawRect(RSGL_RECT(gamepadRect.x - 40, gamepadRect.y - 40, 20, 100), BUTTON_COLOR(MG_GAMEPAD_BUTTON_LEFT_TRIGGER, 200, 0, 0));
                         break;
                     case MG_GAMEPAD_AXIS_RIGHT_TRIGGER:
-                        RSGL_drawRect(RSGL_RECT(gamepadRect.x + gamepadRect.w + 20, gamepadRect.y - 40, 20, 100), RSGL_RGB(100, 100, 100));
+                        RSGL_drawRect(RSGL_RECT(gamepadRect.x + gamepadRect.w + 20, gamepadRect.y - 40, 20, 100), BUTTON_COLOR(MG_GAMEPAD_BUTTON_RIGHT_TRIGGER, 200, 0, 0));
                         break;
                     default: break;
                 }

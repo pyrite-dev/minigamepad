@@ -25,30 +25,24 @@ mg_gamepad_btn mg_get_gamepad_btn(mg_gamepad* gamepad, unsigned int btn) {
     if (gamepad->mapping == NULL) {
         return MG_GAMEPAD_BUTTON_UNKNOWN;
     }
-
-    for (size_t i = 0; i < 16; i++) {
-        mg_element e = gamepad->mapping->buttons[i];
-        if (e.index == btn) {    
-            return i;
-        }
-    }
-
-    return MG_GAMEPAD_BUTTON_UNKNOWN;
+    
+    if (btn >= 256) return MG_GAMEPAD_BUTTON_UNKNOWN;
+    if (gamepad->mapping->rButtons[btn] == MG_GAMEPAD_BUTTON_UNKNOWN) 
+        printf("unkown %i\n", btn);
+    
+    return gamepad->mapping->rButtons[btn];
 }
 
 mg_gamepad_axis mg_get_gamepad_axis(mg_gamepad* gamepad, unsigned int axis) {
     if (gamepad->mapping == NULL) {
         return MG_GAMEPAD_AXIS_UNKNOWN;
     }
-
-    for (size_t i = 0; i < 16; i++) {
-        mg_element e = gamepad->mapping->axes[i];
-        if (e.index == axis) {
-            return i;
-        }
+    
+    if (axis >= MG_GAMEPAD_AXIS_MAX) { 
+        return MG_GAMEPAD_AXIS_UNKNOWN;
     }
-
-    return MG_GAMEPAD_AXIS_UNKNOWN;
+    
+    return gamepad->mapping->rAxes[axis];
 }
 
 void updateGamepadGUID(char* guid) {
@@ -131,10 +125,11 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
         { "dpright", 7,       &mapping->buttons[MG_GAMEPAD_BUTTON_DPAD_RIGHT] },
         { "dpdown", 6,       &mapping->buttons[MG_GAMEPAD_BUTTON_DPAD_DOWN] },
         { "dpleft", 6,        &mapping->buttons[MG_GAMEPAD_BUTTON_DPAD_LEFT] },
+        { "lefttrigger", 11,   &mapping->buttons[MG_GAMEPAD_BUTTON_LEFT_TRIGGER] },
+        { "righttrigger", 12,  &mapping->buttons[MG_GAMEPAD_BUTTON_RIGHT_TRIGGER] },
+
         { "lefttrigger", 11,   &mapping->axes[MG_GAMEPAD_AXIS_LEFT_TRIGGER] },
         { "righttrigger", 12,  &mapping->axes[MG_GAMEPAD_AXIS_RIGHT_TRIGGER] },
-        { "lefttrigger", 11,   &mapping->axes[MG_GAMEPAD_BUTTON_LEFT_TRIGGER] },
-        { "righttrigger", 12,  &mapping->axes[MG_GAMEPAD_BUTTON_RIGHT_TRIGGER] },
         { "leftx",  5,       &mapping->axes[MG_GAMEPAD_AXIS_LEFT_X] },
         { "lefty",  5,       &mapping->axes[MG_GAMEPAD_AXIS_LEFT_Y] } ,
         { "rightx", 6,       &mapping->axes[MG_GAMEPAD_AXIS_RIGHT_X] },
@@ -188,6 +183,10 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
             }
             
             mg_element* e = fields[i].element;
+            if (e >= mapping->axes && e <= &mapping->axes[6] && substr[0] == 'b') {
+                continue;
+            }
+
             int8_t minimum = -1;
             int8_t maximum = 1;
             
@@ -224,6 +223,7 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
                     break;
                 default: break;
             }
+
             break;
         }
 
@@ -234,6 +234,28 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
     for (i = 0;  i < 32;  i++) {
         if (mapping->guid[i] >= 'A' && mapping->guid[i] <= 'F')
             mapping->guid[i] += 'a' - 'A';
+    }
+
+    for (i = 0; i < 255; i++) {
+        mapping->rButtons[i] = MG_GAMEPAD_BUTTON_UNKNOWN;
+        for (size_t y = 0; y < 16; y++) {
+            mg_element e = mapping->buttons[y];
+            if (e.index == i) {    
+                mapping->rButtons[i] = y;
+                break;
+            }
+        }
+    }
+
+    for (i = 0; i < MG_GAMEPAD_AXIS_MAX; i++) {
+        mapping->rAxes[i] = MG_GAMEPAD_AXIS_UNKNOWN;
+        for (size_t y = 0; y < 6; y++) {
+            mg_element e = mapping->buttons[y];
+            if (e.index == i) {    
+                mapping->rAxes[i] = y;
+                break;
+            }
+        }
     }
 
     updateGamepadGUID(mapping->guid);
