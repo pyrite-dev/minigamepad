@@ -27,8 +27,6 @@ mg_gamepad_btn mg_get_gamepad_btn(mg_gamepad* gamepad, unsigned int btn) {
     }
     
     if (btn >= 256) return MG_GAMEPAD_BUTTON_UNKNOWN;
-    if (gamepad->mapping->rButtons[btn] == MG_GAMEPAD_BUTTON_UNKNOWN) 
-        printf("unkown %i\n", btn);
     
     return gamepad->mapping->rButtons[btn];
 }
@@ -250,7 +248,7 @@ static bool parseMapping(mg_mapping* mapping, const char* string) {
     for (i = 0; i < MG_GAMEPAD_AXIS_MAX; i++) {
         mapping->rAxes[i] = MG_GAMEPAD_AXIS_UNKNOWN;
         for (size_t y = 0; y < 6; y++) {
-            mg_element e = mapping->buttons[y];
+            mg_element e = mapping->axes[y];
             if (e.index == i) {    
                 mapping->rAxes[i] = y;
                 break;
