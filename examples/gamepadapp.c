@@ -183,9 +183,13 @@ int main(void) {
                         break;
                     case MG_GAMEPAD_AXIS_LEFT_TRIGGER:
                         RSGL_drawRect(RSGL_RECT(gamepadRect.x - 40, gamepadRect.y - 40, 20, 100), BUTTON_COLOR(MG_GAMEPAD_BUTTON_LEFT_TRIGGER, 200, 0, 0));
+                        if (gamepad->axises[i].value > 0)
+                            RSGL_drawRect(RSGL_RECT(gamepadRect.x - 40, gamepadRect.y - 40, 20, gamepad->axises[i].value), RSGL_RGB(200, 0, 0));
                         break;
                     case MG_GAMEPAD_AXIS_RIGHT_TRIGGER:
                         RSGL_drawRect(RSGL_RECT(gamepadRect.x + gamepadRect.w + 20, gamepadRect.y - 40, 20, 100), BUTTON_COLOR(MG_GAMEPAD_BUTTON_RIGHT_TRIGGER, 200, 0, 0));
+                        if (gamepad->axises[i].value > 0)
+                            RSGL_drawRect(RSGL_RECT(gamepadRect.x + gamepadRect.w + 20, gamepadRect.y - 40, 20, gamepad->axises[i].value), RSGL_RGB(200, 0, 0));
                         break;
                     default: break;
                 }
