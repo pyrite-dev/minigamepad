@@ -24,14 +24,17 @@ int main(void) {
     char* log = "\0";
 
     while (RGFW_window_shouldClose(win) == false) {
-        while (RGFW_window_checkEvent(win));
+        while (RGFW_window_checkEvent(win)) {
+            if (win->event.type != RGFW_keyPressed)
+                continue;
+           
+            if (RGFW_isPressed(win, RGFW_left) && gamepad->prev != NULL) {
+                gamepad = gamepad->prev;
+            }
 
-        if (RGFW_isPressed(win, RGFW_left) && gamepad->prev != NULL) {
-            gamepad = gamepad->prev;
-        }
-
-        if (RGFW_isPressed(win, RGFW_right) && gamepad->next != NULL) {
-            gamepad = gamepad->next;
+            if (RGFW_isPressed(win, RGFW_right) && gamepad->next != NULL) {
+                gamepad = gamepad->next;
+            }
         }
 
         mg_gamepads_fetch(&gamepads);
@@ -43,23 +46,18 @@ int main(void) {
         if (mg_gamepads_update(&gamepads, &ev)) {
             switch (ev.type) {
                 case MG_GAMEPAD_CONNECT:
-                    printf("new gamepad connected\n");
                     log = (char*)RSGL_strFmt("new gamepad connected");
                     break;
                 case MG_GAMEPAD_DISCONNECT:
-                    printf("gamepad disconnected\n");
                     log = (char*)RSGL_strFmt("gamepad disconnected");
                     break;
                 case MG_GAMEPAD_BTN_PRESS:
-                    printf("button pressed %i\n", ev.btn);
                     log = (char*)RSGL_strFmt("button pressed %i", ev.btn);
                     break;
                 case MG_GAMEPAD_BTN_RELEASE:
-                    printf("button released %i\n", ev.btn);
                     log = (char*)RSGL_strFmt("button released", ev.btn);
                     break;
                 case MG_GAMEPAD_AXIS_MOVE:
-                    printf("axis moved %i\n", ev.axis);
                     log = (char*)RSGL_strFmt("axis moved %i", ev.axis);
                     break;
                 default: break;
@@ -80,8 +78,11 @@ int main(void) {
             #define BUTTON_COLOR(i, r, g, b) (gamepad->buttons[i].value) ? RSGL_RGB(r, g, b) : RSGL_RGB(100, 100, 100)
 
             int i;
-            for (i = 0; i < gamepad->button_num; i++) {
-                switch (gamepad->buttons[i].key) {
+            for (i = 0; i < MG_GAMEPAD_BUTTON_MAX; i++) {
+                if (gamepad->buttons[i].supported == false)
+                    continue;
+
+                switch (i) {
                         case MG_GAMEPAD_BUTTON_DPAD_UP:
                             RSGL_drawRect(RSGL_RECT(gamepadRect.x + (gamepadRect.w * (1.0f / 8.0f)), 
                                                 gamepadRect.y + (gamepadRect.h * (2.0f / 8.0f)), 20, 20), RSGL_RGB(100, 100, 100));
@@ -151,14 +152,17 @@ int main(void) {
                 }
             }
  
-            for (i = 0; i < gamepad->axis_num; i++) {
+            for (i = 0; i < MG_GAMEPAD_AXIS_MAX; i++) {
+                if (gamepad->axises[i].supported == false)
+                    continue;
+
                 RSGL_pointF point = RSGL_POINTF((float)gamepad->axises[i].value, 
                                                 (float)gamepad->axises[i + 1].value);
 
                 point.x = (point.x / 100.0f) * 30;
                 point.y = (point.y / 100.0f) * 30;
 
-                switch (gamepad->axises[i].key) {
+                switch (i) {
                     case MG_GAMEPAD_AXIS_LEFT_X:
                         RSGL_drawCircle(RSGL_CIRCLE(gamepadRect.x + (gamepadRect.w * (2.0f / 8.0f)), gamepadRect.y + gamepadRect.h - 100, 80), RSGL_RGB(100, 100, 100));
 

@@ -61,6 +61,7 @@ typedef enum {
   MG_GAMEPAD_BUTTON_DPAD_DOWN,
   MG_GAMEPAD_BUTTON_DPAD_LEFT,
   MG_GAMEPAD_BUTTON_DPAD_RIGHT,
+/* extras */
   MG_GAMEPAD_BUTTON_MISC1, /**< Additional button (e.g. Xbox Series X share
                                button, PS5 microphone button, Nintendo Switch
                                Pro capture button, Amazon Luna microphone
@@ -91,13 +92,18 @@ typedef enum {
   MG_GAMEPAD_AXIS_RIGHT_Y,
   MG_GAMEPAD_AXIS_LEFT_TRIGGER,
   MG_GAMEPAD_AXIS_RIGHT_TRIGGER,
+  MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT,
+  MG_GAMEPAD_AXIS_HAT_DPAD_LEFT = MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT,
+  MG_GAMEPAD_AXIS_HAT_DPAD_RIGHT = MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT,
+  MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN,
+  MG_GAMEPAD_AXIS_HAT_DPAD_UP = MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN,
+  MG_GAMEPAD_AXIS_HAT_DPAD_DOWN = MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN,
+  /* extras */
   MG_GAMEPAD_AXIS_THROTTLE,
   MG_GAMEPAD_AXIS_RUDDER,
   MG_GAMEPAD_AXIS_WHEEL,
   MG_GAMEPAD_AXIS_GAS,
   MG_GAMEPAD_AXIS_BRAKE,
-  MG_GAMEPAD_AXIS_HAT0X,
-  MG_GAMEPAD_AXIS_HAT0Y,
   MG_GAMEPAD_AXIS_HAT1X,
   MG_GAMEPAD_AXIS_HAT1Y,
   MG_GAMEPAD_AXIS_HAT2X,
@@ -132,17 +138,12 @@ typedef enum {
 struct mg_gamepad_context_t;
 
 typedef struct mg_buttons {
-    mg_gamepad_btn key;
+    bool supported;
     int16_t value;
 } mg_buttons;
 
-typedef struct mg_hats {
-    mg_gamepad_hat key;
-    int16_t value;
-} mg_hats;
-
 typedef struct mg_axises {
-    mg_gamepad_axis key;
+    bool supported;
     int16_t value;
     int16_t deadzone;
 } mg_axises;
@@ -151,24 +152,17 @@ struct mg_mapping;
 
 typedef struct mg_gamepad {
     // Internal context for platform dependent items.
-    struct mg_gamepad_context_t *ctx;
+    struct mg_gamepad_context_t* ctx;
     // Map of buttons that the controller has
     mg_buttons buttons[MG_MAX_BUTTONS];
-    // The number of buttons on the controller.
-    size_t button_num;
+
     // Map of axises that the controller has, + their deadzones
     // By default, the deadzones are 5000 for any axis that isn't the d-pad; you
     // are strongly encouraged to make this customizable in any program you make
     // with this.
 
     mg_axises axises[MG_MAX_AXISES];
-    // The number of axises on the controller.
-    size_t axis_num;
-
-    mg_hats hats[MG_MAX_HATS]; 
-    // The number of hats
-    size_t hat_num;
-
+    
     bool connected;
     char name[128];
     char guid[33];
