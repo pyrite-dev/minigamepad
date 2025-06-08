@@ -11,7 +11,4 @@ jobs:
       - uses: actions/checkout@v4
       - name: Make
         run: 
-          sudo apt-get update -qq
-          sudo apt-get install gcc-multilib
-          sudo apt-get install -y --no-install-recommends libx11-dev mesa-common-dev libglx-dev libxcursor-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxext-dev libxfixes-dev 
           make
