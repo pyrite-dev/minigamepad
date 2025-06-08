@@ -91,10 +91,10 @@ const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis) {
     return "Gas";
   case MG_GAMEPAD_AXIS_BRAKE:
     return "Brake";
-  case MG_GAMEPAD_AXIS_HAT0X:
-    return "Hat 0 X Axis";
-  case MG_GAMEPAD_AXIS_HAT0Y:
-    return "Hat 0 Y Axis";
+  case MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT:
+    return "Hat D-Pad Left-Right Axis";
+  case MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN:
+    return "Hat D-Pad Up-Down Axis";
   case MG_GAMEPAD_AXIS_HAT1X:
     return "Hat 1 X Axis";
   case MG_GAMEPAD_AXIS_HAT1Y:

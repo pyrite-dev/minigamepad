@@ -155,9 +155,9 @@ mg_gamepad_axis mg_get_gamepad_axis_backend(unsigned int axis) {
   case ABS_BRAKE:
     return MG_GAMEPAD_AXIS_BRAKE;
   case ABS_HAT0X:
-    return MG_GAMEPAD_AXIS_HAT0X;
+    return MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT;
   case ABS_HAT0Y:
-    return MG_GAMEPAD_AXIS_HAT0Y;
+    return MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN;
   case ABS_HAT1X:
     return MG_GAMEPAD_AXIS_HAT1X;
   case ABS_HAT1Y:
@@ -215,9 +215,9 @@ int get_native_axis(mg_gamepad_axis axis) {
     return ABS_GAS;
   case MG_GAMEPAD_AXIS_BRAKE:
     return ABS_BRAKE;
-  case MG_GAMEPAD_AXIS_HAT0X:
+  case MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT:
     return ABS_HAT0X;
-  case MG_GAMEPAD_AXIS_HAT0Y:
+        case MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN:
     return ABS_HAT0Y;
   case MG_GAMEPAD_AXIS_HAT1X:
     return ABS_HAT1X;
