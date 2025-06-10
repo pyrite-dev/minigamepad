@@ -230,7 +230,7 @@ bool setup_gamepad(mg_gamepads* gamepads, char* full_path) {
                 deadzone = 0;
                 break;
             default:
-                deadzone = 5000;
+                deadzone = 15;
                 break;
         }
         
@@ -356,7 +356,7 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
         if (rc) {
             return false;
         }
-    } while (ev.type == EV_SYN); // Ignore SYN events
+    } while (ev.type != EV_KEY && ev.type != EV_ABS); // Ignore events we don't handle
 
     switch (ev.type) {
         case EV_KEY: {
@@ -395,14 +395,14 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
                 // Normalize to 0.0 -> 1.0
                 normalized = (normalized - (float)info.minimum) / range;
                 // Normalize to -1.0 -> 1.0
-                normalized = normalized * 2.0f - 1.0f;
+                normalized = normalized * 2.0f - 1.0f;                
             }
             
             if (gamepad->axises[axis].supported) {
                 int deadzone = gamepad->axises[axis].deadzone;
-                int16_t event_val = 0;
-                if (abs(ev.value) >= deadzone) {
-                    event_val = (int16_t)(normalized * 100);
+                int16_t event_val = (int16_t)(normalized * 100);
+                if (abs(event_val) < deadzone) {
+                    event_val = 0;
                 }
 
                 gamepad->axises[axis].value = event_val;
@@ -414,8 +414,6 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
                 event->axis = axis;
             }
             return true;
-        }
-        case EV_FF: {
         }
         default:
             break;
