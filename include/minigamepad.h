@@ -43,7 +43,7 @@ typedef uint8_t bool;
 
 /// A button on a gamepad
 typedef enum {
-  MG_GAMEPAD_BUTTON_UNKNOWN = 0,
+  MG_GAMEPAD_BUTTON_UNKNOWN = -1,
   MG_GAMEPAD_BUTTON_SOUTH, /**< Bottom face button (e.g. Xbox A button) */
   MG_GAMEPAD_BUTTON_WEST,  /**< Left face button (e.g. Xbox X button) */
   MG_GAMEPAD_BUTTON_NORTH, /**< Top face button (e.g. Xbox Y button) */
@@ -55,10 +55,13 @@ typedef enum {
   MG_GAMEPAD_BUTTON_RIGHT_STICK,
   MG_GAMEPAD_BUTTON_LEFT_SHOULDER,
   MG_GAMEPAD_BUTTON_RIGHT_SHOULDER,
+  MG_GAMEPAD_BUTTON_LEFT_TRIGGER,
+  MG_GAMEPAD_BUTTON_RIGHT_TRIGGER,
   MG_GAMEPAD_BUTTON_DPAD_UP,
   MG_GAMEPAD_BUTTON_DPAD_DOWN,
   MG_GAMEPAD_BUTTON_DPAD_LEFT,
   MG_GAMEPAD_BUTTON_DPAD_RIGHT,
+/* extras */
   MG_GAMEPAD_BUTTON_MISC1, /**< Additional button (e.g. Xbox Series X share
                                button, PS5 microphone button, Nintendo Switch
                                Pro capture button, Amazon Luna microphone
@@ -82,20 +85,25 @@ typedef enum {
 
 /// An axis on a gamepad
 typedef enum {
-  MG_GAMEPAD_AXIS_UNKNOWN = 0,
-  MG_GAMEPAD_AXIS_X,
-  MG_GAMEPAD_AXIS_Y,
-  MG_GAMEPAD_AXIS_Z,
-  MG_GAMEPAD_AXIS_RX,
-  MG_GAMEPAD_AXIS_RY,
-  MG_GAMEPAD_AXIS_RZ,
+  MG_GAMEPAD_AXIS_UNKNOWN = -1,
+  MG_GAMEPAD_AXIS_LEFT_X,
+  MG_GAMEPAD_AXIS_LEFT_Y,
+  MG_GAMEPAD_AXIS_RIGHT_X,
+  MG_GAMEPAD_AXIS_RIGHT_Y,
+  MG_GAMEPAD_AXIS_LEFT_TRIGGER,
+  MG_GAMEPAD_AXIS_RIGHT_TRIGGER,
+  MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT,
+  MG_GAMEPAD_AXIS_HAT_DPAD_LEFT = MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT,
+  MG_GAMEPAD_AXIS_HAT_DPAD_RIGHT = MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT,
+  MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN,
+  MG_GAMEPAD_AXIS_HAT_DPAD_UP = MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN,
+  MG_GAMEPAD_AXIS_HAT_DPAD_DOWN = MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN,
+  /* extras */
   MG_GAMEPAD_AXIS_THROTTLE,
   MG_GAMEPAD_AXIS_RUDDER,
   MG_GAMEPAD_AXIS_WHEEL,
   MG_GAMEPAD_AXIS_GAS,
   MG_GAMEPAD_AXIS_BRAKE,
-  MG_GAMEPAD_AXIS_HAT0X,
-  MG_GAMEPAD_AXIS_HAT0Y,
   MG_GAMEPAD_AXIS_HAT1X,
   MG_GAMEPAD_AXIS_HAT1Y,
   MG_GAMEPAD_AXIS_HAT2X,
@@ -114,6 +122,15 @@ typedef enum {
   MG_GAMEPAD_AXIS_MAX,
 } mg_gamepad_axis;
 
+typedef enum {
+    MG_HAT_CENTERED = 0,
+    MG_HAT_UP = 1,  
+    MG_HAT_RIGHT = 2,
+    MG_HAT_DOWN = 4,
+    MG_HAT_LEFT = 8
+} mg_gamepad_hat;
+
+#define MG_MAX_HATS 2
 #define MG_MAX_BUTTONS MG_GAMEPAD_BUTTON_MAX
 #define MG_MAX_AXISES MG_GAMEPAD_AXIS_MAX
 
@@ -121,12 +138,12 @@ typedef enum {
 struct mg_gamepad_context_t;
 
 typedef struct mg_buttons {
-    mg_gamepad_btn key;
+    bool supported;
     int16_t value;
 } mg_buttons;
 
 typedef struct mg_axises {
-    mg_gamepad_axis key;
+    bool supported;
     int16_t value;
     int16_t deadzone;
 } mg_axises;
@@ -135,20 +152,17 @@ struct mg_mapping;
 
 typedef struct mg_gamepad {
     // Internal context for platform dependent items.
-    struct mg_gamepad_context_t *ctx;
+    struct mg_gamepad_context_t* ctx;
     // Map of buttons that the controller has
     mg_buttons buttons[MG_MAX_BUTTONS];
-    // The number of buttons on the controller.
-    size_t button_num;
+
     // Map of axises that the controller has, + their deadzones
     // By default, the deadzones are 5000 for any axis that isn't the d-pad; you
     // are strongly encouraged to make this customizable in any program you make
     // with this.
 
     mg_axises axises[MG_MAX_AXISES];
-    // The number of axises on the controller.
-    size_t axis_num;
-
+    
     bool connected;
     char name[128];
     char guid[33];
@@ -205,7 +219,7 @@ MG_API void mg_gamepads_init(mg_gamepads *gamepad);
 MG_API bool mg_gamepads_update(mg_gamepads* gamepads, mg_gamepad_event* ev);
 
 /// Add another mapping to the gamepads mappings
-MG_API int mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string);
+MG_API bool mg_update_gamepad_mappings(mg_gamepads*gamepads, const char* string);
 
 /// Update the gamepad's internal structure.
 /// This needs to be called before any gamepad buttons/axises are checked if you

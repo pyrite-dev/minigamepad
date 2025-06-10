@@ -35,6 +35,10 @@ const char *mg_gamepad_btn_get_name(mg_gamepad_btn btn) {
     return "Left Shoulder Button";
   case MG_GAMEPAD_BUTTON_RIGHT_SHOULDER:
     return "Right Shoulder Button";
+  case MG_GAMEPAD_BUTTON_LEFT_TRIGGER:
+    return "Left Trigger Button";
+  case MG_GAMEPAD_BUTTON_RIGHT_TRIGGER:
+    return "Right Trigger Button";
   case MG_GAMEPAD_BUTTON_MISC1:
     return "Misc Button 1";
   case MG_GAMEPAD_BUTTON_RIGHT_PADDLE1:
@@ -65,17 +69,17 @@ const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis) {
   switch (axis) {
   case MG_GAMEPAD_AXIS_UNKNOWN:
     return "Unknown Axis";
-  case MG_GAMEPAD_AXIS_X:
+  case MG_GAMEPAD_AXIS_LEFT_X:
     return "X Axis";
-  case MG_GAMEPAD_AXIS_Y:
+  case MG_GAMEPAD_AXIS_LEFT_Y:
     return "Y Axis";
-  case MG_GAMEPAD_AXIS_Z:
+  case MG_GAMEPAD_AXIS_LEFT_TRIGGER:
     return "Z Axis";
-  case MG_GAMEPAD_AXIS_RX:
+  case MG_GAMEPAD_AXIS_RIGHT_X:
     return "RX Axis";
-  case MG_GAMEPAD_AXIS_RY:
+  case MG_GAMEPAD_AXIS_RIGHT_Y:
     return "RY Axis";
-  case MG_GAMEPAD_AXIS_RZ:
+  case MG_GAMEPAD_AXIS_RIGHT_TRIGGER:
     return "RZ Axis";
   case MG_GAMEPAD_AXIS_THROTTLE:
     return "Throttle";
@@ -87,10 +91,10 @@ const char *mg_gamepad_axis_get_name(mg_gamepad_axis axis) {
     return "Gas";
   case MG_GAMEPAD_AXIS_BRAKE:
     return "Brake";
-  case MG_GAMEPAD_AXIS_HAT0X:
-    return "Hat 0 X Axis";
-  case MG_GAMEPAD_AXIS_HAT0Y:
-    return "Hat 0 Y Axis";
+  case MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT:
+    return "Hat D-Pad Left-Right Axis";
+  case MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN:
+    return "Hat D-Pad Up-Down Axis";
   case MG_GAMEPAD_AXIS_HAT1X:
     return "Hat 1 X Axis";
   case MG_GAMEPAD_AXIS_HAT1Y:

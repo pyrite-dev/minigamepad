@@ -19,6 +19,7 @@ void mg_gamepads_init(mg_gamepads *gamepads) {
   gamepads->head = NULL;
   gamepads->cur = NULL;
 
+  mg_mappings_init();
   mg_gamepads_backend_init(gamepads);
 }
 
@@ -41,34 +42,15 @@ void mg_gamepads_free(mg_gamepads *gamepads) {
 
 int mg_gamepad_get_button_status(mg_gamepad *gamepad,
                                  mg_gamepad_btn btn) {
-  unsigned int i;
-  for (i = 0; i < gamepad->button_num; i++) {
-    if (gamepad->buttons[i].key == btn) {
-      return gamepad->buttons[i].value;
-    }
-  }
-  return -1;
-}
-
-size_t mg_gamepad_btns_num(mg_gamepad *gamepad) {
-  return gamepad->button_num;
-}
-mg_gamepad_btn mg_gamepad_btns_at(mg_gamepad *gamepad, size_t idx) {
-  return gamepad->buttons[idx].key;
-}
-
-size_t mg_gamepad_get_axis_num(mg_gamepad *gamepad) {
-  return gamepad->axis_num;
+  if (gamepad->buttons[btn].supported == false)
+      return -1;
+  return gamepad->buttons[btn].value;
 }
 
 int mg_gamepad_get_axis_status(mg_gamepad *gamepad, size_t axis) {
-  unsigned int i;
-  for (i = 0; i < gamepad->axis_num; i++) {
-    if (gamepad->axises[i].key == axis) {
-      return gamepad->axises[i].value;
-    }
-  }
-  return -1;
+    if (gamepad->axises[axis].supported == false)
+        return -1;
+    return gamepad->axises[axis].value;
 }
 
 mg_gamepad *mg_alloc(mg_gamepads *gamepads) {

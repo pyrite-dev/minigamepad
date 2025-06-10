@@ -10,4 +10,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Make
-        run: make
+        run: 
+          make

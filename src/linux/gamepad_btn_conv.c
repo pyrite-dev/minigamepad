@@ -2,7 +2,9 @@
 #include "minigamepad.h"
 #include <linux/input-event-codes.h>
 
-mg_gamepad_btn get_gamepad_btn(unsigned int btn) {
+#include <stdio.h>
+
+mg_gamepad_btn mg_get_gamepad_btn_backend(unsigned int btn) {
   switch (btn) {
   case BTN_WEST:
     return MG_GAMEPAD_BUTTON_WEST;
@@ -56,8 +58,21 @@ mg_gamepad_btn get_gamepad_btn(unsigned int btn) {
   case BTN_TRIGGER_HAPPY10:
     return MG_GAMEPAD_BUTTON_MISC6;
 
-  default:
-    return MG_GAMEPAD_BUTTON_UNKNOWN;
+    case BTN_TRIGGER:     return MG_GAMEPAD_BUTTON_WEST;       // maybe map trigger as "A"
+    case BTN_THUMB:       return MG_GAMEPAD_BUTTON_SOUTH;
+    case BTN_THUMB2:      return MG_GAMEPAD_BUTTON_EAST;
+    case BTN_TOP:         return MG_GAMEPAD_BUTTON_NORTH;
+    case BTN_TOP2:        return MG_GAMEPAD_BUTTON_START;       // or whatever fits your layout
+    case BTN_PINKIE:      return MG_GAMEPAD_BUTTON_LEFT_SHOULDER;
+    case BTN_BASE:        return MG_GAMEPAD_BUTTON_RIGHT_SHOULDER;
+    case BTN_BASE2:       return MG_GAMEPAD_BUTTON_BACK;
+
+    case BTN_BASE3: return MG_GAMEPAD_BUTTON_BACK;
+    case BTN_BASE4: return MG_GAMEPAD_BUTTON_START;
+    case BTN_BASE5: return MG_GAMEPAD_BUTTON_START;
+    case BTN_BASE6: return MG_GAMEPAD_BUTTON_RIGHT_STICK;
+    default: 
+            return MG_GAMEPAD_BUTTON_UNKNOWN;
   }
 }
 
@@ -115,20 +130,20 @@ int get_native_btn(mg_gamepad_btn btn) {
   }
 }
 
-mg_gamepad_axis get_gamepad_axis(unsigned int axis) {
+mg_gamepad_axis mg_get_gamepad_axis_backend(unsigned int axis) {
   switch (axis) {
   case ABS_X:
-    return MG_GAMEPAD_AXIS_X;
+    return MG_GAMEPAD_AXIS_LEFT_X;
   case ABS_Y:
-    return MG_GAMEPAD_AXIS_Y;
+    return MG_GAMEPAD_AXIS_LEFT_Y;
   case ABS_Z:
-    return MG_GAMEPAD_AXIS_Z;
+    return MG_GAMEPAD_AXIS_LEFT_TRIGGER;
   case ABS_RX:
-    return MG_GAMEPAD_AXIS_RX;
+    return MG_GAMEPAD_AXIS_RIGHT_X;
   case ABS_RY:
-    return MG_GAMEPAD_AXIS_RY;
+    return MG_GAMEPAD_AXIS_RIGHT_Y;
   case ABS_RZ:
-    return MG_GAMEPAD_AXIS_RZ;
+    return MG_GAMEPAD_AXIS_RIGHT_TRIGGER;
   case ABS_THROTTLE:
     return MG_GAMEPAD_AXIS_THROTTLE;
   case ABS_RUDDER:
@@ -140,9 +155,9 @@ mg_gamepad_axis get_gamepad_axis(unsigned int axis) {
   case ABS_BRAKE:
     return MG_GAMEPAD_AXIS_BRAKE;
   case ABS_HAT0X:
-    return MG_GAMEPAD_AXIS_HAT0X;
+    return MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT;
   case ABS_HAT0Y:
-    return MG_GAMEPAD_AXIS_HAT0Y;
+    return MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN;
   case ABS_HAT1X:
     return MG_GAMEPAD_AXIS_HAT1X;
   case ABS_HAT1Y:
@@ -178,17 +193,17 @@ mg_gamepad_axis get_gamepad_axis(unsigned int axis) {
 
 int get_native_axis(mg_gamepad_axis axis) {
   switch (axis) {
-  case MG_GAMEPAD_AXIS_X:
+  case MG_GAMEPAD_AXIS_LEFT_X:
     return ABS_X;
-  case MG_GAMEPAD_AXIS_Y:
+  case MG_GAMEPAD_AXIS_LEFT_Y:
     return ABS_Y;
-  case MG_GAMEPAD_AXIS_Z:
+  case MG_GAMEPAD_AXIS_LEFT_TRIGGER:
     return ABS_Z;
-  case MG_GAMEPAD_AXIS_RX:
+  case MG_GAMEPAD_AXIS_RIGHT_X:
     return ABS_RX;
-  case MG_GAMEPAD_AXIS_RY:
+  case MG_GAMEPAD_AXIS_RIGHT_Y:
     return ABS_RY;
-  case MG_GAMEPAD_AXIS_RZ:
+  case MG_GAMEPAD_AXIS_RIGHT_TRIGGER:
     return ABS_RZ;
   case MG_GAMEPAD_AXIS_THROTTLE:
     return ABS_THROTTLE;
@@ -200,9 +215,9 @@ int get_native_axis(mg_gamepad_axis axis) {
     return ABS_GAS;
   case MG_GAMEPAD_AXIS_BRAKE:
     return ABS_BRAKE;
-  case MG_GAMEPAD_AXIS_HAT0X:
+  case MG_GAMEPAD_AXIS_HAT_DPAD_LEFT_RIGHT:
     return ABS_HAT0X;
-  case MG_GAMEPAD_AXIS_HAT0Y:
+        case MG_GAMEPAD_AXIS_HAT_DPAD_UP_DOWN:
     return ABS_HAT0Y;
   case MG_GAMEPAD_AXIS_HAT1X:
     return ABS_HAT1X;
