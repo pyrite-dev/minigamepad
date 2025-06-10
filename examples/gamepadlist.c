@@ -8,7 +8,7 @@ int main(void) {
   mg_gamepads_init(&gamepads);
 
   for (cur = mg_gamepad_get_head(&gamepads); cur; cur = mg_gamepad_iterate(cur)) {
-    printf("%s guid: %s\n", cur->name, cur->guid);
+    printf("%s guid: [GUID: %s]\n", cur->name, cur->guid);
   }
 
   mg_gamepads_free(&gamepads);
