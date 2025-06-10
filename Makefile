@@ -67,7 +67,7 @@ OBJECTS = $(SOURCES:.c=.o)
 
 all: $(TARGET) $(EXAMPLES) $(EXTRA_EXAMPLES) 
 library: $(TARGET)
-no_rgfw: $(TARGET) $(EXAMPLES) $(EXTRA_EXAMPLES) 
+no_gui: $(TARGET) $(EXAMPLES) $(EXTRA_EXAMPLES) 
 
 $(OUTDIR)/libminigamepad.a: $(OBJECTS) | $(OUTDIR)
 	$(AR) rcs $@ $(OBJECTS)
