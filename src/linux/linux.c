@@ -345,16 +345,18 @@ bool mg_gamepad_update(mg_gamepad *gamepad, mg_gamepad_event* event) {
     emulate_button(MG_GAMEPAD_BUTTON_DPAD_DOWN, MG_GAMEPAD_AXIS_HAT_DPAD_DOWN, 0, 100, )
 
     struct input_event ev;
-    int pending = libevdev_has_event_pending(gamepad->ctx->dev);
-    if (pending) {
+    do {
+        int pending = libevdev_has_event_pending(gamepad->ctx->dev);
+        if (!pending) {
+            return false;
+        }
+
         int rc = libevdev_next_event(gamepad->ctx->dev, LIBEVDEV_READ_FLAG_BLOCKING,
-                                     &ev);
+                                        &ev);
         if (rc) {
             return false;
         }
-    } else {
-        return false;
-    }
+    } while (ev.type == EV_SYN); // Ignore SYN events
 
     switch (ev.type) {
         case EV_KEY: {
