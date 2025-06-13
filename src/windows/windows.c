@@ -49,14 +49,12 @@ void mg_gamepads_backend_init(mg_gamepads* gamepads) {
         if (internal.xinput_dll) {
             internal.XInputGetState = (PFN_XInputGetState)(mg_proc)GetProcAddress(internal.xinput_dll, "XInputGetState");
             internal.XInputGetKeystroke = (PFN_XInputGetKeystroke)(mg_proc)GetProcAddress(internal.xinput_dll, "XInputGetKeystroke");
-            printf("loaded xinput\n");
         }
     }
 
     /* load directinput dll and functions  */
 	internal.dinput_dll = LoadLibraryA("dinput8.dll");
     if (internal.dinput_dll) {
-        printf("loaded direct input\n");
         internal.DInput8Create = (PFN_DirectInput8Create)(mg_proc)GetProcAddress(internal.dinput_dll, "DirectInput8Create");
     }
 }
