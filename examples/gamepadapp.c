@@ -13,8 +13,8 @@ int main(void) {
 
 	RSGL_init(RSGL_AREA(win->r.w, win->r.h), RGFW_getProcAddress, RSGL_GL_renderer());
     
-    RSGL_font* font = RSGL_loadFont("DejaVuSans.ttf");
-    RSGL_setFont(font);
+//    RSGL_font* font = RSGL_loadFont("DejaVuSans.ttf");
+  //  RSGL_setFont(font);
   
     mg_gamepads gamepads = {0};
     mg_gamepads_init(&gamepads);
@@ -203,9 +203,9 @@ int main(void) {
 		RGFW_window_swapBuffers(win);
     }
     
-    if (font != NULL) {
-        RSGL_freeFont(font);
-    }
+//    if (font != NULL) {
+  //      RSGL_freeFont(font);
+    //}
 
     mg_gamepads_free(&gamepads);
 
