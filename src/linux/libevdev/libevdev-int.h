@@ -69,15 +69,9 @@ struct libevdev {
 	int driver_version;
 	unsigned long bits[NLONGS(EV_CNT)];
 	unsigned long props[NLONGS(INPUT_PROP_CNT)];
-	unsigned long key_bits[NLONGS(KEY_CNT)];
 	unsigned long rel_bits[NLONGS(REL_CNT)];
 	unsigned long abs_bits[NLONGS(ABS_CNT)];
-	unsigned long led_bits[NLONGS(LED_CNT)];
-	unsigned long msc_bits[NLONGS(MSC_CNT)];
-	unsigned long sw_bits[NLONGS(SW_CNT)];
-	unsigned long rep_bits[NLONGS(REP_CNT)]; /* convenience, always 1 */
 	unsigned long ff_bits[NLONGS(FF_CNT)];
-	unsigned long snd_bits[NLONGS(SND_CNT)];
 	unsigned long key_values[NLONGS(KEY_CNT)];
 	unsigned long led_values[NLONGS(LED_CNT)];
 	unsigned long sw_values[NLONGS(SW_CNT)];
@@ -236,13 +230,7 @@ static inline int type_to_mask_const(const struct libevdev* dev,
 	switch (type) {
 		max_mask(ABS, abs);
 		max_mask(REL, rel);
-		max_mask(KEY, key);
-		max_mask(LED, led);
-		max_mask(MSC, msc);
-		max_mask(SW, sw);
 		max_mask(FF, ff);
-		max_mask(REP, rep);
-		max_mask(SND, snd);
 	default:
 		max = -1;
 		break;
@@ -258,13 +246,7 @@ static inline int type_to_mask(struct libevdev* dev, unsigned int type,
 	switch (type) {
 		max_mask(ABS, abs);
 		max_mask(REL, rel);
-		max_mask(KEY, key);
-		max_mask(LED, led);
-		max_mask(MSC, msc);
-		max_mask(SW, sw);
 		max_mask(FF, ff);
-		max_mask(REP, rep);
-		max_mask(SND, snd);
 	default:
 		max = -1;
 		break;

@@ -291,52 +291,9 @@ int libevdev_set_fd(struct libevdev* dev, int fd) {
 	if (rc < 0)
 		goto out;
 
-	rc = ioctl(fd, EVIOCGBIT(EV_LED, sizeof(dev->led_bits)), dev->led_bits);
-	if (rc < 0)
-		goto out;
-
-	rc = ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(dev->key_bits)), dev->key_bits);
-	if (rc < 0)
-		goto out;
-
-	rc = ioctl(fd, EVIOCGBIT(EV_SW, sizeof(dev->sw_bits)), dev->sw_bits);
-	if (rc < 0)
-		goto out;
-
-	rc = ioctl(fd, EVIOCGBIT(EV_MSC, sizeof(dev->msc_bits)), dev->msc_bits);
-	if (rc < 0)
-		goto out;
-
 	rc = ioctl(fd, EVIOCGBIT(EV_FF, sizeof(dev->ff_bits)), dev->ff_bits);
 	if (rc < 0)
 		goto out;
-
-	rc = ioctl(fd, EVIOCGBIT(EV_SND, sizeof(dev->snd_bits)), dev->snd_bits);
-	if (rc < 0)
-		goto out;
-
-	rc = ioctl(fd, EVIOCGKEY(sizeof(dev->key_values)), dev->key_values);
-	if (rc < 0)
-		goto out;
-
-	rc = ioctl(fd, EVIOCGLED(sizeof(dev->led_values)), dev->led_values);
-	if (rc < 0)
-		goto out;
-
-	rc = ioctl(fd, EVIOCGSW(sizeof(dev->sw_values)), dev->sw_values);
-	if (rc < 0)
-		goto out;
-
-	/* rep is a special case, always set it to 1 for both values if EV_REP is
-	 * set
-	 */
-	if (bit_is_set(dev->bits, EV_REP)) {
-		for (i = 0; i < REP_CNT; i++)
-			set_bit(dev->rep_bits, i);
-		rc = ioctl(fd, EVIOCGREP, dev->rep_values);
-		if (rc < 0)
-			goto out;
-	}
 
 	for (i = ABS_X; i <= ABS_MAX; i++) {
 		if (bit_is_set(dev->abs_bits, i)) {
