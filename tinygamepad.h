@@ -307,7 +307,15 @@ typedef struct tg_gamepad_src {
     char full_path[256];
 } tg_gamepad_src;
 #elif defined(TG_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#define OEMRESOURCE
+#include <windows.h>
+
+#include <xinput.h>
+#include <dinput.h>
+
 typedef struct tg_gamepad_src {     
+    IDirectInputDevice8* device;
 } tg_gamepad_src;
 #elif defined(TG_MACOS)
 typedef struct tg_gamepad_src {     
@@ -598,7 +606,7 @@ tg_gamepad* tg_linux_setup_gamepad(tg_gamepads* gamepads, const char* full_path)
     }
 
     /* go through any axes a gamepad would have */
-    for (unsigned int i = 0; i < ABS_CNT; i++) {
+    for (u32 i = 0; i < ABS_CNT; i++) {
         if (!isBitSet(i, absBits))
             continue;
 
@@ -699,7 +707,7 @@ tg_gamepad* tg_linux_setup_gamepad(tg_gamepads* gamepads, const char* full_path)
         }
         
         tg_axis key = tg_get_gamepad_axis(gamepad, gamepad->src.absMap[axis]);
-        if (key == TG_AXIS_UNKNOWN)
+        if (key == TG_AXIS_UNKNOWN) 
             key = tg_get_gamepad_axis_platform(axis);
         if (key == TG_AXIS_UNKNOWN)
             continue;
