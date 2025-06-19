@@ -81,15 +81,8 @@ const char* libevdev_get_name(const struct libevdev* dev);
 int libevdev_has_event_type(const struct libevdev* dev, unsigned int type);
 int libevdev_has_event_code(const struct libevdev* dev, unsigned int type,
 							unsigned int code);
-const struct input_absinfo* libevdev_get_abs_info(const struct libevdev* dev,
-												  unsigned int code);
-int libevdev_get_num_slots(const struct libevdev* dev);
-int libevdev_enable_event_type(struct libevdev* dev, unsigned int type);
-int libevdev_enable_event_code(struct libevdev* dev, unsigned int type,
-							   unsigned int code, const void* data);
 int libevdev_event_is_code(const struct input_event* ev, unsigned int type,
 						   unsigned int code);
-int libevdev_event_type_get_max(unsigned int type);
 typedef void (*libevdev_log_func_t)(enum libevdev_log_priority priority,
 									void* data, const char* file, int line,
 									const char* func, const char* format,

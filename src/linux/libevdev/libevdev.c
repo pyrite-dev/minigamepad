@@ -33,6 +33,25 @@
 #include "libevdev-util.h"
 #include "libevdev.h"
 
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winitializer-overrides"
+#else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverride-init"
+#endif
+static const int ev_max[EV_MAX + 1] = {
+	[0 ... EV_MAX] = -1,
+	[EV_ABS] = ABS_MAX,
+	[EV_KEY] = KEY_MAX,
+	[EV_FF] = FF_MAX,
+};
+#if __clang__
+#pragma clang diagnostic pop /* "-Winitializer-overrides" */
+#else
+#pragma GCC diagnostic pop /* "-Woverride-init" */
+#endif
+
 enum event_filter_status {
 	EVENT_FILTER_NONE,	   /**< Event untouched by filters */
 	EVENT_FILTER_MODIFIED, /**< Event was modified */
@@ -67,14 +86,14 @@ static int init_event_queue(struct libevdev* dev) {
 	   room for events while syncing a device.
 	 */
 	for (type = EV_KEY; type < EV_MAX; type++) {
-		int max = libevdev_event_type_get_max(type);
+		int max = ev_max[type];
 		for (code = 0; max > 0 && code < (unsigned int)max; code++) {
 			if (libevdev_has_event_code(dev, type, code))
 				nevents++;
 		}
 	}
 
-	nslots = libevdev_get_num_slots(dev);
+	nslots = dev->num_slots;
 	if (nslots > 1) {
 		int num_mt_axes = 0;
 
@@ -174,7 +193,6 @@ static void libevdev_reset(struct libevdev* dev) {
 	dev->current_slot = -1;
 	dev->sync_state = SYNC_NONE;
 	dev->log.priority = pri;
-	libevdev_enable_event_type(dev, EV_SYN);
 }
 
 struct libevdev* libevdev_new(void) {
@@ -333,7 +351,7 @@ int libevdev_set_fd(struct libevdev* dev, int fd) {
 		libevdev_has_event_code(dev, EV_ABS, ABS_MT_SLOT)) {
 		const struct input_absinfo* abs_info;
 
-		abs_info = libevdev_get_abs_info(dev, ABS_MT_SLOT);
+		abs_info = &dev->abs_info[ABS_MT_SLOT];
 
 		dev->num_slots = abs_info->maximum + 1;
 		dev->mt_slot_vals = calloc(dev->num_slots * ABS_MT_CNT, sizeof(int));
@@ -848,6 +866,30 @@ int libevdev_has_event_type(const struct libevdev* dev, unsigned int type) {
 	return type == EV_SYN || (type <= EV_MAX && bit_is_set(dev->bits, type));
 }
 
+#define max_mask(uc, lc)                                                       \
+	case EV_##uc:                                                              \
+		*mask = dev->lc##_bits;                                                \
+		max = ev_max[type];                                                    \
+		break;
+
+static inline int type_to_mask_const(const struct libevdev* dev,
+									 unsigned int type,
+									 const unsigned long** mask) {
+	int max;
+
+	switch (type) {
+		max_mask(ABS, abs);
+		max_mask(KEY, key);
+		max_mask(FF, ff);
+	default:
+		max = -1;
+		break;
+	}
+
+	return max;
+}
+#undef max_mask
+
 int libevdev_has_event_code(const struct libevdev* dev, unsigned int type,
 							unsigned int code) {
 	const unsigned long* mask = NULL;
@@ -867,119 +909,8 @@ int libevdev_has_event_code(const struct libevdev* dev, unsigned int type,
 	return bit_is_set(mask, code);
 }
 
-int libevdev_get_num_slots(const struct libevdev* dev) {
-	return dev->num_slots;
-}
-
-const struct input_absinfo* libevdev_get_abs_info(const struct libevdev* dev,
-												  unsigned int code) {
-	if (!libevdev_has_event_type(dev, EV_ABS) ||
-		!libevdev_has_event_code(dev, EV_ABS, code))
-		return NULL;
-
-	return &dev->abs_info[code];
-}
-
-int libevdev_enable_event_type(struct libevdev* dev, unsigned int type) {
-	int max;
-
-	if (type > EV_MAX)
-		return -1;
-
-	if (libevdev_has_event_type(dev, type))
-		return 0;
-
-	max = libevdev_event_type_get_max(type);
-	if (max == -1)
-		return -1;
-
-	set_bit(dev->bits, type);
-
-	if (type == EV_REP) {
-		int delay = 0, period = 0;
-		libevdev_enable_event_code(dev, EV_REP, REP_DELAY, &delay);
-		libevdev_enable_event_code(dev, EV_REP, REP_PERIOD, &period);
-	}
-	return 0;
-}
-
-int libevdev_enable_event_code(struct libevdev* dev, unsigned int type,
-							   unsigned int code, const void* data) {
-	unsigned int max;
-	unsigned long* mask = NULL;
-
-	if (libevdev_enable_event_type(dev, type))
-		return -1;
-
-	switch (type) {
-	case EV_SYN:
-		return 0;
-	case EV_ABS:
-	case EV_REP:
-		if (data == NULL)
-			return -1;
-		break;
-	default:
-		if (data != NULL)
-			return -1;
-		break;
-	}
-
-	max = type_to_mask(dev, type, &mask);
-
-	if (code > max || (int)max == -1)
-		return -1;
-
-	set_bit(mask, code);
-
-	if (type == EV_ABS) {
-		const struct input_absinfo* abs = data;
-		dev->abs_info[code] = *abs;
-	} else if (type == EV_REP) {
-		const int* value = data;
-		dev->rep_values[code] = *value;
-	}
-
-	return 0;
-}
-
-int libevdev_event_is_type(const struct input_event* ev, unsigned int type) {
-	return type < EV_CNT && ev->type == type;
-}
-
 int libevdev_event_is_code(const struct input_event* ev, unsigned int type,
 						   unsigned int code) {
-	int max;
-
-	if (!libevdev_event_is_type(ev, type))
-		return 0;
-
-	max = libevdev_event_type_get_max(type);
+	int max = ev_max[type];
 	return (max > -1 && code <= (unsigned int)max && ev->code == code);
-}
-
-#if __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winitializer-overrides"
-#else
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Woverride-init"
-#endif
-static const int ev_max[EV_MAX + 1] = {
-	[0 ... EV_MAX] = -1, [EV_REL] = REL_MAX, [EV_ABS] = ABS_MAX,
-	[EV_KEY] = KEY_MAX,	 [EV_LED] = LED_MAX, [EV_SND] = SND_MAX,
-	[EV_MSC] = MSC_MAX,	 [EV_SW] = SW_MAX,	 [EV_FF] = FF_MAX,
-	[EV_SYN] = SYN_MAX,	 [EV_REP] = REP_MAX,
-};
-#if __clang__
-#pragma clang diagnostic pop /* "-Winitializer-overrides" */
-#else
-#pragma GCC diagnostic pop /* "-Woverride-init" */
-#endif
-
-int libevdev_event_type_get_max(unsigned int type) {
-	if (type > EV_MAX)
-		return -1;
-
-	return ev_max[type];
 }

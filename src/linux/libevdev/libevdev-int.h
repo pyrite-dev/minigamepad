@@ -214,44 +214,4 @@ static inline int queue_set_num_elements(struct libevdev* dev, size_t nelem) {
 	return 0;
 }
 
-#define max_mask(uc, lc)                                                       \
-	case EV_##uc:                                                              \
-		*mask = dev->lc##_bits;                                                \
-		max = libevdev_event_type_get_max(type);                               \
-		break;
-
-static inline int type_to_mask_const(const struct libevdev* dev,
-									 unsigned int type,
-									 const unsigned long** mask) {
-	int max;
-
-	switch (type) {
-		max_mask(ABS, abs);
-		max_mask(KEY, key);
-		max_mask(FF, ff);
-	default:
-		max = -1;
-		break;
-	}
-
-	return max;
-}
-
-static inline int type_to_mask(struct libevdev* dev, unsigned int type,
-							   unsigned long** mask) {
-	int max;
-
-	switch (type) {
-		max_mask(ABS, abs);
-		max_mask(KEY, key);
-		max_mask(FF, ff);
-	default:
-		max = -1;
-		break;
-	}
-
-	return max;
-}
-
-#undef max_mask
 #endif
