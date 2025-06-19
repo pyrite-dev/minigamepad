@@ -763,13 +763,9 @@ sanitize_event(const struct libevdev* dev, struct input_event* ev,
 	return EVENT_FILTER_NONE;
 }
 
-int libevdev_next_event(struct libevdev* dev, unsigned int flags,
-						struct input_event* ev) {
+int libevdev_next_event(struct libevdev* dev, struct input_event* ev) {
 	int rc = LIBEVDEV_READ_STATUS_SUCCESS;
 	enum event_filter_status filter_status;
-	const unsigned int valid_flags =
-		LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_SYNC |
-		LIBEVDEV_READ_FLAG_FORCE_SYNC | LIBEVDEV_READ_FLAG_BLOCKING;
 
 	if (!dev->initialized) {
 		log_bug(dev, "device not initialized. call libevdev_set_fd() first\n");
@@ -777,25 +773,7 @@ int libevdev_next_event(struct libevdev* dev, unsigned int flags,
 	} else if (dev->fd < 0)
 		return -EBADF;
 
-	if ((flags & valid_flags) == 0) {
-		log_bug(dev, "invalid flags %#x.\n", flags);
-		return -EINVAL;
-	}
-
-	if (flags & LIBEVDEV_READ_FLAG_SYNC) {
-		if (dev->sync_state == SYNC_NEEDED) {
-			rc = sync_state(dev);
-			if (rc != 0)
-				return rc;
-			dev->sync_state = SYNC_IN_PROGRESS;
-		}
-
-		if (dev->queue_nsync == 0) {
-			dev->sync_state = SYNC_NONE;
-			return -EAGAIN;
-		}
-
-	} else if (dev->sync_state != SYNC_NONE) {
+	if (dev->sync_state != SYNC_NONE) {
 		struct input_event e;
 
 		/* call update_state for all events here, otherwise the library has the
@@ -818,17 +796,10 @@ int libevdev_next_event(struct libevdev* dev, unsigned int flags,
 	   last read, don't read in any more.
 	 */
 	do {
-		if (!(flags & LIBEVDEV_READ_FLAG_BLOCKING) ||
-			queue_num_elements(dev) == 0) {
+		if (queue_num_elements(dev) == 0) {
 			rc = read_more_events(dev);
 			if (rc < 0 && rc != -EAGAIN)
 				goto out;
-		}
-
-		if (flags & LIBEVDEV_READ_FLAG_FORCE_SYNC) {
-			dev->sync_state = SYNC_NEEDED;
-			rc = LIBEVDEV_READ_STATUS_SYNC;
-			goto out;
 		}
 
 		if (queue_shift(dev, ev) != 0)
@@ -846,20 +817,6 @@ int libevdev_next_event(struct libevdev* dev, unsigned int flags,
 	if (ev->type == EV_SYN && ev->code == SYN_DROPPED) {
 		dev->sync_state = SYNC_NEEDED;
 		rc = LIBEVDEV_READ_STATUS_SYNC;
-	}
-
-	if (flags & LIBEVDEV_READ_FLAG_SYNC && dev->queue_nsync > 0) {
-		dev->queue_nsync--;
-		rc = LIBEVDEV_READ_STATUS_SYNC;
-		if (dev->queue_nsync == 0) {
-			struct input_event next;
-			dev->sync_state = SYNC_NONE;
-
-			if (queue_peek(dev, 0, &next) == 0 && next.type == EV_SYN &&
-				next.code == SYN_DROPPED)
-				log_info(dev, "SYN_DROPPED received after finished "
-							  "sync - you're not keeping up\n");
-		}
 	}
 
 out:

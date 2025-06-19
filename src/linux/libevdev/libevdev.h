@@ -46,13 +46,6 @@ extern "C" {
  */
 struct libevdev;
 
-enum libevdev_read_flag {
-	LIBEVDEV_READ_FLAG_SYNC = 1,
-	LIBEVDEV_READ_FLAG_NORMAL = 2,
-	LIBEVDEV_READ_FLAG_FORCE_SYNC = 4,
-	LIBEVDEV_READ_FLAG_BLOCKING = 8
-};
-
 struct libevdev* libevdev_new(void);
 
 void libevdev_free(struct libevdev* dev);
@@ -82,8 +75,7 @@ enum libevdev_read_status {
 	 */
 	LIBEVDEV_READ_STATUS_SYNC = 1
 };
-int libevdev_next_event(struct libevdev* dev, unsigned int flags,
-						struct input_event* ev);
+int libevdev_next_event(struct libevdev* dev, struct input_event* ev);
 int libevdev_has_event_pending(struct libevdev* dev);
 const char* libevdev_get_name(const struct libevdev* dev);
 int libevdev_has_event_type(const struct libevdev* dev, unsigned int type);

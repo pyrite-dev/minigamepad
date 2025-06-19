@@ -369,8 +369,7 @@ bool mg_gamepad_update(mg_gamepad* gamepad, mg_gamepad_event* event) {
 			return false;
 		}
 
-		int rc = libevdev_next_event(gamepad->ctx->dev,
-									 LIBEVDEV_READ_FLAG_BLOCKING, &ev);
+		int rc = libevdev_next_event(gamepad->ctx->dev, &ev);
 		if (rc) {
 			return false;
 		}
