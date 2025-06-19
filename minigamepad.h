@@ -425,6 +425,9 @@ TGDEF void mg_gamepads_init(mg_gamepads* gamepads);
 TGDEF mg_bool mg_gamepads_update(mg_gamepads* gamepads, mg_event* event);
 TGDEF void mg_gamepads_free(mg_gamepads* gamepads);
 
+TGDEF const char* mg_button_get_name(mg_button button);
+TGDEF const char* mg_axis_get_name(mg_axis button);
+
 #endif /* MG_HEADER */
 
 #ifdef MG_IMPLEMENTATION 
@@ -4019,9 +4022,135 @@ void mg_mappings_init(void) {
     }
 }
 
+const char* mg_button_get_name(mg_button btn) {
+    switch (btn) {
+        case MG_BUTTON_COUNT:
+        case MG_BUTTON_UNKNOWN:
+            return "Unknown Button";
+        case MG_BUTTON_SOUTH:
+            return "South Button";
+        case MG_BUTTON_WEST:
+            return "West Button";
+        case MG_BUTTON_NORTH:
+            return "North Button";
+        case MG_BUTTON_EAST:
+            return "East Button";
+        case MG_BUTTON_BACK:
+            return "Back Button";
+        case MG_BUTTON_GUIDE:
+            return "Guide Button";
+        case MG_BUTTON_START:
+            return "Start Button";
+        case MG_BUTTON_LEFT_STICK:
+            return "Left Stick Button";
+        case MG_BUTTON_RIGHT_STICK:
+            return "Right Stick Button";
+        case MG_BUTTON_DPAD_UP: 
+            return "D-pad Up";
+        case MG_BUTTON_DPAD_DOWN: 
+            return "D-pad Down"; 
+        case MG_BUTTON_DPAD_LEFT: 
+            return "D-pad Left";
+        case MG_BUTTON_DPAD_RIGHT: 
+            return "D-pad Right"; 
+        case MG_BUTTON_LEFT_SHOULDER:
+            return "Left Shoulder Button";
+        case MG_BUTTON_RIGHT_SHOULDER:
+            return "Right Shoulder Button";
+        case MG_BUTTON_LEFT_TRIGGER:
+            return "Left Trigger Button";
+        case MG_BUTTON_RIGHT_TRIGGER:
+            return "Right Trigger Button";
+        case MG_BUTTON_MISC1:
+            return "Misc Button 1";
+        case MG_BUTTON_RIGHT_PADDLE1:
+            return "Paddle 1 Right";
+        case MG_BUTTON_LEFT_PADDLE1:
+            return "Paddle 1 Left";
+        case MG_BUTTON_RIGHT_PADDLE2:
+            return "Paddle 2 Right";
+        case MG_BUTTON_LEFT_PADDLE2:
+            return "Paddle 2 Left";
+        case MG_BUTTON_TOUCHPAD:
+            return "Touchpad";
+        case MG_BUTTON_MISC2:
+            return "Misc Button 2";
+        case MG_BUTTON_MISC3:
+            return "Misc Button 3";
+        case MG_BUTTON_MISC4:
+            return "Misc Button 4";
+        case MG_BUTTON_MISC5:
+            return "Misc Button 5";
+        case MG_BUTTON_MISC6:
+            return "Misc Button 6";
+        default: return NULL;
+    }
+    return NULL;
+}
 
-/* clang-format on */
-
+const char* mg_axis_get_name(mg_axis axis) {
+    switch (axis) {
+        case MG_AXIS_COUNT:
+        case MG_AXIS_UNKNOWN:
+            return "Unknown Axis";
+        case MG_AXIS_LEFT_X:
+            return "X Axis";
+        case MG_AXIS_LEFT_Y:
+            return "Y Axis";
+        case MG_AXIS_LEFT_TRIGGER:
+            return "Z Axis";
+        case MG_AXIS_RIGHT_X:
+            return "RX Axis";
+        case MG_AXIS_RIGHT_Y:
+            return "RY Axis";
+        case MG_AXIS_RIGHT_TRIGGER:
+            return "RZ Axis";
+        case MG_AXIS_THROTTLE:
+            return "Throttle";
+        case MG_AXIS_RUDDER:
+            return "Rudder";
+        case MG_AXIS_WHEEL:
+            return "Wheel";
+        case MG_AXIS_GAS:
+            return "Gas";
+        case MG_AXIS_BRAKE:
+            return "Brake";
+        case MG_AXIS_HAT_DPAD_LEFT_RIGHT:
+            return "Hat D-Pad Left-Right Axis";
+        case MG_AXIS_HAT_DPAD_UP_DOWN:
+            return "Hat D-Pad Up-Down Axis";
+        case MG_AXIS_HAT1X:
+            return "Hat 1 X Axis";
+        case MG_AXIS_HAT1Y:
+            return "Hat 1 Y Axis";
+        case MG_AXIS_HAT2X:
+            return "Hat 2 X Axis";
+        case MG_AXIS_HAT2Y:
+            return "Hat 2 Y Axis";
+        case MG_AXIS_HAT3X:
+            return "Hat 3 X Axis";
+        case MG_AXIS_HAT3Y:
+            return "Hat 3 Y Axis";
+        case MG_AXIS_PRESSURE:
+            return "Pressure Axis";
+        case MG_AXIS_DISTANCE:
+            return "Distance Axis";
+        case MG_AXIS_TILT_X:
+            return "Tilt X Axis";
+        case MG_AXIS_TILT_Y:
+            return "Tilt Y Axis";
+        case MG_AXIS_TOOL_WIDTH:
+            return "Tool Width Axis";
+        case MG_AXIS_VOLUME:
+            return "Volume Axis";
+        case MG_AXIS_PROFILE:
+            return "Profile Axis";
+        case MG_AXIS_MISC:
+            return "Misc Axis";
+        default: break;
+    }
+    return NULL;
+}
 
 #endif /* MG_IMPLEMENTATION */
 
