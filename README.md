@@ -1,1 +1,1 @@
-# tinygamepad
+# minigamepad

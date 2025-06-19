@@ -1,32 +1,32 @@
-#define TG_IMPLEMENTATION
-#include "tinygamepad.h"
+#define MG_IMPLEMENTATION
+#include "minigamepad.h"
 
 #include <stdio.h>
 
 int main(void) {
-    tg_gamepads gamepads;
-    tg_gamepads_init(&gamepads);
+    mg_gamepads gamepads;
+    mg_gamepads_init(&gamepads);
     
     while (gamepads.list.head) {
-        tg_event ev;
-        while (tg_gamepads_update(&gamepads, &ev)) {
+        mg_event ev;
+        while (mg_gamepads_update(&gamepads, &ev)) {
             switch (ev.type) {
-                case TG_EVENT_BUTTON_PRESS:
+                case MG_EVENT_BUTTON_PRESS:
                     printf("button press (gamepad %p) %i\n", (void*)ev.gamepad, ev.button);
                     break;
-                case TG_EVENT_BUTTON_RELEASE:
+                case MG_EVENT_BUTTON_RELEASE:
                     printf("button release (gamepad %p) %i\n", (void*)ev.gamepad, ev.button);
                     break;
-                case TG_EVENT_AXIS_MOVE:
-                    if (ev.button == TG_BUTTON_GUIDE)
+                case MG_EVENT_AXIS_MOVE:
+                    if (ev.button == MG_BUTTON_GUIDE)
                         goto end;
 
                     printf("axis move (gamepad %p) %i\n", (void*)ev.gamepad, ev.axis);
                     break;
-                case TG_EVENT_GAMEPAD_CONNECT:
+                case MG_EVENT_GAMEPAD_CONNECT:
                     printf("gamepad connected (gamepad %p)\n", (void*)ev.gamepad);
                     break;
-                case TG_EVENT_GAMEPAD_DISCONNECT:
+                case MG_EVENT_GAMEPAD_DISCONNECT:
                     printf("gamepad disconnected (gamepad %p)\n", (void*)ev.gamepad);
                     break;
                 default: break;
@@ -35,6 +35,6 @@ int main(void) {
     }
     end:
 
-    tg_gamepads_free(&gamepads);
+    mg_gamepads_free(&gamepads);
     return 0;
 }
