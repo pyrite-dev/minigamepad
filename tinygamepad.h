@@ -1360,7 +1360,7 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
     }
     
     TG_UNUSED(event);
-    if (gamepads->src.dinput_dll) {
+    if (gamepad->src.device) {
         DIDEVCAPS caps = {0};
         caps.dwSize = sizeof(DIDEVCAPS);
 
