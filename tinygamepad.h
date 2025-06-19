@@ -1393,7 +1393,7 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
         
         caps.dwSize = sizeof(DIDEVCAPS);
 
-        IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
+        result = IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
         if (result == DIERR_NOTACQUIRED || result == DIERR_INPUTLOST) {
             event->type = TG_EVENT_GAMEPAD_DISCONNECT;
             event->gamepad = gamepad;
