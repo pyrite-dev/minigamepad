@@ -390,7 +390,10 @@ static int update_key_state(struct libevdev* dev, const struct input_event* e) {
 	if (e->code > KEY_MAX)
 		return 1;
 
-	set_bit_state(dev->key_values, e->code, e->value != 0);
+	if (e->value != 0)
+		set_bit(dev->key_values, e->code);
+	else
+		clear_bit(dev->key_values, e->code);
 
 	return 0;
 }

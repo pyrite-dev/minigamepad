@@ -27,7 +27,6 @@
 
 #define LONG_BITS (sizeof(long) * 8)
 #define NLONGS(x) (((x) + LONG_BITS - 1) / LONG_BITS)
-#define ARRAY_LENGTH(a) (sizeof(a) / (sizeof((a)[0])))
 #define unlikely(x) (__builtin_expect(!!(x), 0))
 
 #undef min
@@ -60,13 +59,6 @@ static inline void set_bit(unsigned long* array, int bit) {
 
 static inline void clear_bit(unsigned long* array, int bit) {
 	array[bit / LONG_BITS] &= ~(1LL << (bit % LONG_BITS));
-}
-
-static inline void set_bit_state(unsigned long* array, int bit, int state) {
-	if (state)
-		set_bit(array, bit);
-	else
-		clear_bit(array, bit);
 }
 
 #endif
