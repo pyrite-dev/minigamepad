@@ -1151,19 +1151,19 @@ tg_bool tg_supportsXInput(tg_gamepads* gamepads, const GUID* guid) {
     RAWINPUTDEVICELIST* list;
     unsigned int count = 0;
 
-    if (gamepads->xinput_dll == NULL) {
-        return false;
+    if (gamepads->src.xinput_dll == NULL) {
+        return TG_FALSE;
     }
 
     if (GetRawInputDeviceList(NULL, &count, sizeof(RAWINPUTDEVICELIST)) != 0)
-        return false;
+        return TG_FALSE;
 
     list = (RAWINPUTDEVICELIST*)malloc(count * sizeof(RAWINPUTDEVICELIST));
     memset(list, 0, count * sizeof(RAWINPUTDEVICELIST));
 
     if ((int)GetRawInputDeviceList(list, &count, sizeof(RAWINPUTDEVICELIST)) == -1) {
         free(list);
-        return false;
+        return TG_FALSE;
     }
 
     for (size_t i = 0;  i < count;  i++) {
@@ -1193,12 +1193,12 @@ tg_bool tg_supportsXInput(tg_gamepads* gamepads, const GUID* guid) {
         name[sizeof(name) - 1] = '\0';
         if (strstr((char*)name, "IG_")) {
             free(list);
-            return true;
+            return TG_TRUE;
         }
     }
 
     free(list);
-    return false;
+    return TG_FALSE;
 }
 
 BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID userData) {
@@ -1270,8 +1270,8 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
         if (gamepad->buttons[key].supported)
             continue;
 
-        gamepad->buttons[key].supported = true;
-        gamepad->buttons[key].value = 0;
+        gamepad->buttons[key].supported = TG_TRUE;
+        gamepad->buttons[key].current = 0;
     }
 
     for (unsigned int i = 0; i < caps.dwAxes; i++) {
@@ -1279,11 +1279,11 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
         if (key == TG_AXIS_UNKNOWN) 
             continue;
 
-        if (gamepad->axises[key].supported)
+        if (gamepad->axes[key].supported)
             continue;
 
-        gamepad->axises[key].supported = true;
-        gamepad->axises[key].value = 0;
+        gamepad->axes[key].supported = TG_TRUE;
+        gamepad->axes[key].value = 0;
     }
 
     return DIENUM_CONTINUE;
@@ -1291,7 +1291,7 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
 
 void tg_gamepads_init_platform(tg_gamepads* gamepads) {
     /* init global gamepads->src.data */
-    if (gamepads->src.xinput_dll == NULL && internal.dinput_dll == NULL) {
+    if (gamepads->src.xinput_dll == NULL && gamepads->src.dinput_dll == NULL) {
         /* load xinput dll and functions (if it's available) */
         static const char* names[] = {"xinput0_4.dll", "xinput9_1_0.dll", "xinput1_2.dll", "xinput1_1.dll"};
 
@@ -1354,9 +1354,9 @@ void tg_gamepads_free_platform(tg_gamepads* gamepads) {
 }
 
 tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
-    if (gamepad->connected == false) {
+    if (gamepad->connected == TG_FALSE) {
         tg_gamepad_release(gamepad);
-        return false;
+        return TG_FALSE;
     }
     
     TG_UNUSED(event);
@@ -1370,24 +1370,24 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
             event->type = TG_EVENT_GAMEPAD_DISCONNECT;
             event->gamepad = gamepad;
             gamepad->connected = false;
-            return false;
+            return TG_FALSE;
         }
 
         if (FAILED(result)) {
 //            tg_gamepad_release(gamepad);
-            return false;
+            return TG_FALSE;
         }
 
         for (unsigned int i = 0; i < caps.dwButtons; i++) {
             tg_button key = tg_get_gamepad_button(gamepad, i); 
             if (key == TG_BUTTON_UNKNOWN) 
                 continue;
-
-            gamepad->buttons[key].value = state.rgbButtons[i];
+            gamepad->buttons[key].prev = gamepad->buttons[key].current;
+            gamepad->buttons[key].current = state.rgbButtons[i];
         }
     }
 
-    return false;
+    return TG_FALSE;
 }
 
 void tg_gamepad_release_platform(tg_gamepad* gamepad) {
