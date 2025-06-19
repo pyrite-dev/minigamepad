@@ -1263,7 +1263,7 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
     IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
  
     for (unsigned int i = 0; i < caps.dwButtons; i++) {
-        tg_button key = tg_get_gamepad_button(gamepads, i); 
+        tg_button key = tg_get_gamepad_button(gamepad, i); 
         if (key == TG_BUTTON_UNKNOWN) 
             continue;
 
@@ -1300,7 +1300,7 @@ void tg_gamepads_init_platform(tg_gamepads* gamepads) {
             gamepads->src.xinput_dll = LoadLibraryA(names[i]);
 
             if (gamepads->src.xinput_dll) {
-                gamepads->src.XInputGetState = (PFN_XInputGetState)(tg_proc)GetProcAddress(internal.xinput_dll, "XInputGetState");
+                gamepads->src.XInputGetState = (PFN_XInputGetState)(tg_proc)GetProcAddress(gamepads->src.xinput_dll, "XInputGetState");
                 gamepads->src.XInputGetKeystroke = (PFN_XInputGetKeystroke)(tg_proc)GetProcAddress(internal.xinput_dll, "XInputGetKeystroke");
                 gamepads->src.XInputGetCapabilities =  (PFN_XInputGetCapabilities)(tg_proc)GetProcAddress(internal.xinput_dll, "XInputGetCapabilities");
 
