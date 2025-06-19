@@ -1301,8 +1301,8 @@ void tg_gamepads_init_platform(tg_gamepads* gamepads) {
 
             if (gamepads->src.xinput_dll) {
                 gamepads->src.XInputGetState = (PFN_XInputGetState)(tg_proc)GetProcAddress(gamepads->src.xinput_dll, "XInputGetState");
-                gamepads->src.XInputGetKeystroke = (PFN_XInputGetKeystroke)(tg_proc)GetProcAddress(internal.xinput_dll, "XInputGetKeystroke");
-                gamepads->src.XInputGetCapabilities =  (PFN_XInputGetCapabilities)(tg_proc)GetProcAddress(internal.xinput_dll, "XInputGetCapabilities");
+                gamepads->src.XInputGetKeystroke = (PFN_XInputGetKeystroke)(tg_proc)GetProcAddress(gamepads->src.xinput_dll, "XInputGetKeystroke");
+                gamepads->src.XInputGetCapabilities =  (PFN_XInputGetCapabilities)(tg_proc)GetProcAddress(gamepads->src.xinput_dll, "XInputGetCapabilities");
 
             }
         }
@@ -1310,7 +1310,7 @@ void tg_gamepads_init_platform(tg_gamepads* gamepads) {
         /* load directinput dll and functions  */
         gamepads->src.dinput_dll = LoadLibraryA("dinput8.dll");
         if (gamepads->src.dinput_dll) {
-            gamepads->src.DInput8Create = (PFN_DirectInput8Create)(tg_proc)GetProcAddress(internal.dinput_dll, "DirectInput8Create");
+            gamepads->src.DInput8Create = (PFN_DirectInput8Create)(tg_proc)GetProcAddress(gamepads->src.dinput_dll, "DirectInput8Create");
             HINSTANCE hInstance = GetModuleHandle(0);
             if (FAILED(gamepads->src.DInput8Create(hInstance,
                                               DIRECTINPUT_VERSION,
