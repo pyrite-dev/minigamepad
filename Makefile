@@ -29,11 +29,11 @@ ifeq ($(PLATFORM),Windows)
 	LIBS = 	
 endif
 
-all: $(EXAMPLES) $(EXTRA_EXAMPLES) tinygamepad.h 
-examples/rgfw_gamepad: examples/rgfw_gamepad.c tinygamepad.h 
+all: $(EXAMPLES) $(EXTRA_EXAMPLES) minigamepad.h 
+examples/rgfw_gamepad: examples/rgfw_gamepad.c minigamepad.h 
 	$(CC) -I./ $< $(LIBS) $(RGFW_LIBS) -o $@ 
 
-$(EXAMPLES): %: %.c tinygamepad.h 
+$(EXAMPLES): %: %.c minigamepad.h 
 	$(CC) -std=c89 $(WARNINGS) -I. $< $(LIBS) -o $@
 
 debug: all
