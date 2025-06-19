@@ -36,4 +36,5 @@ int main(void) {
     end:
 
     tg_gamepads_free(&gamepads);
+    return 0;
 }
