@@ -1,0 +1,9 @@
+- implement linux backend
+    - rumble
+- implement directinput backend 
+- implement xinput backend
+- implement iokit backend
+- implement wasm backend
+
+- event callbacks
+- rumble
