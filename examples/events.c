@@ -18,6 +18,9 @@ int main(void) {
                     printf("button release (gamepad %p) %i\n", (void*)ev.gamepad, ev.button);
                     break;
                 case TG_EVENT_AXIS_MOVE:
+                    if (ev.button == TG_BUTTON_GUIDE)
+                        goto end;
+
                     printf("axis move (gamepad %p) %i\n", (void*)ev.gamepad, ev.axis);
                     break;
                 case TG_EVENT_GAMEPAD_CONNECT:
@@ -30,6 +33,7 @@ int main(void) {
             }
         }
     }
+    end:
 
     tg_gamepads_free(&gamepads);
 }

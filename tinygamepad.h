@@ -354,7 +354,23 @@ typedef struct tg_gamepads_src {
     int inotify, watch;
 } tg_gamepads_src;
 #elif defined(TG_WINDOWS)
+typedef DWORD (WINAPI * PFN_XInputGetState)(DWORD,XINPUT_STATE*);
+typedef DWORD (WINAPI * PFN_XInputGetCapabilities)(DWORD,DWORD,XINPUT_CAPABILITIES*);
+typedef HRESULT (WINAPI * PFN_DirectInput8Create)(HINSTANCE,DWORD,REFIID,LPVOID*,LPUNKNOWN);
+
+typedef void (*tg_proc)(void); /* function pointer equivalent of void* */
+
+typedef DWORD (WINAPI * PFN_XInputGetKeystroke)(DWORD, DWORD, PXINPUT_KEYSTROKE);
+
 typedef struct tg_gamepads_src {     
+    HINSTANCE xinput_dll;
+    PFN_XInputGetState XInputGetState;
+    PFN_XInputGetKeystroke XInputGetKeystroke;
+    PFN_XInputGetCapabilities XInputGetCapabilities;
+
+    HINSTANCE dinput_dll;
+    PFN_DirectInput8Create DInput8Create;
+    IDirectInput8* dinput;
 } tg_gamepads_src;
 #elif defined(TG_MACOS)
 typedef struct tg_gamepads_src {     
@@ -396,13 +412,13 @@ TGDEF void tg_gamepads_free(tg_gamepads* gamepads);
 
 #ifdef TG_IMPLEMENTATION 
 
-/* internal global API */
+/* gamepads->src.global API */
 /* find a valid unused gamepad or return NULL */
 TGDEF tg_gamepad* tg_gamepad_find(tg_gamepads* gamepads);
 TGDEF void tg_gamepad_release(tg_gamepads* gamepads, tg_gamepad* gamepad);
 TGDEF void tg_list_swap_gamepad(tg_gamepad_list* from, tg_gamepad_list* to, tg_gamepad* gamepad);
 
-/* internal platform-specific API */
+/* gamepads->src.platform-specific API */
 TGDEF void tg_gamepads_init_platform(tg_gamepads* gamepads);
 /* updates gamepad structure by checking if any new gamepads are connected and adding them */
 TGDEF tg_bool tg_gamepads_update_platform(tg_gamepads* gamepads, tg_event* event);
@@ -412,7 +428,7 @@ TGDEF void tg_gamepad_release_platform(tg_gamepad* gamepad);
 TGDEF tg_button tg_get_gamepad_button_platform(u32 button);
 TGDEF tg_axis tg_get_gamepad_axis_platform(u32 axis);
 
-/* internal mappings API */
+/* gamepads->src.mappings API */
 TGDEF struct tg_mapping* tg_gamepad_find_valid_mapping(tg_gamepad* gamepad);
 TGDEF tg_button tg_get_gamepad_button(tg_gamepad* gamepad, u8 button);
 TGDEF tg_axis tg_get_gamepad_axis(tg_gamepad* gamepad, u8 axis);
@@ -904,14 +920,138 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
 }
 
 tg_button tg_get_gamepad_button_platform(u32 button) {
-    /* TODO */
-    TG_UNUSED(button);
+    switch (button) {
+        case BTN_WEST:
+            return TG_BUTTON_WEST;
+        case BTN_A:
+            return TG_BUTTON_SOUTH;
+        case BTN_NORTH:
+            return TG_BUTTON_NORTH;
+        case BTN_EAST:
+            return TG_BUTTON_EAST;
+        case BTN_BACK:
+            return TG_BUTTON_BACK;
+        case BTN_MODE:
+            return TG_BUTTON_GUIDE;
+        case BTN_START:
+            return TG_BUTTON_START;
+        case BTN_THUMBL:
+            return TG_BUTTON_LEFT_STICK;
+        case BTN_THUMBR:
+            return TG_BUTTON_RIGHT_STICK;
+        case BTN_TL:
+            return TG_BUTTON_LEFT_SHOULDER;
+        case BTN_DPAD_UP:
+            return TG_BUTTON_DPAD_UP;
+        case BTN_DPAD_DOWN: 
+            return TG_BUTTON_DPAD_DOWN;
+        case BTN_DPAD_LEFT:
+            return TG_BUTTON_DPAD_LEFT;
+        case BTN_DPAD_RIGHT: 
+            return TG_BUTTON_DPAD_RIGHT;
+        case BTN_TR:
+            return TG_BUTTON_RIGHT_SHOULDER;
+        case BTN_TOUCH:
+            return TG_BUTTON_TOUCHPAD;
+        case BTN_TRIGGER_HAPPY4:
+            return TG_BUTTON_RIGHT_PADDLE1;
+        case BTN_TRIGGER_HAPPY6:
+            return TG_BUTTON_RIGHT_PADDLE2;
+        case BTN_TRIGGER_HAPPY7:
+            return TG_BUTTON_LEFT_PADDLE1;
+        case BTN_TRIGGER_HAPPY8:
+            return TG_BUTTON_LEFT_PADDLE2;
+
+        case BTN_SELECT:
+            return TG_BUTTON_MISC1;
+        case BTN_TRIGGER_HAPPY2:
+            return TG_BUTTON_MISC2;
+        case BTN_TRIGGER_HAPPY3:
+            return TG_BUTTON_MISC3;
+        case BTN_TRIGGER_HAPPY9:
+            return TG_BUTTON_MISC5;
+        case BTN_TRIGGER_HAPPY10:
+            return TG_BUTTON_MISC6;
+
+        case BTN_TRIGGER:     return TG_BUTTON_WEST;       // maybe map trigger as "A"
+        case BTN_THUMB:       return TG_BUTTON_SOUTH;
+        case BTN_THUMB2:      return TG_BUTTON_EAST;
+        case BTN_TOP:         return TG_BUTTON_NORTH;
+        case BTN_TOP2:        return TG_BUTTON_START;       // or whatever fits your layout
+        case BTN_PINKIE:      return TG_BUTTON_LEFT_SHOULDER;
+        case BTN_BASE:        return TG_BUTTON_RIGHT_SHOULDER;
+        case BTN_BASE2:       return TG_BUTTON_BACK;
+
+        case BTN_BASE3: return TG_BUTTON_BACK;
+        case BTN_BASE4: return TG_BUTTON_START;
+        case BTN_BASE5: return TG_BUTTON_START;
+        case BTN_BASE6: return TG_BUTTON_RIGHT_STICK;
+        default: 
+            return TG_BUTTON_UNKNOWN;
+    }
     return TG_BUTTON_UNKNOWN;
 }
 
 tg_axis tg_get_gamepad_axis_platform(u32 axis) {
-    /* TODO */
-    TG_UNUSED(axis);
+    switch (axis) {
+        case ABS_X:
+           return TG_AXIS_LEFT_X;
+        case ABS_Y:
+           return TG_AXIS_LEFT_Y;
+        case ABS_Z:
+           return TG_AXIS_LEFT_TRIGGER;
+        case ABS_RX:
+           return TG_AXIS_RIGHT_X;
+        case ABS_RY:
+           return TG_AXIS_RIGHT_Y;
+        case ABS_RZ:
+           return TG_AXIS_RIGHT_TRIGGER;
+        case ABS_THROTTLE:
+           return TG_AXIS_THROTTLE;
+        case ABS_RUDDER:
+           return TG_AXIS_RUDDER;
+        case ABS_WHEEL:
+           return TG_AXIS_WHEEL;
+        case ABS_GAS:
+           return TG_AXIS_GAS;
+        case ABS_BRAKE:
+           return TG_AXIS_BRAKE;
+        case ABS_HAT0X:
+           return TG_AXIS_HAT_DPAD_LEFT_RIGHT;
+        case ABS_HAT0Y:
+           return TG_AXIS_HAT_DPAD_UP_DOWN;
+        case ABS_HAT1X:
+           return TG_AXIS_HAT1X;
+        case ABS_HAT1Y:
+           return TG_AXIS_HAT1Y;
+        case ABS_HAT2X:
+           return TG_AXIS_HAT2X;
+        case ABS_HAT2Y:
+           return TG_AXIS_HAT2Y;
+        case ABS_HAT3X:
+           return TG_AXIS_HAT3X;
+        case ABS_HAT3Y:
+           return TG_AXIS_HAT3Y;
+        case ABS_PRESSURE:
+           return TG_AXIS_PRESSURE;
+        case ABS_DISTANCE:
+           return TG_AXIS_DISTANCE;
+        case ABS_TILT_X:
+           return TG_AXIS_TILT_X;
+        case ABS_TILT_Y:
+           return TG_AXIS_TILT_Y;
+        case ABS_TOOL_WIDTH:
+           return TG_AXIS_TOOL_WIDTH;
+        case ABS_VOLUME:
+           return TG_AXIS_VOLUME;
+        case ABS_PROFILE:
+           return TG_AXIS_PROFILE;
+        case ABS_MISC:
+           return TG_AXIS_MISC;
+        default:
+           return TG_AXIS_UNKNOWN;
+    }
+
     return TG_AXIS_UNKNOWN;
 }
 
@@ -923,24 +1063,327 @@ tg_axis tg_get_gamepad_axis_platform(u32 axis) {
  */
 
 #elif defined(TG_WINDOWS)
-void tg_gamepads_init_platform(tg_gamepads* gamepads) {
 
+const GUID TG_IID_IDirectInput8W =
+    {0xbf798031,0x483a,0x4da2,{0xaa,0x99,0x5d,0x64,0xed,0x36,0x97,0x00}};
+const GUID TG_GUID_XAxis =
+    {0xa36d02e0,0xc9f3,0x11cf,{0xbf,0xc7,0x44,0x45,0x53,0x54,0x00,0x00}};
+const GUID TG_GUID_YAxis =
+    {0xa36d02e1,0xc9f3,0x11cf,{0xbf,0xc7,0x44,0x45,0x53,0x54,0x00,0x00}};
+const GUID TG_GUID_ZAxis =
+    {0xa36d02e2,0xc9f3,0x11cf,{0xbf,0xc7,0x44,0x45,0x53,0x54,0x00,0x00}};
+const GUID TG_GUID_RxAxis =
+    {0xa36d02f4,0xc9f3,0x11cf,{0xbf,0xc7,0x44,0x45,0x53,0x54,0x00,0x00}};
+const GUID TG_GUID_RyAxis =
+    {0xa36d02f5,0xc9f3,0x11cf,{0xbf,0xc7,0x44,0x45,0x53,0x54,0x00,0x00}};
+const GUID TG_GUID_RzAxis =
+    {0xa36d02e3,0xc9f3,0x11cf,{0xbf,0xc7,0x44,0x45,0x53,0x54,0x00,0x00}};
+const GUID TG_GUID_Slider =
+    {0xa36d02e4,0xc9f3,0x11cf,{0xbf,0xc7,0x44,0x45,0x53,0x54,0x00,0x00}};
+const GUID TG_GUID_POV =
+    {0xa36d02f2,0xc9f3,0x11cf,{0xbf,0xc7,0x44,0x45,0x53,0x54,0x00,0x00}};
+
+static DIOBJECTDATAFORMAT tg_objectDataFormats[] = {
+    { &TG_GUID_XAxis,DIJOFS_X,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
+    { &TG_GUID_YAxis,DIJOFS_Y,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
+    { &TG_GUID_ZAxis,DIJOFS_Z,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
+    { &TG_GUID_RxAxis,DIJOFS_RX,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
+    { &TG_GUID_RyAxis,DIJOFS_RY,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
+    { &TG_GUID_RzAxis,DIJOFS_RZ,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
+    { &TG_GUID_Slider,DIJOFS_SLIDER(0),DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
+    { &TG_GUID_Slider,DIJOFS_SLIDER(1),DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
+    { &TG_GUID_POV,DIJOFS_POV(0),DIDFT_POV|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { &TG_GUID_POV,DIJOFS_POV(1),DIDFT_POV|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { &TG_GUID_POV,DIJOFS_POV(2),DIDFT_POV|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { &TG_GUID_POV,DIJOFS_POV(3),DIDFT_POV|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(0),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(1),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(2),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(3),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(4),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(5),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(6),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(7),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(8),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(9),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(10),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(11),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(12),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(13),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(14),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(15),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(16),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(17),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(18),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(19),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(20),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(21),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(22),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(23),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(24),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(25),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(26),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(27),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(28),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(29),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(30),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+    { NULL,DIJOFS_BUTTON(31),DIDFT_BUTTON|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,0 },
+};
+
+const DIDATAFORMAT tg_dataFormat = {
+    sizeof(DIDATAFORMAT),
+    sizeof(DIOBJECTDATAFORMAT),
+    DIDFT_ABSAXIS,
+    sizeof(DIJOYSTATE),
+    sizeof(tg_objectDataFormats) / sizeof(DIOBJECTDATAFORMAT),
+    tg_objectDataFormats
+};
+
+tg_bool tg_supportsXInput(tg_gamepads* gamepads, const GUID* guid) {
+    RAWINPUTDEVICELIST* list;
+    unsigned int count = 0;
+
+    if (gamepads->xinput_dll == NULL) {
+        return false;
+    }
+
+    if (GetRawInputDeviceList(NULL, &count, sizeof(RAWINPUTDEVICELIST)) != 0)
+        return false;
+
+    list = (RAWINPUTDEVICELIST*)malloc(count * sizeof(RAWINPUTDEVICELIST));
+    memset(list, 0, count * sizeof(RAWINPUTDEVICELIST));
+
+    if ((int)GetRawInputDeviceList(list, &count, sizeof(RAWINPUTDEVICELIST)) == -1) {
+        free(list);
+        return false;
+    }
+
+    for (size_t i = 0;  i < count;  i++) {
+        RID_DEVICE_INFO rdi = {0};
+        rdi.cbSize = sizeof(rdi);
+
+        char name[256];
+        UINT size = sizeof(rdi);
+
+        if (list[i].dwType != RIM_TYPEHID)
+            continue;
+
+        if ((int)GetRawInputDeviceInfoA(list[i].hDevice, RIDI_DEVICEINFO, &rdi, &size) == -1) {
+            continue;
+        }
+
+        if (MAKELONG(rdi.hid.dwVendorId, rdi.hid.dwProductId) != (LONG) guid->Data1)
+            continue;
+
+        memset(name, 0, sizeof(name));
+        size = sizeof(name);
+
+        if ((int)GetRawInputDeviceInfoA(list[i].hDevice, RIDI_DEVICENAME, name, &size) == -1) {
+            break;
+        }
+
+        name[sizeof(name) - 1] = '\0';
+        if (strstr((char*)name, "IG_")) {
+            free(list);
+            return true;
+        }
+    }
+
+    free(list);
+    return false;
+}
+
+BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID userData) {
+    tg_gamepads* gamepads = (tg_gamepads*)userData;
+    
+    /* avoid clones */
+    if (tg_supportsXInput(&inst->guidProduct))
+        return DIENUM_CONTINUE;
+
+    tg_gamepad* gamepad = tg_gamepad_find(gamepads);
+
+    if (FAILED(IDirectInput8_CreateDevice(gamepads->src.dinput, &inst->guidInstance, &gamepad->src.device, NULL))) {
+        tg_gamepad_release(gamepads, gamepad);
+        return DIENUM_CONTINUE;
+    }
+
+
+    if (FAILED(IDirectInputDevice8_SetDataFormat(gamepad->src.device, &tg_dataFormat ))) {
+        tg_gamepad_release(gamepads, gamepad);
+        return DIENUM_CONTINUE;
+    }
+
+    DIDEVCAPS caps = {0};
+    caps.dwSize = sizeof(DIDEVCAPS);
+
+    IDirectInputDevice8_GetCapabilities(gamepad->src.device, &caps);
+
+
+    DIPROPDWORD dipd = {0};
+    dipd.diph.dwSize = sizeof(dipd);
+    dipd.diph.dwHeaderSize = sizeof(dipd.diph);
+    dipd.diph.dwHow = DIPH_DEVICE;
+    dipd.dwData = DIPROPAXISMODE_ABS;
+
+    if (FAILED(IDirectInputDevice8_SetProperty(gamepad->src.device, DIPROP_AXISMODE, &dipd.diph))) {
+        tg_gamepad_release(gamepads, gamepad);
+        return DIENUM_CONTINUE;
+    }
+
+   if (!WideCharToMultiByte(CP_UTF8, 0, (const unsigned short*)inst->tszInstanceName, -1, gamepad->name, sizeof(gamepad->name), NULL, NULL)) {
+        tg_gamepad_release(gamepads, gamepad);
+        return DIENUM_STOP;
+    }
+
+    if (memcmp(&inst->guidProduct.Data4[2], "PIDVID", 6) == 0) {
+        sprintf(gamepad->guid, "03000000%02x%02x0000%02x%02x000000000000",
+                (uint8_t) inst->guidProduct.Data1,
+                (uint8_t) (inst->guidProduct.Data1 >> 8),
+                (uint8_t) (inst->guidProduct.Data1 >> 16),
+                (uint8_t) (inst->guidProduct.Data1 >> 24));
+    } else {
+        sprintf(gamepad->guid, "05000000%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x00",
+                gamepad->name[0], gamepad->name[1], gamepad->name[2], gamepad->name[3],
+                gamepad->name[4], gamepad->name[5], gamepad->name[6], gamepad->name[7],
+                gamepad->name[8], gamepad->name[9], gamepad->name[10]);
+    }
+
+
+    gamepad->mapping = tg_gamepad_find_valid_mapping(gamepad);
+
+    DIJOYSTATE state;
+    IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
+ 
+    for (unsigned int i = 0; i < caps.dwButtons; i++) {
+        tg_gamepad_btn key = tg_get_gamepad_button(gamepad, i); 
+        if (key == TG_BUTTON_UNKNOWN) 
+            continue;
+
+        if (gamepad->buttons[key].supported)
+            continue;
+
+        gamepad->buttons[key].supported = true;
+        gamepad->buttons[key].value = 0;
+    }
+
+    for (unsigned int i = 0; i < caps.dwAxes; i++) {
+        tg_axis key = tg_get_gamepad_axis(gamepad, i); 
+        if (key == TG_AXIS_UNKNOWN) 
+            continue;
+
+        if (gamepad->axises[key].supported)
+            continue;
+
+        gamepad->axises[key].supported = true;
+        gamepad->axises[key].value = 0;
+    }
+
+    return DIENUM_CONTINUE;
+}
+
+void tg_gamepads_init_platform(tg_gamepads* gamepads) {
+    /* init global gamepads->src.data */
+    if (gamepads->src.xinput_dll == NULL && internal.dinput_dll == NULL) {
+        /* load xinput dll and functions (if it's available) */
+        static const char* names[] = {"xinput0_4.dll", "xinput9_1_0.dll", "xinput1_2.dll", "xinput1_1.dll"};
+
+        uint32_t i;
+        for (i = 0; i < sizeof(names) / sizeof(const char*) && (gamepads->src.XInputGetState == NULL || internal.XInputGetKeystroke != NULL);  i++) {
+            gamepads->src.xinput_dll = LoadLibraryA(names[i]);
+
+            if (gamepads->src.xinput_dll) {
+                gamepads->src.XInputGetState = (PFN_XInputGetState)(tg_proc)GetProcAddress(internal.xinput_dll, "XInputGetState");
+                gamepads->src.XInputGetKeystroke = (PFN_XInputGetKeystroke)(tg_proc)GetProcAddress(internal.xinput_dll, "XInputGetKeystroke");
+                gamepads->src.XInputGetCapabilities =  (PFN_XInputGetCapabilities)(tg_proc)GetProcAddress(internal.xinput_dll, "XInputGetCapabilities");
+
+            }
+        }
+
+        /* load directinput dll and functions  */
+        gamepads->src.dinput_dll = LoadLibraryA("dinput8.dll");
+        if (gamepads->src.dinput_dll) {
+            gamepads->src.DInput8Create = (PFN_DirectInput8Create)(tg_proc)GetProcAddress(internal.dinput_dll, "DirectInput8Create");
+            HINSTANCE hInstance = GetModuleHandle(0);
+            if (FAILED(gamepads->src.DInput8Create(hInstance,
+                                              DIRECTINPUT_VERSION,
+                                              &TG_IID_IDirectInput8W,
+                                              (void**) &gamepads->src.dinput,
+                                              NULL)) ||
+                FAILED(IDirectInput8_EnumDevices(gamepads->src.dinput,
+                                                 DI8DEVCLASS_GAMECTRL,
+                                                 DirectInputEnumDevicesCallback,
+                                                 (void*)gamepads,
+                                                 DIEDFL_ALLDEVICES))) { 
+                gamepads->src.dinput_dll = NULL; 
+            }
+        }
+    }
 }
 
 tg_bool tg_gamepads_update_platform(tg_gamepads* gamepads, tg_event* event) {
-
+    if (gamepads->src.dinput) {
+(void)(gamepads);
+        /*        IDirectInput8_EnumDevices(gamepads->src.dinput,
+                                  DI8DEVCLASS_GAMECTRL,
+                                  DirectInputEnumDevicesCallback,
+                                  (void*)gamepads,
+                                  DIEDFL_ALLDEVICES);
+  */
+    }
 }
 
 void tg_gamepads_free_platform(tg_gamepads* gamepads) {
+    if (gamepads->src.xinput_dll) {
+        FreeLibrary(gamepads->src.xinput_dll);
+    }
 
+    if (gamepads->src.dinput_dll) {
+        if (gamepads->src.dinput)
+            IDirectInput8_Release(gamepads->src.dinput);
+
+        FreeLibrary(gamepads->src.dinput_dll);
+    }
 }
 
 tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
+    if (gamepad->connected == false) {
+        tg_gamepad_release(gamepad);
+        return false;
+    }
+    
+    TG_UNUSED(event);
+    if (gamepads->src.dinput_dll) {
+        DIDEVCAPS caps = {0};
+        caps.dwSize = sizeof(DIDEVCAPS);
 
+        DIJOYSTATE state;
+        HRESULT result = IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
+        if (result == DIERR_NOTACQUIRED || result == DIERR_INPUTLOST) {
+            event->type = TG_EVENT_GAMEPAD_DISCONNECT;
+            event->gamepad = gamepad;
+            gamepad->connected = false;
+            return false;
+        }
+
+        if (FAILED(result)) {
+//            tg_gamepad_release(gamepad);
+            return false;
+        }
+
+        for (unsigned int i = 0; i < caps.dwButtons; i++) {
+            tg_button key = tg_get_gamepad_button(gamepad, i); 
+            if (key == TG_BUTTON_UNKNOWN) 
+                continue;
+
+            gamepad->buttons[key].value = state.rgbButtons[i];
+        }
+    }
+
+    return false;
 }
 
 void tg_gamepad_release_platform(tg_gamepad* gamepad) {
-
+    IDirectInputDevice8_Release(gamepad->src.device);
 }
 
 tg_button tg_get_gamepad_button_platform(u32 button) {

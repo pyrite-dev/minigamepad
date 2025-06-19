@@ -41,7 +41,7 @@ debug: all
 		echo "Running $$exe..."; \
 		./$$exe; \
 	done
-	./examples/rgfw_gamepad
+	cd examples && ./rgfw_gamepad
 
 clean:
 	rm -rf $(EXAMPLES) examples/rgfw_gamepad
