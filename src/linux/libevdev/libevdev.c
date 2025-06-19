@@ -177,7 +177,7 @@ static void libevdev_reset(struct libevdev* dev) {
 	libevdev_enable_event_type(dev, EV_SYN);
 }
 
-LIBEVDEV_EXPORT struct libevdev* libevdev_new(void) {
+struct libevdev* libevdev_new(void) {
 	struct libevdev* dev;
 
 	dev = calloc(1, sizeof(*dev));
@@ -189,7 +189,7 @@ LIBEVDEV_EXPORT struct libevdev* libevdev_new(void) {
 	return dev;
 }
 
-LIBEVDEV_EXPORT void libevdev_free(struct libevdev* dev) {
+void libevdev_free(struct libevdev* dev) {
 	if (!dev)
 		return;
 
@@ -198,7 +198,7 @@ LIBEVDEV_EXPORT void libevdev_free(struct libevdev* dev) {
 	free(dev);
 }
 
-LIBEVDEV_EXPORT int libevdev_change_fd(struct libevdev* dev, int fd) {
+int libevdev_change_fd(struct libevdev* dev, int fd) {
 	if (!dev->initialized) {
 		log_bug(dev, "device not initialized. call libevdev_set_fd() first\n");
 		return -1;
@@ -207,7 +207,7 @@ LIBEVDEV_EXPORT int libevdev_change_fd(struct libevdev* dev, int fd) {
 	return 0;
 }
 
-LIBEVDEV_EXPORT int libevdev_set_fd(struct libevdev* dev, int fd) {
+int libevdev_set_fd(struct libevdev* dev, int fd) {
 	int rc;
 	int i;
 	char buf[256];
@@ -410,9 +410,7 @@ out:
 	return rc ? -errno : 0;
 }
 
-LIBEVDEV_EXPORT int libevdev_get_fd(const struct libevdev* dev) {
-	return dev->fd;
-}
+int libevdev_get_fd(const struct libevdev* dev) { return dev->fd; }
 
 static inline void init_event(struct libevdev* dev, struct input_event* ev,
 							  int type, int code, int value) {
@@ -792,9 +790,8 @@ sanitize_event(const struct libevdev* dev, struct input_event* ev,
 	return EVENT_FILTER_NONE;
 }
 
-LIBEVDEV_EXPORT int libevdev_next_event(struct libevdev* dev,
-										unsigned int flags,
-										struct input_event* ev) {
+int libevdev_next_event(struct libevdev* dev, unsigned int flags,
+						struct input_event* ev) {
 	int rc = LIBEVDEV_READ_STATUS_SUCCESS;
 	enum event_filter_status filter_status;
 	const unsigned int valid_flags =
@@ -896,7 +893,7 @@ out:
 	return rc;
 }
 
-LIBEVDEV_EXPORT int libevdev_has_event_pending(struct libevdev* dev) {
+int libevdev_has_event_pending(struct libevdev* dev) {
 	struct pollfd fds = {dev->fd, POLLIN, 0};
 	int rc;
 
@@ -913,18 +910,16 @@ LIBEVDEV_EXPORT int libevdev_has_event_pending(struct libevdev* dev) {
 	return (rc >= 0) ? rc : -errno;
 }
 
-LIBEVDEV_EXPORT const char* libevdev_get_name(const struct libevdev* dev) {
+const char* libevdev_get_name(const struct libevdev* dev) {
 	return dev->name ? dev->name : "";
 }
 
-LIBEVDEV_EXPORT int libevdev_has_event_type(const struct libevdev* dev,
-											unsigned int type) {
+int libevdev_has_event_type(const struct libevdev* dev, unsigned int type) {
 	return type == EV_SYN || (type <= EV_MAX && bit_is_set(dev->bits, type));
 }
 
-LIBEVDEV_EXPORT int libevdev_has_event_code(const struct libevdev* dev,
-											unsigned int type,
-											unsigned int code) {
+int libevdev_has_event_code(const struct libevdev* dev, unsigned int type,
+							unsigned int code) {
 	const unsigned long* mask = NULL;
 	int max;
 
@@ -942,12 +937,12 @@ LIBEVDEV_EXPORT int libevdev_has_event_code(const struct libevdev* dev,
 	return bit_is_set(mask, code);
 }
 
-LIBEVDEV_EXPORT int libevdev_get_num_slots(const struct libevdev* dev) {
+int libevdev_get_num_slots(const struct libevdev* dev) {
 	return dev->num_slots;
 }
 
-LIBEVDEV_EXPORT const struct input_absinfo*
-libevdev_get_abs_info(const struct libevdev* dev, unsigned int code) {
+const struct input_absinfo* libevdev_get_abs_info(const struct libevdev* dev,
+												  unsigned int code) {
 	if (!libevdev_has_event_type(dev, EV_ABS) ||
 		!libevdev_has_event_code(dev, EV_ABS, code))
 		return NULL;
@@ -955,8 +950,7 @@ libevdev_get_abs_info(const struct libevdev* dev, unsigned int code) {
 	return &dev->abs_info[code];
 }
 
-LIBEVDEV_EXPORT int libevdev_enable_event_type(struct libevdev* dev,
-											   unsigned int type) {
+int libevdev_enable_event_type(struct libevdev* dev, unsigned int type) {
 	int max;
 
 	if (type > EV_MAX)
@@ -979,10 +973,8 @@ LIBEVDEV_EXPORT int libevdev_enable_event_type(struct libevdev* dev,
 	return 0;
 }
 
-LIBEVDEV_EXPORT int libevdev_enable_event_code(struct libevdev* dev,
-											   unsigned int type,
-											   unsigned int code,
-											   const void* data) {
+int libevdev_enable_event_code(struct libevdev* dev, unsigned int type,
+							   unsigned int code, const void* data) {
 	unsigned int max;
 	unsigned long* mask = NULL;
 
@@ -1021,14 +1013,12 @@ LIBEVDEV_EXPORT int libevdev_enable_event_code(struct libevdev* dev,
 	return 0;
 }
 
-LIBEVDEV_EXPORT int libevdev_event_is_type(const struct input_event* ev,
-										   unsigned int type) {
+int libevdev_event_is_type(const struct input_event* ev, unsigned int type) {
 	return type < EV_CNT && ev->type == type;
 }
 
-LIBEVDEV_EXPORT int libevdev_event_is_code(const struct input_event* ev,
-										   unsigned int type,
-										   unsigned int code) {
+int libevdev_event_is_code(const struct input_event* ev, unsigned int type,
+						   unsigned int code) {
 	int max;
 
 	if (!libevdev_event_is_type(ev, type))
@@ -1057,7 +1047,7 @@ static const int ev_max[EV_MAX + 1] = {
 #pragma GCC diagnostic pop /* "-Woverride-init" */
 #endif
 
-LIBEVDEV_EXPORT int libevdev_event_type_get_max(unsigned int type) {
+int libevdev_event_type_get_max(unsigned int type) {
 	if (type > EV_MAX)
 		return -1;
 

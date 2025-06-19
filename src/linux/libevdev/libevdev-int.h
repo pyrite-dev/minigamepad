@@ -40,7 +40,6 @@
 #define ABS_MT_MIN ABS_MT_SLOT
 #define ABS_MT_MAX ABS_MT_TOOL_Y
 #define ABS_MT_CNT (ABS_MT_MAX - ABS_MT_MIN + 1)
-#define LIBEVDEV_EXPORT __attribute__((visibility("default")))
 #define ALIAS(_to) __attribute__((alias(#_to)))
 
 enum SyncState {
