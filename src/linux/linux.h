@@ -12,7 +12,7 @@ struct mg_gamepad_context_t {
   struct ff_effect effect;        // effect used in the rumble function
   char full_path[267];            // the path of the file
   unsigned int keyMap[KEY_CNT - BTN_MISC];
-  unsigned int  absMap[ABS_CNT];
+  unsigned int absMap[ABS_CNT];
   struct input_absinfo absInfo[ABS_CNT];
 };
 
@@ -21,5 +21,5 @@ mg_gamepad_axis get_gamepad_axis(unsigned int axis);
 int get_native_btn(mg_gamepad_btn btn);
 int get_native_axis(mg_gamepad_axis axis);
 
-bool setup_gamepad(mg_gamepads* gamepads, char* full_path);
+bool setup_gamepad(mg_gamepads *gamepads, char *full_path);
 #endif
