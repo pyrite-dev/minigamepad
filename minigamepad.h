@@ -128,25 +128,25 @@
 		#endif
 
 		#if defined(MG_EXPORT)
-			#define TGDEF __declspec(dllexport)
+			#define MGDEF __declspec(dllexport)
 		#else
-			#define TGDEF __declspec(dllimport)
+			#define MGDEF __declspec(dllimport)
 		#endif
 	#else
 		#if defined(MG_EXPORT)
-			#define TGDEF __attribute__((visibility("default")))
+			#define MGDEF __attribute__((visibility("default")))
 		#endif
 	#endif
-    #ifndef TGDEF
-        #define TGDEF
+    #ifndef MGDEF
+        #define MGDEF
     #endif
 #endif
 
-#ifndef TGDEF
+#ifndef MGDEF
 	#ifdef MG_C89
-		#define TGDEF __inline
+		#define MGDEF __inline
 	#else
-		#define TGDEF inline
+		#define MGDEF inline
 	#endif
 #endif
 
@@ -421,12 +421,12 @@ typedef struct mg_event {
     mg_gamepad* gamepad;
 } mg_event;
 
-TGDEF void mg_gamepads_init(mg_gamepads* gamepads);
-TGDEF mg_bool mg_gamepads_update(mg_gamepads* gamepads, mg_event* event);
-TGDEF void mg_gamepads_free(mg_gamepads* gamepads);
+MGDEF void mg_gamepads_init(mg_gamepads* gamepads);
+MGDEF mg_bool mg_gamepads_update(mg_gamepads* gamepads, mg_event* event);
+MGDEF void mg_gamepads_free(mg_gamepads* gamepads);
 
-TGDEF const char* mg_button_get_name(mg_button button);
-TGDEF const char* mg_axis_get_name(mg_axis button);
+MGDEF const char* mg_button_get_name(mg_button button);
+MGDEF const char* mg_axis_get_name(mg_axis button);
 
 #endif /* MG_HEADER */
 
@@ -434,25 +434,25 @@ TGDEF const char* mg_axis_get_name(mg_axis button);
 
 /* gamepads->src.global API */
 /* find a valid unused gamepad or return NULL */
-TGDEF mg_gamepad* mg_gamepad_find(mg_gamepads* gamepads);
-TGDEF void mg_gamepad_release(mg_gamepads* gamepads, mg_gamepad* gamepad);
-TGDEF void mg_list_swap_gamepad(mg_gamepad_list* from, mg_gamepad_list* to, mg_gamepad* gamepad);
+MGDEF mg_gamepad* mg_gamepad_find(mg_gamepads* gamepads);
+MGDEF void mg_gamepad_release(mg_gamepads* gamepads, mg_gamepad* gamepad);
+MGDEF void mg_list_swap_gamepad(mg_gamepad_list* from, mg_gamepad_list* to, mg_gamepad* gamepad);
 
 /* gamepads->src.platform-specific API */
-TGDEF void mg_gamepads_init_platform(mg_gamepads* gamepads);
+MGDEF void mg_gamepads_init_platform(mg_gamepads* gamepads);
 /* updates gamepad structure by checking if any new gamepads are connected and adding them */
-TGDEF mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event);
-TGDEF void mg_gamepads_free_platform(mg_gamepads* gamepads);
-TGDEF mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event);
-TGDEF void mg_gamepad_release_platform(mg_gamepad* gamepad);
-TGDEF mg_button mg_get_gamepad_button_platform(u32 button);
-TGDEF mg_axis mg_get_gamepad_axis_platform(u32 axis);
+MGDEF mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event);
+MGDEF void mg_gamepads_free_platform(mg_gamepads* gamepads);
+MGDEF mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event);
+MGDEF void mg_gamepad_release_platform(mg_gamepad* gamepad);
+MGDEF mg_button mg_get_gamepad_button_platform(u32 button);
+MGDEF mg_axis mg_get_gamepad_axis_platform(u32 axis);
 
 /* gamepads->src.mappings API */
-TGDEF struct mg_mapping* mg_gamepad_find_valid_mapping(mg_gamepad* gamepad);
-TGDEF mg_button mg_get_gamepad_button(mg_gamepad* gamepad, u8 button);
-TGDEF mg_axis mg_get_gamepad_axis(mg_gamepad* gamepad, u8 axis);
-TGDEF void mg_mappings_init(void);
+MGDEF struct mg_mapping* mg_gamepad_find_valid_mapping(mg_gamepad* gamepad);
+MGDEF mg_button mg_get_gamepad_button(mg_gamepad* gamepad, u8 button);
+MGDEF mg_axis mg_get_gamepad_axis(mg_gamepad* gamepad, u8 axis);
+MGDEF void mg_mappings_init(void);
 /* public/global API implementation */
 
 void mg_gamepads_init(mg_gamepads* gamepads) {
