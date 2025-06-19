@@ -1205,7 +1205,7 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
     tg_gamepads* gamepads = (tg_gamepads*)userData;
     
     /* avoid clones */
-    if (tg_supportsXInput(&inst->guidProduct))
+    if (tg_supportsXInput(gamepads, &inst->guidProduct))
         return DIENUM_CONTINUE;
 
     tg_gamepad* gamepad = tg_gamepad_find(gamepads);
@@ -1263,7 +1263,7 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
     IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
  
     for (unsigned int i = 0; i < caps.dwButtons; i++) {
-        tg_gamepad_btn key = tg_get_gamepad_button(gamepad, i); 
+        tg_button key = tg_get_gamepad_button(gamepads, i); 
         if (key == TG_BUTTON_UNKNOWN) 
             continue;
 
@@ -1296,7 +1296,7 @@ void tg_gamepads_init_platform(tg_gamepads* gamepads) {
         static const char* names[] = {"xinput0_4.dll", "xinput9_1_0.dll", "xinput1_2.dll", "xinput1_1.dll"};
 
         uint32_t i;
-        for (i = 0; i < sizeof(names) / sizeof(const char*) && (gamepads->src.XInputGetState == NULL || internal.XInputGetKeystroke != NULL);  i++) {
+        for (i = 0; i < sizeof(names) / sizeof(const char*) && (gamepads->src.XInputGetState == NULL || gamepads->src.XInputGetKeystroke != NULL);  i++) {
             gamepads->src.xinput_dll = LoadLibraryA(names[i]);
 
             if (gamepads->src.xinput_dll) {
@@ -1355,7 +1355,7 @@ void tg_gamepads_free_platform(tg_gamepads* gamepads) {
 
 tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
     if (gamepad->connected == TG_FALSE) {
-        tg_gamepad_release(gamepad);
+//        tg_gamepad_release(gamepad);
         return TG_FALSE;
     }
     
@@ -1369,7 +1369,7 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
         if (result == DIERR_NOTACQUIRED || result == DIERR_INPUTLOST) {
             event->type = TG_EVENT_GAMEPAD_DISCONNECT;
             event->gamepad = gamepad;
-            gamepad->connected = false;
+            gamepad->connected = TG_FALSE;
             return TG_FALSE;
         }
 
@@ -1550,7 +1550,7 @@ void updateGamepadGUID(char* guid) {
     if (strncmp(&guid[20], "504944564944", 12) == 0) {
         char original[33];
         TG_STRNCPY(original, guid, sizeof(original) - 1);
-        TG_SNPRINTF(guid, sizeof(guid), "03000000%.4s0000%.4s000000000000"),
+        TG_SNPRINTF(guid, sizeof(guid), "03000000%.4s0000%.4s000000000000",
                 original, original + 4);
     }
 #else
