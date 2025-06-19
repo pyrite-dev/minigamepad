@@ -1242,13 +1242,13 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
         return DIENUM_CONTINUE;
     }
 
-    TG_MEMCPY(&caps, 0, sizeof(caps));
+    TG_MEMSET(&caps, 0, sizeof(caps));
     caps.dwSize = sizeof(DIDEVCAPS);
 
     IDirectInputDevice8_GetCapabilities(gamepad->src.device, &caps);
 
 
-    TG_MEMCPY(&dipd, 0, sizeof(dipd));
+    TG_MEMSET(&dipd, 0, sizeof(dipd));
     dipd.diph.dwSize = sizeof(dipd);
     dipd.diph.dwHeaderSize = sizeof(dipd.diph);
     dipd.diph.dwHow = DIPH_DEVICE;
@@ -1286,7 +1286,7 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
 }
 
     for (i = 0; i < caps.dwButtons; i++) {
-        tg_button key = tg_get_gamepad_button(gamepad, i); 
+        tg_button key = tg_get_gamepad_button(gamepad, (u8)i); 
         if (key == TG_BUTTON_UNKNOWN) 
             continue;
 
@@ -1298,7 +1298,7 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
     }
 
     for (i = 0; i < caps.dwAxes; i++) {
-        tg_axis key = tg_get_gamepad_axis(gamepad, i); 
+        tg_axis key = tg_get_gamepad_axis(gamepad, (u8)i); 
         if (key == TG_AXIS_UNKNOWN) 
             continue;
 
@@ -1362,6 +1362,7 @@ tg_bool tg_gamepads_update_platform(tg_gamepads* gamepads, tg_event* event) {
                                   DIEDFL_ALLDEVICES);
   */
     }
+    return TG_FALSE;
 }
 
 void tg_gamepads_free_platform(tg_gamepads* gamepads) {
@@ -1401,7 +1402,7 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
         }
 
         if (FAILED(result)) {
-//            tg_gamepad_release(gamepad);
+         /*   tg_gamepad_release(gamepad); */
             return TG_FALSE;
         }
 
