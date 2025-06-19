@@ -25,6 +25,7 @@
 #include <poll.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -52,28 +53,6 @@ static const int ev_max[EV_MAX + 1] = {
 #pragma GCC diagnostic pop /* "-Woverride-init" */
 #endif
 
-enum event_filter_status {
-	EVENT_FILTER_NONE,	   /**< Event untouched by filters */
-	EVENT_FILTER_MODIFIED, /**< Event was modified */
-	EVENT_FILTER_DISCARD,  /**< Discard current event */
-};
-
-static int sync_mt_state(struct libevdev* dev, int create_events);
-
-static inline int* slot_value(const struct libevdev* dev, int slot, int axis) {
-	if (unlikely(slot > dev->num_slots)) {
-		// log_bug(dev, "Slot %d
-		// exceeds number of slots (%d)\n", slot, 				dev->num_slots);
-		slot = 0;
-	}
-	if (unlikely(axis < ABS_MT_MIN || axis > ABS_MT_MAX)) {
-		log_bug(dev, "MT axis %d is outside the valid range [%d,%d]\n", axis,
-				ABS_MT_MIN, ABS_MT_MAX);
-		axis = ABS_MT_MIN;
-	}
-	return &dev->mt_slot_vals[slot * ABS_MT_CNT + axis - ABS_MT_MIN];
-}
-
 static int init_event_queue(struct libevdev* dev) {
 	const int MIN_QUEUE_SIZE = 256;
 	int nevents = 1; /* terminating SYN_REPORT */
@@ -93,52 +72,7 @@ static int init_event_queue(struct libevdev* dev) {
 		}
 	}
 
-	nslots = dev->num_slots;
-	if (nslots > 1) {
-		int num_mt_axes = 0;
-
-		for (code = ABS_MT_SLOT; code <= ABS_MAX; code++) {
-			if (libevdev_has_event_code(dev, EV_ABS, code))
-				num_mt_axes++;
-		}
-
-		/* We already counted the first slot in the initial count */
-		nevents += num_mt_axes * (nslots - 1);
-	}
-
 	return queue_alloc(dev, max(MIN_QUEUE_SIZE, nevents * 2));
-}
-
-static void libevdev_dflt_log_func(enum libevdev_log_priority priority,
-								   void* data, const char* file, int line,
-								   const char* func, const char* format,
-								   va_list args) {
-	const char* prefix;
-	switch (priority) {
-	case LIBEVDEV_LOG_ERROR:
-		prefix = "libevdev error";
-		break;
-	case LIBEVDEV_LOG_INFO:
-		prefix = "libevdev info";
-		break;
-	case LIBEVDEV_LOG_DEBUG:
-		prefix = "libevdev debug";
-		break;
-	default:
-		prefix = "libevdev INVALID LOG PRIORITY";
-		break;
-	}
-	/* default logging format:
-	   libevev error in libevdev_some_func: blah blah
-	   libevev info in libevdev_some_func: blah blah
-	   libevev debug in file.c:123:libevdev_some_func: blah blah
-	 */
-
-	fprintf(stderr, "%s in ", prefix);
-	if (priority == LIBEVDEV_LOG_DEBUG)
-		fprintf(stderr, "%s:%d:", file, line);
-	fprintf(stderr, "%s: ", func);
-	vfprintf(stderr, format, args);
 }
 
 static void fix_invalid_absinfo(const struct libevdev* dev, int axis,
@@ -151,8 +85,8 @@ static void fix_invalid_absinfo(const struct libevdev* dev, int axis,
 	if (axis == ABS_MT_TRACKING_ID && abs_info->maximum == abs_info->minimum) {
 		abs_info->minimum = -1;
 		abs_info->maximum = 0xFFFF;
-		log_bug(dev, "Device \"%s\" has invalid ABS_MT_TRACKING_ID range",
-				dev->name);
+		printf("[BUG] Device \"%s\" has invalid ABS_MT_TRACKING_ID range",
+			   dev->name);
 	}
 }
 
@@ -161,36 +95,16 @@ static void fix_invalid_absinfo(const struct libevdev* dev, int axis,
  */
 static struct logdata log_data = {
 	.priority = LIBEVDEV_LOG_INFO,
-	.global_handler = libevdev_dflt_log_func,
 	.userdata = NULL,
 };
-
-void _libevdev_log_msg(const struct libevdev* dev,
-					   enum libevdev_log_priority priority, const char* file,
-					   int line, const char* func, const char* format, ...) {
-	va_list args;
-
-	va_start(args, format);
-	log_data.global_handler(priority, log_data.userdata, file, line, func,
-							format, args);
-	va_end(args);
-}
 
 static void libevdev_reset(struct libevdev* dev) {
 	enum libevdev_log_priority pri = dev->log.priority;
 
 	free(dev->name);
-	free(dev->phys);
-	free(dev->uniq);
-	free(dev->mt_slot_vals);
-	free(dev->mt_sync.mt_state);
-	free(dev->mt_sync.tracking_id_changes);
-	free(dev->mt_sync.slot_update);
 	memset(dev, 0, sizeof(*dev));
 	dev->fd = -1;
 	dev->initialized = false;
-	dev->num_slots = -1;
-	dev->current_slot = -1;
 	dev->sync_state = SYNC_NONE;
 	dev->log.priority = pri;
 }
@@ -218,7 +132,7 @@ void libevdev_free(struct libevdev* dev) {
 
 int libevdev_change_fd(struct libevdev* dev, int fd) {
 	if (!dev->initialized) {
-		log_bug(dev, "device not initialized. call libevdev_set_fd() first\n");
+		printf("[BUG] device not initialized. call libevdev_set_fd() first\n");
 		return -1;
 	}
 	dev->fd = fd;
@@ -231,7 +145,7 @@ int libevdev_set_fd(struct libevdev* dev, int fd) {
 	char buf[256];
 
 	if (dev->initialized) {
-		log_bug(dev, "device already initialized.\n");
+		printf("[BUG] device already initialized.\n");
 		return -EBADF;
 	} else if (fd < 0)
 		return -EBADF;
@@ -252,37 +166,6 @@ int libevdev_set_fd(struct libevdev* dev, int fd) {
 	if (!dev->name) {
 		errno = ENOMEM;
 		goto out;
-	}
-
-	free(dev->phys);
-	dev->phys = NULL;
-	memset(buf, 0, sizeof(buf));
-	rc = ioctl(fd, EVIOCGPHYS(sizeof(buf) - 1), buf);
-	if (rc < 0) {
-		/* uinput has no phys */
-		if (errno != ENOENT)
-			goto out;
-	} else {
-		dev->phys = strdup(buf);
-		if (!dev->phys) {
-			errno = ENOMEM;
-			goto out;
-		}
-	}
-
-	free(dev->uniq);
-	dev->uniq = NULL;
-	memset(buf, 0, sizeof(buf));
-	rc = ioctl(fd, EVIOCGUNIQ(sizeof(buf) - 1), buf);
-	if (rc < 0) {
-		if (errno != ENOENT)
-			goto out;
-	} else {
-		dev->uniq = strdup(buf);
-		if (!dev->uniq) {
-			errno = ENOMEM;
-			goto out;
-		}
 	}
 
 	rc = ioctl(fd, EVIOCGID, &dev->ids);
@@ -343,45 +226,6 @@ int libevdev_set_fd(struct libevdev* dev, int fd) {
 	}
 
 	dev->fd = fd;
-
-	/* devices with ABS_MT_SLOT - 1 aren't MT devices,
-	   see the documentation for multitouch-related
-	   functions for more details */
-	if (!libevdev_has_event_code(dev, EV_ABS, ABS_MT_SLOT - 1) &&
-		libevdev_has_event_code(dev, EV_ABS, ABS_MT_SLOT)) {
-		const struct input_absinfo* abs_info;
-
-		abs_info = &dev->abs_info[ABS_MT_SLOT];
-
-		dev->num_slots = abs_info->maximum + 1;
-		dev->mt_slot_vals = calloc(dev->num_slots * ABS_MT_CNT, sizeof(int));
-		if (!dev->mt_slot_vals) {
-			rc = -ENOMEM;
-			goto out;
-		}
-		dev->current_slot = abs_info->value;
-
-		dev->mt_sync.mt_state_sz =
-			sizeof(*dev->mt_sync.mt_state) + (dev->num_slots) * sizeof(int);
-		dev->mt_sync.mt_state = calloc(1, dev->mt_sync.mt_state_sz);
-
-		dev->mt_sync.tracking_id_changes_sz =
-			NLONGS(dev->num_slots) * sizeof(long);
-		dev->mt_sync.tracking_id_changes =
-			malloc(dev->mt_sync.tracking_id_changes_sz);
-
-		dev->mt_sync.slot_update_sz =
-			NLONGS(dev->num_slots * ABS_MT_CNT) * sizeof(long);
-		dev->mt_sync.slot_update = malloc(dev->mt_sync.slot_update_sz);
-
-		if (!dev->mt_sync.tracking_id_changes || !dev->mt_sync.slot_update ||
-			!dev->mt_sync.mt_state) {
-			rc = -ENOMEM;
-			goto out;
-		}
-
-		sync_mt_state(dev, 0);
-	}
 
 	rc = init_event_queue(dev);
 	if (rc < 0) {
@@ -445,9 +289,6 @@ static int sync_abs_state(struct libevdev* dev) {
 	for (i = ABS_X; i < ABS_CNT; i++) {
 		struct input_absinfo abs_info;
 
-		if (i >= ABS_MT_MIN && i <= ABS_MT_MAX)
-			continue;
-
 		if (!bit_is_set(dev->abs_bits, i))
 			continue;
 
@@ -462,128 +303,6 @@ static int sync_abs_state(struct libevdev* dev) {
 			dev->abs_info[i].value = abs_info.value;
 		}
 	}
-
-	rc = 0;
-out:
-	return rc ? -errno : 0;
-}
-
-static int sync_mt_state(struct libevdev* dev, int create_events) {
-	struct input_event* ev;
-	struct input_absinfo abs_info;
-	int rc;
-	int axis, slot;
-	int ioctl_success = 0;
-	int last_reported_slot = 0;
-	struct mt_sync_state* mt_state = dev->mt_sync.mt_state;
-	unsigned long* slot_update = dev->mt_sync.slot_update;
-	unsigned long* tracking_id_changes = dev->mt_sync.tracking_id_changes;
-	int need_tracking_id_changes = 0;
-
-	memset(dev->mt_sync.slot_update, 0, dev->mt_sync.slot_update_sz);
-	memset(dev->mt_sync.tracking_id_changes, 0,
-		   dev->mt_sync.tracking_id_changes_sz);
-
-#define AXISBIT(_slot, _axis) (_slot * ABS_MT_CNT + _axis - ABS_MT_MIN)
-
-	for (axis = ABS_MT_MIN; axis <= ABS_MT_MAX; axis++) {
-		if (axis == ABS_MT_SLOT)
-			continue;
-
-		if (!libevdev_has_event_code(dev, EV_ABS, axis))
-			continue;
-
-		mt_state->code = axis;
-		rc = ioctl(dev->fd, EVIOCGMTSLOTS(dev->mt_sync.mt_state_sz), mt_state);
-		if (rc < 0) {
-			/* if the first ioctl fails with -EINVAL, chances are the kernel
-			   doesn't support the ioctl. Simply continue */
-			if (errno == -EINVAL && !ioctl_success) {
-				rc = 0;
-			} else /* if the second, ... ioctl fails, really fail */
-				goto out;
-		} else {
-			if (ioctl_success == 0)
-				ioctl_success = 1;
-
-			for (slot = 0; slot < dev->num_slots; slot++) {
-
-				if (*slot_value(dev, slot, axis) == mt_state->val[slot])
-					continue;
-
-				if (axis == ABS_MT_TRACKING_ID &&
-					*slot_value(dev, slot, axis) != -1 &&
-					mt_state->val[slot] != -1) {
-					set_bit(tracking_id_changes, slot);
-					need_tracking_id_changes = 1;
-				}
-
-				*slot_value(dev, slot, axis) = mt_state->val[slot];
-
-				set_bit(slot_update, AXISBIT(slot, axis));
-				/* note that this slot has updates */
-				set_bit(slot_update, AXISBIT(slot, ABS_MT_SLOT));
-			}
-		}
-	}
-
-	if (!create_events) {
-		rc = 0;
-		goto out;
-	}
-
-	if (need_tracking_id_changes) {
-		for (slot = 0; slot < dev->num_slots; slot++) {
-			if (!bit_is_set(tracking_id_changes, slot))
-				continue;
-
-			ev = queue_push(dev);
-			init_event(dev, ev, EV_ABS, ABS_MT_SLOT, slot);
-			ev = queue_push(dev);
-			init_event(dev, ev, EV_ABS, ABS_MT_TRACKING_ID, -1);
-
-			last_reported_slot = slot;
-		}
-
-		ev = queue_push(dev);
-		init_event(dev, ev, EV_SYN, SYN_REPORT, 0);
-	}
-
-	for (slot = 0; slot < dev->num_slots; slot++) {
-		if (!bit_is_set(slot_update, AXISBIT(slot, ABS_MT_SLOT)))
-			continue;
-
-		ev = queue_push(dev);
-		init_event(dev, ev, EV_ABS, ABS_MT_SLOT, slot);
-		last_reported_slot = slot;
-
-		for (axis = ABS_MT_MIN; axis <= ABS_MT_MAX; axis++) {
-			if (axis == ABS_MT_SLOT ||
-				!libevdev_has_event_code(dev, EV_ABS, axis))
-				continue;
-
-			if (bit_is_set(slot_update, AXISBIT(slot, axis))) {
-				ev = queue_push(dev);
-				init_event(dev, ev, EV_ABS, axis, *slot_value(dev, slot, axis));
-			}
-		}
-	}
-
-	/* add one last slot event to make sure the client is on the same
-	   slot as the kernel */
-
-	rc = ioctl(dev->fd, EVIOCGABS(ABS_MT_SLOT), &abs_info);
-	if (rc < 0)
-		goto out;
-
-	dev->current_slot = abs_info.value;
-
-	if (dev->current_slot != last_reported_slot) {
-		ev = queue_push(dev);
-		init_event(dev, ev, EV_ABS, ABS_MT_SLOT, dev->current_slot);
-	}
-
-#undef AXISBIT
 
 	rc = 0;
 out:
@@ -628,7 +347,7 @@ static inline void drain_events(struct libevdev* dev) {
 			return;
 
 		if (rc < 0) {
-			log_error(dev, "Failed to drain events before sync.\n");
+			printf("[BUG] Failed to drain events before sync.\n");
 			return;
 		}
 
@@ -643,7 +362,7 @@ static inline void drain_events(struct libevdev* dev) {
 	   we can drain them.
 	 */
 	if (iterations >= max_iterations)
-		log_info(dev, "Unable to drain events, buffer size mismatch.\n");
+		printf("[BUG] Unable to drain events, buffer size mismatch.\n");
 }
 
 static int sync_state(struct libevdev* dev) {
@@ -658,9 +377,6 @@ static int sync_state(struct libevdev* dev) {
 		rc = sync_key_state(dev);
 	if (rc == 0 && libevdev_has_event_type(dev, EV_ABS))
 		rc = sync_abs_state(dev);
-	if (rc == 0 && dev->num_slots > -1 &&
-		libevdev_has_event_code(dev, EV_ABS, ABS_MT_SLOT))
-		rc = sync_mt_state(dev, 1);
 
 	dev->queue_nsync = queue_num_elements(dev);
 
@@ -685,34 +401,12 @@ static int update_key_state(struct libevdev* dev, const struct input_event* e) {
 	return 0;
 }
 
-static int update_mt_state(struct libevdev* dev, const struct input_event* e) {
-	if (e->code == ABS_MT_SLOT && dev->num_slots > -1) {
-		int i;
-		dev->current_slot = e->value;
-		/* sync abs_info with the current slot values */
-		for (i = ABS_MT_SLOT + 1; i <= ABS_MT_MAX; i++) {
-			if (libevdev_has_event_code(dev, EV_ABS, i))
-				dev->abs_info[i].value = *slot_value(dev, dev->current_slot, i);
-		}
-
-		return 0;
-	} else if (dev->current_slot == -1)
-		return 1;
-
-	*slot_value(dev, dev->current_slot, e->code) = e->value;
-
-	return 0;
-}
-
 static int update_abs_state(struct libevdev* dev, const struct input_event* e) {
 	if (!libevdev_has_event_type(dev, EV_ABS))
 		return 1;
 
 	if (e->code > ABS_MAX)
 		return 1;
-
-	if (e->code >= ABS_MT_MIN && e->code <= ABS_MT_MAX)
-		update_mt_state(dev, e);
 
 	dev->abs_info[e->code].value = e->value;
 
@@ -740,53 +434,11 @@ static int update_state(struct libevdev* dev, const struct input_event* e) {
 	return rc;
 }
 
-/**
- * Sanitize/modify events where needed.
- */
-static inline enum event_filter_status
-sanitize_event(const struct libevdev* dev, struct input_event* ev,
-			   enum SyncState sync_state) {
-	if (!libevdev_has_event_code(dev, ev->type, ev->code))
-		return EVENT_FILTER_DISCARD;
-
-	if (unlikely(dev->num_slots > -1 &&
-				 libevdev_event_is_code(ev, EV_ABS, ABS_MT_SLOT) &&
-				 (ev->value < 0 || ev->value >= dev->num_slots))) {
-		log_bug(dev,
-				"Device \"%s\" received an invalid slot index %d."
-				"Capping to announced max slot number %d.\n",
-				dev->name, ev->value, dev->num_slots - 1);
-		ev->value = dev->num_slots - 1;
-		return EVENT_FILTER_MODIFIED;
-
-		/* Drop any invalid tracking IDs, they are only supposed to go from
-		   N to -1 or from -1 to N. Never from -1 to -1, or N to M. Very
-		   unlikely to ever happen from a real device.
-		   */
-	} else if (unlikely(
-				   sync_state == SYNC_NONE && dev->num_slots > -1 &&
-				   libevdev_event_is_code(ev, EV_ABS, ABS_MT_TRACKING_ID) &&
-				   ((ev->value == -1 &&
-					 *slot_value(dev, dev->current_slot, ABS_MT_TRACKING_ID) ==
-						 -1) ||
-					(ev->value != -1 &&
-					 *slot_value(dev, dev->current_slot, ABS_MT_TRACKING_ID) !=
-						 -1)))) {
-		log_bug(dev,
-				"Device \"%s\" received a double tracking ID %d in slot %d.\n",
-				dev->name, ev->value, dev->current_slot);
-		return EVENT_FILTER_DISCARD;
-	}
-
-	return EVENT_FILTER_NONE;
-}
-
 int libevdev_next_event(struct libevdev* dev, struct input_event* ev) {
 	int rc = LIBEVDEV_READ_STATUS_SUCCESS;
-	enum event_filter_status filter_status;
 
 	if (!dev->initialized) {
-		log_bug(dev, "device not initialized. call libevdev_set_fd() first\n");
+		printf("[BUG] device not initialized. call libevdev_set_fd() first\n");
 		return -EBADF;
 	} else if (dev->fd < 0)
 		return -EBADF;
@@ -798,8 +450,7 @@ int libevdev_next_event(struct libevdev* dev, struct input_event* ev) {
 		   wrong view of the device too */
 		while (queue_shift(dev, &e) == 0) {
 			dev->queue_nsync--;
-			if (sanitize_event(dev, &e, dev->sync_state) !=
-				EVENT_FILTER_DISCARD)
+			if (libevdev_has_event_code(dev, ev->type, ev->code))
 				update_state(dev, &e);
 		}
 
@@ -823,13 +474,11 @@ int libevdev_next_event(struct libevdev* dev, struct input_event* ev) {
 		if (queue_shift(dev, ev) != 0)
 			return -EAGAIN;
 
-		filter_status = sanitize_event(dev, ev, dev->sync_state);
-		if (filter_status != EVENT_FILTER_DISCARD)
+		if (libevdev_has_event_code(dev, ev->type, ev->code))
 			update_state(dev, ev);
 
 		/* if we disabled a code, get the next event instead */
-	} while (filter_status == EVENT_FILTER_DISCARD ||
-			 !libevdev_has_event_code(dev, ev->type, ev->code));
+	} while (!libevdev_has_event_code(dev, ev->type, ev->code));
 
 	rc = LIBEVDEV_READ_STATUS_SUCCESS;
 	if (ev->type == EV_SYN && ev->code == SYN_DROPPED) {
@@ -846,7 +495,7 @@ int libevdev_has_event_pending(struct libevdev* dev) {
 	int rc;
 
 	if (!dev->initialized) {
-		log_bug(dev, "device not initialized. call libevdev_set_fd() first\n");
+		printf("[BUG] device not initialized. call libevdev_set_fd() first\n");
 		return -EBADF;
 	} else if (dev->fd < 0)
 		return -EBADF;

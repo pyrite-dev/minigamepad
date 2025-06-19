@@ -39,11 +39,6 @@ extern "C" {
 #define LIBEVDEV_ATTRIBUTE_PRINTF(_format, _args)                              \
 	__attribute__((format(printf, _format, _args)))
 
-/**
- * @ingroup init
- *
- * Opaque struct representing an evdev device.
- */
 struct libevdev;
 
 struct libevdev* libevdev_new(void);
@@ -58,21 +53,7 @@ enum libevdev_log_priority {
 int libevdev_set_fd(struct libevdev* dev, int fd);
 int libevdev_get_fd(const struct libevdev* dev);
 enum libevdev_read_status {
-	/**
-	 * libevdev_next_event() has finished without an error
-	 * and an event is available for processing.
-	 *
-	 * @see libevdev_next_event
-	 */
 	LIBEVDEV_READ_STATUS_SUCCESS = 0,
-	/**
-	 * Depending on the libevdev_next_event() read flag:
-	 * * libevdev received a SYN_DROPPED from the device, and the caller should
-	 * now resync the device, or,
-	 * * an event has been read in sync mode.
-	 *
-	 * @see libevdev_next_event
-	 */
 	LIBEVDEV_READ_STATUS_SYNC = 1
 };
 int libevdev_next_event(struct libevdev* dev, struct input_event* ev);

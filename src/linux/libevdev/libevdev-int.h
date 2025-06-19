@@ -37,20 +37,12 @@
 #include <stdlib.h>
 
 #define MAX_NAME 256
-#define ABS_MT_MIN ABS_MT_SLOT
-#define ABS_MT_MAX ABS_MT_TOOL_Y
-#define ABS_MT_CNT (ABS_MT_MAX - ABS_MT_MIN + 1)
 #define ALIAS(_to) __attribute__((alias(#_to)))
 
 enum SyncState {
 	SYNC_NONE,
 	SYNC_NEEDED,
 	SYNC_IN_PROGRESS,
-};
-
-struct mt_sync_state {
-	int code;
-	int val[];
 };
 
 struct logdata {
@@ -63,8 +55,6 @@ struct libevdev {
 	int fd;
 	bool initialized;
 	char* name;
-	char* phys;
-	char* uniq;
 	struct input_id ids;
 	int driver_version;
 	unsigned long bits[NLONGS(EV_CNT)];
@@ -74,9 +64,6 @@ struct libevdev {
 	unsigned long ff_bits[NLONGS(FF_CNT)];
 	unsigned long key_values[NLONGS(KEY_CNT)];
 	struct input_absinfo abs_info[ABS_CNT];
-	int* mt_slot_vals; /* [num_slots * ABS_MT_CNT] */
-	int num_slots;	   /**< valid slots in mt_slot_vals */
-	int current_slot;
 	int rep_values[REP_CNT];
 
 	enum SyncState sync_state;
@@ -88,50 +75,14 @@ struct libevdev {
 
 	struct timeval last_event_time;
 
-	struct {
-		struct mt_sync_state* mt_state;
-		size_t mt_state_sz; /* in bytes */
-		unsigned long* slot_update;
-		size_t slot_update_sz; /* in bytes */
-		unsigned long* tracking_id_changes;
-		size_t tracking_id_changes_sz; /* in bytes */
-	} mt_sync;
-
 	struct logdata log;
 };
-
-#define log_msg_cond(dev, priority, ...)                                       \
-	do {                                                                       \
-		if (LIBEVDEV_LOG_INFO >= priority)                                     \
-			_libevdev_log_msg(dev, priority, __FILE__, __LINE__, __func__,     \
-							  __VA_ARGS__);                                    \
-	} while (0)
-
-#define log_error(dev, ...) log_msg_cond(dev, LIBEVDEV_LOG_ERROR, __VA_ARGS__)
-#define log_info(dev, ...) log_msg_cond(dev, LIBEVDEV_LOG_INFO, __VA_ARGS__)
-#define log_dbg(dev, ...) log_msg_cond(dev, LIBEVDEV_LOG_DEBUG, __VA_ARGS__)
-#define log_bug(dev, ...)                                                      \
-	log_msg_cond(dev, LIBEVDEV_LOG_ERROR, "BUG: "__VA_ARGS__)
-
-extern void _libevdev_log_msg(const struct libevdev* dev,
-							  enum libevdev_log_priority priority,
-							  const char* file, int line, const char* func,
-							  const char* format, ...)
-	LIBEVDEV_ATTRIBUTE_PRINTF(6, 7);
 
 static inline struct input_event* queue_push(struct libevdev* dev) {
 	if (dev->queue_next >= dev->queue_size)
 		return NULL;
 
 	return &dev->queue[dev->queue_next++];
-}
-
-static inline int queue_peek(struct libevdev* dev, size_t idx,
-							 struct input_event* ev) {
-	if (dev->queue_next == 0 || idx > dev->queue_next)
-		return 1;
-	*ev = dev->queue[idx];
-	return 0;
 }
 
 static inline int queue_shift_multiple(struct libevdev* dev, size_t n,
