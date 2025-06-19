@@ -34,7 +34,7 @@ examples/rgfw_gamepad: examples/rgfw_gamepad.c tinygamepad.h
 	$(CC) $(WARNINGS) -I./ $< $(LIBS) $(RGFW_LIBS) -o $@ 
 
 $(EXAMPLES): %: %.c tinygamepad.h 
-	$(CC) -std-c89 $(WARNINGS) -I. $< $(LIBS) -o $@
+	$(CC) -std=c89 $(WARNINGS) -I. $< $(LIBS) -o $@
 
 debug: all
 	@for exe in $(EXAMPLES); do \
