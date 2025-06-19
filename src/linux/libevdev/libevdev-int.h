@@ -35,6 +35,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX_NAME 256
 #define ALIAS(_to) __attribute__((alias(#_to)))
@@ -54,7 +55,7 @@ struct logdata {
 struct libevdev {
 	int fd;
 	bool initialized;
-	char* name;
+	char name[256];
 	struct input_id ids;
 	int driver_version;
 	unsigned long bits[NLONGS(EV_CNT)];

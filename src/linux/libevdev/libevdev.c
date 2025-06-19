@@ -101,7 +101,6 @@ static struct logdata log_data = {
 static void libevdev_reset(struct libevdev* dev) {
 	enum libevdev_log_priority pri = dev->log.priority;
 
-	free(dev->name);
 	memset(dev, 0, sizeof(*dev));
 	dev->fd = -1;
 	dev->initialized = false;
@@ -161,12 +160,7 @@ int libevdev_set_fd(struct libevdev* dev, int fd) {
 	if (rc < 0)
 		goto out;
 
-	free(dev->name);
-	dev->name = strdup(buf);
-	if (!dev->name) {
-		errno = ENOMEM;
-		goto out;
-	}
+	strncpy(dev->name, buf, 256);
 
 	rc = ioctl(fd, EVIOCGID, &dev->ids);
 	if (rc < 0)
@@ -507,9 +501,7 @@ int libevdev_has_event_pending(struct libevdev* dev) {
 	return (rc >= 0) ? rc : -errno;
 }
 
-const char* libevdev_get_name(const struct libevdev* dev) {
-	return dev->name ? dev->name : "";
-}
+const char* libevdev_get_name(const struct libevdev* dev) { return dev->name; }
 
 int libevdev_has_event_type(const struct libevdev* dev, unsigned int type) {
 	return type == EV_SYN || (type <= EV_MAX && bit_is_set(dev->bits, type));
