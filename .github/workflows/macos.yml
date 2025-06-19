@@ -1,0 +1,14 @@
+name: MacOS-CI
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make
+        run: | 
+            make
