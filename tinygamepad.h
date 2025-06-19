@@ -203,6 +203,7 @@
 		typedef int64_t    i64;
         
 #ifdef __linux__
+        #include <sys/types.h>
         typedef ssize_t tg_ssize_t;
 #endif
         typedef size_t tg_size_t;
@@ -344,8 +345,8 @@ typedef struct tg_button_state {
 
 typedef struct TG_AXIS_state {
     tg_bool supported;
-    float value;
-    float deadzone;
+    i32 value;
+    i32 deadzone;
 } TG_AXIS_state;
 
 struct tg_mapping;
@@ -778,7 +779,6 @@ tg_bool tg_gamepads_update_platform(tg_gamepads* gamepads, tg_event* event) {
     char full_path[256];
     const char path[] = "/dev/input/";
     tg_ssize_t size;
-    tg_bool ret = TG_FALSE;
 
     if (gamepads->src.inotify <= 0)
         return TG_FALSE;
@@ -888,7 +888,7 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
 
             if (btn != TG_BUTTON_UNKNOWN) {
                 gamepad->buttons[btn].prev =  gamepad->buttons[btn].current;
-                gamepad->buttons[btn].current = (int16_t)ev.value;
+                gamepad->buttons[btn].current = (tg_bool)ev.value;
             }
 
             if (event != NULL) {
@@ -1265,13 +1265,13 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
     }
 
     if (memcmp(&inst->guidProduct.Data4[2], "PIDVID", 6) == 0) {
-        sprintf(gamepad->guid, "03000000%02x%02x0000%02x%02x000000000000",
+        SNPRINTF(gamepad->guid, sizeof(gamepad->guid), "03000000%02x%02x0000%02x%02x000000000000",
                 (uint8_t) inst->guidProduct.Data1,
                 (uint8_t) (inst->guidProduct.Data1 >> 8),
                 (uint8_t) (inst->guidProduct.Data1 >> 16),
                 (uint8_t) (inst->guidProduct.Data1 >> 24));
     } else {
-        sprintf(gamepad->guid, "05000000%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x00",
+        TG_SNPRINTF(gamepad->guid, sizeof(gamepad->guid), "05000000%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x00"),
                 gamepad->name[0], gamepad->name[1], gamepad->name[2], gamepad->name[3],
                 gamepad->name[4], gamepad->name[5], gamepad->name[6], gamepad->name[7],
                 gamepad->name[8], gamepad->name[9], gamepad->name[10]);
