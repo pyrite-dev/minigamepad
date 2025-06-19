@@ -1242,13 +1242,13 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
         return DIENUM_CONTINUE;
     }
 
-    caps = {0};
+    TG_MEMCPY(&caps, 0, sizeof(caps));
     caps.dwSize = sizeof(DIDEVCAPS);
 
     IDirectInputDevice8_GetCapabilities(gamepad->src.device, &caps);
 
 
-    dipd = {0};
+    TG_MEMCPY(&dipd, 0, sizeof(dipd));
     dipd.diph.dwSize = sizeof(dipd);
     dipd.diph.dwHeaderSize = sizeof(dipd.diph);
     dipd.diph.dwHow = DIPH_DEVICE;
@@ -1352,6 +1352,7 @@ void tg_gamepads_init_platform(tg_gamepads* gamepads) {
 }
 
 tg_bool tg_gamepads_update_platform(tg_gamepads* gamepads, tg_event* event) {
+    TG_UNUSED(event);
     if (gamepads->src.dinput) {
 (void)(gamepads);
         /*        IDirectInput8_EnumDevices(gamepads->src.dinput,
@@ -1378,7 +1379,7 @@ void tg_gamepads_free_platform(tg_gamepads* gamepads) {
 
 tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
     if (gamepad->connected == TG_FALSE) {
-//        tg_gamepad_release(gamepad);
+/*        tg_gamepad_release(gamepad); */
         return TG_FALSE;
     }
     
@@ -1387,9 +1388,11 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
         u32 i;
         DIDEVCAPS caps = {0};
         DIJOYSTATE state;
+        HRESULT result;        
+        
         caps.dwSize = sizeof(DIDEVCAPS);
 
-        HRESULT result = IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
+        IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
         if (result == DIERR_NOTACQUIRED || result == DIERR_INPUTLOST) {
             event->type = TG_EVENT_GAMEPAD_DISCONNECT;
             event->gamepad = gamepad;
@@ -1774,7 +1777,7 @@ static tg_bool parseMapping(tg_mapping* mapping, const char* string) {
         for (y = 0; y < 16; y++) {
             tg_element e = mapping->buttons[y];
             if (e.index == i) {    
-                mapping->rButtons[i] = y;
+                mapping->rButtons[i] = (tg_button)y;
                 break;
             }
         }
@@ -1786,7 +1789,7 @@ static tg_bool parseMapping(tg_mapping* mapping, const char* string) {
         for (y = 0; y < 6; y++) {
             tg_element e = mapping->axes[y];
             if (e.index == i) {    
-                mapping->rAxes[i] = y;
+                mapping->rAxes[i] = (tg_axis)y;
                 break;
             }
         }
