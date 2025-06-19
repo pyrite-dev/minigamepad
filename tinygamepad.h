@@ -175,7 +175,6 @@
     #define TG_MACOS
 #endif
 
-#include <stddef.h>
 #ifndef TG_INT_DEFINED
 	#ifdef TG_USE_INT /* optional for any system that might not have stdint.h */
 		typedef unsigned char       u8;
@@ -186,8 +185,13 @@
 		typedef signed long int    i32;
 		typedef unsigned long long u64;
 		typedef signed long long   i64;
-	#else /* use stdint standard types instead of c "standard" types */
+
+
+        typedef signed long tg_ssize_t;
+        typedef unsigned long tg_size_t;
+    #else /* use stdint standard types instead of c "standard" types */
 		#include <stdint.h>
+        #include <stddef.h>
 
 		typedef uint8_t     u8;
 		typedef int8_t      i8;
@@ -197,7 +201,12 @@
 		typedef int32_t    i32;
 		typedef uint64_t   u64;
 		typedef int64_t    i64;
-	#endif
+        
+#ifdef __linux__
+        typedef ssize_t tg_ssize_t;
+#endif
+        typedef size_t tg_size_t;
+    #endif
 	#define TG_INT_DEFINED
 #endif
 
@@ -283,7 +292,7 @@ typedef TG_ENUM(i8, tg_axis) {
     TG_AXIS_PROFILE,
     TG_AXIS_MISC,
 
-    TG_AXIS_COUNT,
+    TG_AXIS_COUNT
 };
 
 typedef TG_ENUM(u8, tg_event_type) {
@@ -292,7 +301,7 @@ typedef TG_ENUM(u8, tg_event_type) {
     TG_EVENT_GAMEPAD_DISCONNECT,
     TG_EVENT_BUTTON_PRESS,
     TG_EVENT_BUTTON_RELEASE,
-    TG_EVENT_AXIS_MOVE,
+    TG_EVENT_AXIS_MOVE
 };
 
 #ifdef TG_LINUX
@@ -349,7 +358,7 @@ typedef struct tg_gamepad {
     TG_AXIS_state axes[TG_AXIS_COUNT];
     
     tg_bool connected;
-    size_t index; /* index in gamepad array */
+    tg_size_t index; /* index in gamepad array */
 
     struct tg_mapping* mapping;
     struct tg_gamepad* prev;
@@ -393,7 +402,7 @@ typedef struct tg_gamepads_src {
 typedef struct tg_gamepad_list {
     tg_gamepad* head; 
     tg_gamepad* cur;
-    size_t count;
+    tg_size_t count;
 } tg_gamepad_list;
 
 typedef struct tg_gamepads {
@@ -452,17 +461,21 @@ void tg_gamepads_init(tg_gamepads* gamepads) {
     /* create free list */
     gamepads->free_list.head = &gamepads->gamepads[0]; 
     gamepads->free_list.cur = gamepads->free_list.head; 
-    for (size_t i = 0; i < TG_MAX_GAMEPADS; i++) {
-        gamepads->free_list.cur->prev = NULL;
-        gamepads->free_list.cur->next = NULL;
+    
+    {
+        tg_size_t i;
+        for (i = 0; i < TG_MAX_GAMEPADS; i++) {
+            gamepads->free_list.cur->prev = NULL;
+            gamepads->free_list.cur->next = NULL;
 
-        if (i) {
-            gamepads->free_list.cur->prev = &gamepads->gamepads[i - 1];
-        }
+            if (i) {
+                gamepads->free_list.cur->prev = &gamepads->gamepads[i - 1];
+            }
 
-        if (i != TG_MAX_GAMEPADS - 1) {
-            gamepads->free_list.cur->next = &gamepads->gamepads[i + 1];
-            gamepads->free_list.cur = gamepads->free_list.cur->next; 
+            if (i != TG_MAX_GAMEPADS - 1) {
+                gamepads->free_list.cur->next = &gamepads->gamepads[i + 1];
+                gamepads->free_list.cur = gamepads->free_list.cur->next; 
+            }
         }
     }
 
@@ -483,12 +496,12 @@ tg_bool tg_gamepads_update(tg_gamepads* gamepads, tg_event* event) {
 }
 
 void tg_gamepads_free(tg_gamepads* gamepads) {
+    tg_gamepad* cur;
     TG_ASSERT(gamepads != NULL);
     TG_MEMSET(gamepads, 0, sizeof(tg_gamepads));
 
     tg_gamepads_free_platform(gamepads);
     
-    tg_gamepad* cur;
     for (cur = gamepads->list.cur; cur != NULL; cur = cur->prev) {
         tg_gamepad_release(gamepads, cur);
     }
@@ -530,7 +543,7 @@ tg_gamepad* tg_gamepad_find(tg_gamepads* gamepads) {
         return NULL;
     
     tg_list_swap_gamepad(&gamepads->free_list, &gamepads->list, gamepad);
-    gamepad->index = (size_t)(gamepad - gamepads->gamepads);
+    gamepad->index = (tg_size_t)(gamepad - gamepads->gamepads);
     return gamepad;
 }
 
@@ -556,7 +569,13 @@ void tg_gamepad_release(tg_gamepads* gamepads, tg_gamepad* gamepad) {
 
 tg_gamepad* tg_linux_setup_gamepad(tg_gamepads* gamepads, const char* full_path) {
     int fd = 0;
-
+    struct input_id id = {0};
+    char evBits[(EV_CNT + 7) / 8] = {0};
+    char keyBits[(KEY_CNT + 7) / 8] = {0};
+    char absBits[(ABS_CNT + 7) / 8] = {0};
+    u32 i, btn, axis;
+    tg_size_t buttonCount = 0, axisCount = 0;
+    
     tg_gamepad* gamepad = tg_gamepad_find(gamepads); 
     if (gamepad == NULL) {
         return NULL; 
@@ -571,11 +590,6 @@ tg_gamepad* tg_linux_setup_gamepad(tg_gamepads* gamepads, const char* full_path)
         tg_gamepad_release(gamepads, gamepad);
         return NULL;
     }
-
-    struct input_id id = {0};
-    char evBits[(EV_CNT + 7) / 8] = {0};
-    char keyBits[(KEY_CNT + 7) / 8] = {0};
-    char absBits[(ABS_CNT + 7) / 8] = {0};
 
     if (ioctl(fd, EVIOCGBIT(0, sizeof(evBits)), evBits) < 0 ||
         ioctl(fd, EVIOCGID, &id) < 0 || 
@@ -592,12 +606,11 @@ tg_gamepad* tg_linux_setup_gamepad(tg_gamepads* gamepads, const char* full_path)
         return NULL;
     }
 
-    size_t buttonCount = 0, axisCount = 0;
     memset(gamepad->buttons, 0, sizeof(gamepad->buttons));
     memset(gamepad->buttons, 0, sizeof(gamepad->axes));
 
     /* go through any buttons a gamepad would have */
-    for (u32 i = BTN_MISC; i < KEY_CNT; i++) {
+    for (i = BTN_MISC; i < KEY_CNT; i++) {
         if (!isBitSet(i, keyBits))
             continue;
 
@@ -606,7 +619,7 @@ tg_gamepad* tg_linux_setup_gamepad(tg_gamepads* gamepads, const char* full_path)
     }
 
     /* go through any axes a gamepad would have */
-    for (u32 i = 0; i < ABS_CNT; i++) {
+    for (i = 0; i < ABS_CNT; i++) {
         if (!isBitSet(i, absBits))
             continue;
 
@@ -643,7 +656,7 @@ tg_gamepad* tg_linux_setup_gamepad(tg_gamepads* gamepads, const char* full_path)
 
     gamepad->mapping = tg_gamepad_find_valid_mapping(gamepad);
 
-    for (unsigned int btn = BTN_MISC; btn < KEY_CNT; btn++) {
+    for (btn = BTN_MISC; btn < KEY_CNT; btn++) {
         tg_button key = tg_get_gamepad_button(gamepad, gamepad->src.keyMap[btn - BTN_MISC]); 
         if (key == TG_BUTTON_UNKNOWN) 
             key = tg_get_gamepad_button_platform(btn); 
@@ -662,12 +675,13 @@ tg_gamepad* tg_linux_setup_gamepad(tg_gamepads* gamepads, const char* full_path)
         gamepad->buttons[key].current = 0;
     }
 
-    for (unsigned int axis = 0; axis < ABS_CNT; axis++) {
-       if (!isBitSet(axis, absBits)) {
+    for (axis = 0; axis < ABS_CNT; axis++) {
+        tg_axis key;
+        int16_t deadzone = 0;
+        if (!isBitSet(axis, absBits)) {
             continue;
         }
  
-        int16_t deadzone = 0;
         switch (axis) {
             case ABS_HAT0X:
                 gamepad->buttons[TG_BUTTON_DPAD_LEFT].supported = TG_TRUE;
@@ -706,7 +720,7 @@ tg_gamepad* tg_linux_setup_gamepad(tg_gamepads* gamepads, const char* full_path)
                 break;
         }
         
-        tg_axis key = tg_get_gamepad_axis(gamepad, gamepad->src.absMap[axis]);
+        key = tg_get_gamepad_axis(gamepad, gamepad->src.absMap[axis]);
         if (key == TG_AXIS_UNKNOWN) 
             key = tg_get_gamepad_axis_platform(axis);
         if (key == TG_AXIS_UNKNOWN)
@@ -730,23 +744,24 @@ void tg_gamepad_release_platform(tg_gamepad* gamepad) {
 
 
 void tg_gamepads_init_platform(tg_gamepads* gamepads) {
+    struct dirent *dp;
+    DIR *dfd;
+    char full_path[256];
+
     gamepads->src.inotify = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
     if (gamepads->src.inotify > 0) {
-        // HACK: Register for IN_ATTRIB to get notified when udev is done
-        //       This works well in practice but the TG_TRUE way is libudev
+        /* HACK: Register for IN_ATTRIB to get notified when udev is done
+               This works well in practice but the TG_TRUE way is libudev */
 
         gamepads->src.watch = inotify_add_watch(gamepads->src.inotify, "/dev/input/", IN_CREATE | IN_ATTRIB | IN_DELETE);
     }
-
-    struct dirent *dp;
-    DIR *dfd;
 
     /* open the directory where all the devices are gonna be */
     if ((dfd = opendir("/dev/input/")) == NULL) {
         TG_FPRINTF(stderr, "Can't open /dev/input/\n");
         return;
     }
-    char full_path[256];
+
     /* for each file found: */
     while ((dp = readdir(dfd)) != NULL) {
         /* get the full path of it (size of path + size of file name) */
@@ -758,21 +773,22 @@ void tg_gamepads_init_platform(tg_gamepads* gamepads) {
 }
 
 tg_bool tg_gamepads_update_platform(tg_gamepads* gamepads, tg_event* event) {
+    tg_ssize_t offset = 0;
+    char buffer[16384];
+    char full_path[256];
+    const char path[] = "/dev/input/";
+    tg_ssize_t size;
+    tg_bool ret = TG_FALSE;
+
     if (gamepads->src.inotify <= 0)
         return TG_FALSE;
 
-    ssize_t offset = 0;
-    char buffer[16384];
-    const ssize_t size = read(gamepads->src.inotify, buffer, sizeof(buffer));
+    size = read(gamepads->src.inotify, buffer, sizeof(buffer));
 
-    char full_path[256];
-    const char path[] = "/dev/input/";
-
-    tg_bool ret = TG_FALSE;
     while (size > offset) {
         const struct inotify_event* e = (struct inotify_event*) (buffer + offset);
 
-        offset += (ssize_t)sizeof(struct inotify_event) + e->len;
+        offset += (tg_ssize_t)sizeof(struct inotify_event) + e->len;
         
         if (strncmp(e->name, "event", 5) != 0) {
             continue;
@@ -794,7 +810,8 @@ tg_bool tg_gamepads_update_platform(tg_gamepads* gamepads, tg_event* event) {
         }
     
         else if (e->mask & IN_DELETE) {   
-            for (tg_gamepad* cur = gamepads->list.head; cur != NULL; cur = cur->next) {
+            tg_gamepad* cur;
+            for (cur = gamepads->list.head; cur != NULL; cur = cur->next) {
                 if (TG_STRNCMP(cur->src.full_path, full_path, sizeof(cur->src.full_path)) == 0) {
                     if (event != NULL) {
                         event->type = TG_EVENT_GAMEPAD_DISCONNECT;
@@ -840,6 +857,7 @@ void tg_gamepads_free_platform(tg_gamepads* gamepads) {
 }
 
 tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
+    struct input_event ev;
     if (gamepad->connected == TG_FALSE) return TG_FALSE;
 
     emulate_button(TG_BUTTON_LEFT_TRIGGER, TG_AXIS_LEFT_TRIGGER, -98, 98, )
@@ -850,8 +868,6 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
     emulate_button(TG_BUTTON_DPAD_UP, TG_AXIS_HAT_DPAD_UP, -100, 0, !)
     emulate_button(TG_BUTTON_DPAD_DOWN, TG_AXIS_HAT_DPAD_DOWN, 0, 100, )
 
-
-    struct input_event ev;
     TG_MEMSET(&ev, 0, sizeof(ev));
 
     do {
@@ -884,6 +900,10 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
         }
         case EV_ABS: {
             tg_axis axis = tg_get_gamepad_axis(gamepad, gamepad->src.absMap[ev.code]);
+            const struct input_absinfo info = gamepad->src.absInfo[ev.code];
+            float normalized = (float)ev.value;
+            const float range = (float)(info.maximum - info.minimum);
+
             if (axis == TG_AXIS_UNKNOWN) 
                 axis = tg_get_gamepad_axis_platform(ev.code); 
             if (axis == TG_AXIS_UNKNOWN) {
@@ -893,10 +913,6 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
                 return TG_TRUE;
             }
            
-            const struct input_absinfo info = gamepad->src.absInfo[ev.code];
-            float normalized = (float)ev.value;
-
-            const float range = (float)(info.maximum - info.minimum);
             if (range) {
                 /* Normalize to 0.0 -> 1.0 */
                 normalized = (normalized - (float)info.minimum) / range;
@@ -981,11 +997,11 @@ tg_button tg_get_gamepad_button_platform(u32 button) {
         case BTN_TRIGGER_HAPPY10:
             return TG_BUTTON_MISC6;
 
-        case BTN_TRIGGER:     return TG_BUTTON_WEST;       // maybe map trigger as "A"
+        case BTN_TRIGGER:     return TG_BUTTON_WEST;
         case BTN_THUMB:       return TG_BUTTON_SOUTH;
         case BTN_THUMB2:      return TG_BUTTON_EAST;
         case BTN_TOP:         return TG_BUTTON_NORTH;
-        case BTN_TOP2:        return TG_BUTTON_START;       // or whatever fits your layout
+        case BTN_TOP2:        return TG_BUTTON_START; 
         case BTN_PINKIE:      return TG_BUTTON_LEFT_SHOULDER;
         case BTN_BASE:        return TG_BUTTON_RIGHT_SHOULDER;
         case BTN_BASE2:       return TG_BUTTON_BACK;
@@ -1150,6 +1166,7 @@ const DIDATAFORMAT tg_dataFormat = {
 tg_bool tg_supportsXInput(tg_gamepads* gamepads, const GUID* guid) {
     RAWINPUTDEVICELIST* list;
     unsigned int count = 0;
+    tg_size_t i;
 
     if (gamepads->src.xinput_dll == NULL) {
         return TG_FALSE;
@@ -1166,7 +1183,7 @@ tg_bool tg_supportsXInput(tg_gamepads* gamepads, const GUID* guid) {
         return TG_FALSE;
     }
 
-    for (size_t i = 0;  i < count;  i++) {
+    for (i = 0;  i < count;  i++) {
         RID_DEVICE_INFO rdi = {0};
         rdi.cbSize = sizeof(rdi);
 
@@ -1203,7 +1220,8 @@ tg_bool tg_supportsXInput(tg_gamepads* gamepads, const GUID* guid) {
 
 BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID userData) {
     tg_gamepads* gamepads = (tg_gamepads*)userData;
-    
+    u32 i;
+
     /* avoid clones */
     if (tg_supportsXInput(gamepads, &inst->guidProduct))
         return DIENUM_CONTINUE;
@@ -1262,7 +1280,7 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
     DIJOYSTATE state;
     IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
  
-    for (unsigned int i = 0; i < caps.dwButtons; i++) {
+    for (i = 0; i < caps.dwButtons; i++) {
         tg_button key = tg_get_gamepad_button(gamepad, i); 
         if (key == TG_BUTTON_UNKNOWN) 
             continue;
@@ -1274,7 +1292,7 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
         gamepad->buttons[key].current = 0;
     }
 
-    for (unsigned int i = 0; i < caps.dwAxes; i++) {
+    for (i = 0; i < caps.dwAxes; i++) {
         tg_axis key = tg_get_gamepad_axis(gamepad, i); 
         if (key == TG_AXIS_UNKNOWN) 
             continue;
@@ -1361,6 +1379,7 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
     
     TG_UNUSED(event);
     if (gamepad->src.device) {
+        u32 i;
         DIDEVCAPS caps = {0};
         caps.dwSize = sizeof(DIDEVCAPS);
 
@@ -1378,7 +1397,7 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
             return TG_FALSE;
         }
 
-        for (unsigned int i = 0; i < caps.dwButtons; i++) {
+        for (i = 0; i < caps.dwButtons; i++) {
             tg_button key = tg_get_gamepad_button(gamepad, i); 
             if (key == TG_BUTTON_UNKNOWN) 
                 continue;
@@ -1593,40 +1612,53 @@ tg_mapping* tg_gamepad_find_valid_mapping(tg_gamepad* js) {
 
 typedef struct tg_field {
     const char* name;
-    size_t len;
+    tg_size_t len;
+    u8 val;
     tg_element* element;
 } tg_field;
 
 static tg_bool parseMapping(tg_mapping* mapping, const char* string) {
     const char* substr = string;
-    size_t i, length;
+    tg_size_t i, length, len;
     tg_field fields[] = {
-        { "platform", 8,      NULL },
-        { "a", 1,             &mapping->buttons[TG_BUTTON_SOUTH] },
-        { "b", 1,           &mapping->buttons[TG_BUTTON_EAST] },
-        { "x", 1,            &mapping->buttons[TG_BUTTON_WEST] },
-        { "y", 1,            &mapping->buttons[TG_BUTTON_NORTH] },
-        { "back", 4,          &mapping->buttons[TG_BUTTON_BACK] },
-        { "start", 5,         &mapping->buttons[TG_BUTTON_START] },
-        { "guide", 5,         &mapping->buttons[TG_BUTTON_GUIDE] },
-        { "leftshoulder", 12,  &mapping->buttons[TG_BUTTON_LEFT_SHOULDER] },
-        { "rightshoulder", 13, &mapping->buttons[TG_BUTTON_RIGHT_SHOULDER] },
-        { "leftstick", 9,     &mapping->buttons[TG_BUTTON_LEFT_STICK] },
-        { "rightstick", 10,    &mapping->buttons[TG_BUTTON_RIGHT_STICK] },
-        { "dpup",   4,       &mapping->buttons[TG_BUTTON_DPAD_UP] },
-        { "dpright", 7,       &mapping->buttons[TG_BUTTON_DPAD_RIGHT] },
-        { "dpdown", 6,       &mapping->buttons[TG_BUTTON_DPAD_DOWN] },
-        { "dpleft", 6,        &mapping->buttons[TG_BUTTON_DPAD_LEFT] },
-        { "lefttrigger", 11,   &mapping->buttons[TG_BUTTON_LEFT_TRIGGER] },
-        { "righttrigger", 12,  &mapping->buttons[TG_BUTTON_RIGHT_TRIGGER] },
+        { "platform", 8,     0, NULL },
+        { "a", 1,             TG_BUTTON_SOUTH },
+        { "b", 1,           TG_BUTTON_EAST },
+        { "x", 1,            TG_BUTTON_WEST },
+        { "y", 1,            TG_BUTTON_NORTH },
+        { "back", 4,          TG_BUTTON_BACK },
+        { "start", 5,         TG_BUTTON_START },
+        { "guide", 5,         TG_BUTTON_GUIDE },
+        { "leftshoulder", 12,  TG_BUTTON_LEFT_SHOULDER },
+        { "rightshoulder", 13, TG_BUTTON_RIGHT_SHOULDER },
+        { "leftstick", 9,     TG_BUTTON_LEFT_STICK },
+        { "rightstick", 10,    TG_BUTTON_RIGHT_STICK },
+        { "dpup",   4,       TG_BUTTON_DPAD_UP },
+        { "dpright", 7,       TG_BUTTON_DPAD_RIGHT },
+        { "dpdown", 6,       TG_BUTTON_DPAD_DOWN },
+        { "dpleft", 6,        TG_BUTTON_DPAD_LEFT },
+        { "lefttrigger", 11,   TG_BUTTON_LEFT_TRIGGER },
+        { "righttrigger", 12,  TG_BUTTON_RIGHT_TRIGGER },
 
-        { "lefttrigger", 11,   &mapping->axes[TG_AXIS_LEFT_TRIGGER] },
-        { "righttrigger", 12,  &mapping->axes[TG_AXIS_RIGHT_TRIGGER] },
-        { "leftx",  5,       &mapping->axes[TG_AXIS_LEFT_X] },
-        { "lefty",  5,       &mapping->axes[TG_AXIS_LEFT_Y] } ,
-        { "rightx", 6,       &mapping->axes[TG_AXIS_RIGHT_X] },
-        { "righty", 6,        &mapping->axes[TG_AXIS_RIGHT_Y] }
+        { "lefttrigger", 11,   TG_AXIS_LEFT_TRIGGER },
+        { "righttrigger", 12,  TG_AXIS_RIGHT_TRIGGER },
+        { "leftx",  5,       TG_AXIS_LEFT_X },
+        { "lefty",  5,       TG_AXIS_LEFT_Y } ,
+        { "rightx", 6,       TG_AXIS_RIGHT_X },
+        { "righty", 6,        TG_AXIS_RIGHT_Y }
     };
+
+    len = (sizeof(fields) / sizeof(tg_field)); 
+
+    for (i = 1; i < len - 6; i++) {
+        fields[i].element = &mapping->buttons[fields[i].val]; 
+    } 
+
+    for (i = len - 6; i < len; i++) {
+        fields[i].element = &mapping->axes[fields[i].val]; 
+    } 
+
+
 
     length = TG_STRCSPN(substr, ",");
     if (length != 32 || substr[length] != ',') {
@@ -1650,6 +1682,10 @@ static tg_bool parseMapping(tg_mapping* mapping, const char* string) {
             return TG_FALSE;
 
         for (i = 0;  i < sizeof(fields) / sizeof(fields[0]);  i++) {
+            int8_t minimum = -1;
+            int8_t maximum = 1;
+            tg_element* e;
+
             length = fields[i].len;
             if (strncmp(substr, fields[i].name, length) != 0 || substr[length] != ':')
                 continue;
@@ -1674,14 +1710,11 @@ static tg_bool parseMapping(tg_mapping* mapping, const char* string) {
                 break;
             }
             
-            tg_element* e = fields[i].element;
+            e = fields[i].element;
             if (e >= mapping->axes && e <= &mapping->axes[6] && substr[0] == 'b') {
                 continue;
             }
-
-            int8_t minimum = -1;
-            int8_t maximum = 1;
-            
+           
             switch (substr[0]) {
                 case '+':
                     minimum = 0;
@@ -1706,13 +1739,15 @@ static tg_bool parseMapping(tg_mapping* mapping, const char* string) {
                     e->type = TG_JOYSTICK_BUTTON;
                     e->index = (uint8_t) strtoul(&substr[1], (char**) &substr, 10);
                     break;
-                case 'h':
-                    e->type = TG_JOYSTICK_HATBIT;
+                case 'h': {
                     const unsigned long hat = strtoul(&substr[1], (char**) &substr, 10);
                     const unsigned long bit = strtoul(&substr[1], (char**) &substr, 10);
+                    
+                    e->type = TG_JOYSTICK_HATBIT;
                     e->index = (uint8_t) ((hat << 4) | bit);
 
                     break;
+                }
                 default: break;
             }
 
@@ -1729,8 +1764,9 @@ static tg_bool parseMapping(tg_mapping* mapping, const char* string) {
     }
 
     for (i = 0; i < 255; i++) {
+        tg_size_t y;
         mapping->rButtons[i] = TG_BUTTON_UNKNOWN;
-        for (size_t y = 0; y < 16; y++) {
+        for (y = 0; y < 16; y++) {
             tg_element e = mapping->buttons[y];
             if (e.index == i) {    
                 mapping->rButtons[i] = y;
@@ -1740,8 +1776,9 @@ static tg_bool parseMapping(tg_mapping* mapping, const char* string) {
     }
 
     for (i = 0; i < TG_AXIS_COUNT; i++) {
+        tg_size_t y;
         mapping->rAxes[i] = TG_AXIS_UNKNOWN;
-        for (size_t y = 0; y < 6; y++) {
+        for (y = 0; y < 6; y++) {
             tg_element e = mapping->axes[y];
             if (e.index == i) {    
                 mapping->rAxes[i] = y;
@@ -1755,15 +1792,15 @@ static tg_bool parseMapping(tg_mapping* mapping, const char* string) {
 }
 
 tg_bool tg_update_gamepad_mappings(tg_gamepads* gamepads, const char* string) {
-    if (mappings.mappingCount >= mappings.mappingMax) {
-        return TG_FALSE;
-    }
-
     const char* substr = string;
 	tg_gamepad* cur;
 	tg_mapping mapping;
-	size_t length;
+	tg_size_t length;
 	char line[1024];
+
+    if (mappings.mappingCount >= mappings.mappingMax) {
+        return TG_FALSE;
+    }
 
     while (*substr) {
         if (!(*substr >= '0' && *substr <= '9') &&
@@ -1788,7 +1825,7 @@ tg_bool tg_update_gamepad_mappings(tg_gamepads* gamepads, const char* string) {
                     mappings.mappingCount++;
                     /*mappings.mappings =
                             realloc(mappings.mappings,
-                                          sizeof(tg_mapping) * (size_t)mappings.mappingCount);*/
+                                          sizeof(tg_mapping) * (tg_size_t)mappings.mappingCount);*/
                     mappings.mappings[mappings.mappingCount - 1] = mapping;
                 }
             }
@@ -3958,7 +3995,7 @@ const char * sdl_db[] = {
 };
 
 void tg_mappings_init(void) {
-    size_t i;
+    tg_size_t i;
     mappings.mappingCount = 0;
     mappings.mappingMax = 1300;
     memset(mappings.mappings, 0, sizeof(mappings.mappings));
