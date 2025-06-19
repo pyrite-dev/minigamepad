@@ -1185,10 +1185,10 @@ tg_bool tg_supportsXInput(tg_gamepads* gamepads, const GUID* guid) {
 
     for (i = 0;  i < count;  i++) {
         RID_DEVICE_INFO rdi = {0};
-        rdi.cbSize = sizeof(rdi);
-
         char name[256];
         UINT size = sizeof(rdi);
+
+        rdi.cbSize = sizeof(rdi);
 
         if (list[i].dwType != RIM_TYPEHID)
             continue;
@@ -1220,14 +1220,17 @@ tg_bool tg_supportsXInput(tg_gamepads* gamepads, const GUID* guid) {
 
 BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID userData) {
     tg_gamepads* gamepads = (tg_gamepads*)userData;
+    tg_gamepad* gamepad;
     u32 i;
-
+    DIDEVCAPS caps;
+    DIPROPDWORD dipd; 
+    
     /* avoid clones */
     if (tg_supportsXInput(gamepads, &inst->guidProduct))
         return DIENUM_CONTINUE;
 
-    tg_gamepad* gamepad = tg_gamepad_find(gamepads);
-
+    gamepad = tg_gamepad_find(gamepads);
+    
     if (FAILED(IDirectInput8_CreateDevice(gamepads->src.dinput, &inst->guidInstance, &gamepad->src.device, NULL))) {
         tg_gamepad_release(gamepads, gamepad);
         return DIENUM_CONTINUE;
@@ -1239,13 +1242,13 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
         return DIENUM_CONTINUE;
     }
 
-    DIDEVCAPS caps = {0};
+    caps = {0};
     caps.dwSize = sizeof(DIDEVCAPS);
 
     IDirectInputDevice8_GetCapabilities(gamepad->src.device, &caps);
 
 
-    DIPROPDWORD dipd = {0};
+    dipd = {0};
     dipd.diph.dwSize = sizeof(dipd);
     dipd.diph.dwHeaderSize = sizeof(dipd.diph);
     dipd.diph.dwHow = DIPH_DEVICE;
@@ -1277,9 +1280,11 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
 
     gamepad->mapping = tg_gamepad_find_valid_mapping(gamepad);
 
+{
     DIJOYSTATE state;
     IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
- 
+}
+
     for (i = 0; i < caps.dwButtons; i++) {
         tg_button key = tg_get_gamepad_button(gamepad, i); 
         if (key == TG_BUTTON_UNKNOWN) 
@@ -1328,8 +1333,8 @@ void tg_gamepads_init_platform(tg_gamepads* gamepads) {
         /* load directinput dll and functions  */
         gamepads->src.dinput_dll = LoadLibraryA("dinput8.dll");
         if (gamepads->src.dinput_dll) {
-            gamepads->src.DInput8Create = (PFN_DirectInput8Create)(tg_proc)GetProcAddress(gamepads->src.dinput_dll, "DirectInput8Create");
             HINSTANCE hInstance = GetModuleHandle(0);
+            gamepads->src.DInput8Create = (PFN_DirectInput8Create)(tg_proc)GetProcAddress(gamepads->src.dinput_dll, "DirectInput8Create");
             if (FAILED(gamepads->src.DInput8Create(hInstance,
                                               DIRECTINPUT_VERSION,
                                               &TG_IID_IDirectInput8W,
@@ -1381,9 +1386,9 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
     if (gamepad->src.device) {
         u32 i;
         DIDEVCAPS caps = {0};
+        DIJOYSTATE state;
         caps.dwSize = sizeof(DIDEVCAPS);
 
-        DIJOYSTATE state;
         HRESULT result = IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
         if (result == DIERR_NOTACQUIRED || result == DIERR_INPUTLOST) {
             event->type = TG_EVENT_GAMEPAD_DISCONNECT;
@@ -1398,7 +1403,7 @@ tg_bool tg_gamepad_update_platform(tg_gamepad* gamepad, tg_event* event) {
         }
 
         for (i = 0; i < caps.dwButtons; i++) {
-            tg_button key = tg_get_gamepad_button(gamepad, i); 
+            tg_button key = tg_get_gamepad_button(gamepad, (u8)i); 
             if (key == TG_BUTTON_UNKNOWN) 
                 continue;
             gamepad->buttons[key].prev = gamepad->buttons[key].current;
@@ -1622,30 +1627,30 @@ static tg_bool parseMapping(tg_mapping* mapping, const char* string) {
     tg_size_t i, length, len;
     tg_field fields[] = {
         { "platform", 8,     0, NULL },
-        { "a", 1,             TG_BUTTON_SOUTH },
-        { "b", 1,           TG_BUTTON_EAST },
-        { "x", 1,            TG_BUTTON_WEST },
-        { "y", 1,            TG_BUTTON_NORTH },
-        { "back", 4,          TG_BUTTON_BACK },
-        { "start", 5,         TG_BUTTON_START },
-        { "guide", 5,         TG_BUTTON_GUIDE },
-        { "leftshoulder", 12,  TG_BUTTON_LEFT_SHOULDER },
-        { "rightshoulder", 13, TG_BUTTON_RIGHT_SHOULDER },
-        { "leftstick", 9,     TG_BUTTON_LEFT_STICK },
-        { "rightstick", 10,    TG_BUTTON_RIGHT_STICK },
-        { "dpup",   4,       TG_BUTTON_DPAD_UP },
-        { "dpright", 7,       TG_BUTTON_DPAD_RIGHT },
-        { "dpdown", 6,       TG_BUTTON_DPAD_DOWN },
-        { "dpleft", 6,        TG_BUTTON_DPAD_LEFT },
-        { "lefttrigger", 11,   TG_BUTTON_LEFT_TRIGGER },
-        { "righttrigger", 12,  TG_BUTTON_RIGHT_TRIGGER },
+        { "a", 1,             TG_BUTTON_SOUTH , NULL},
+        { "b", 1,           TG_BUTTON_EAST , NULL},
+        { "x", 1,            TG_BUTTON_WEST , NULL},
+        { "y", 1,            TG_BUTTON_NORTH , NULL},
+        { "back", 4,          TG_BUTTON_BACK , NULL},
+        { "start", 5,         TG_BUTTON_START , NULL},
+        { "guide", 5,         TG_BUTTON_GUIDE , NULL},
+        { "leftshoulder", 12,  TG_BUTTON_LEFT_SHOULDER , NULL},
+        { "rightshoulder", 13, TG_BUTTON_RIGHT_SHOULDER , NULL},
+        { "leftstick", 9,     TG_BUTTON_LEFT_STICK , NULL},
+        { "rightstick", 10,    TG_BUTTON_RIGHT_STICK , NULL},
+        { "dpup",   4,       TG_BUTTON_DPAD_UP , NULL},
+        { "dpright", 7,       TG_BUTTON_DPAD_RIGHT , NULL},
+        { "dpdown", 6,       TG_BUTTON_DPAD_DOWN , NULL},
+        { "dpleft", 6,        TG_BUTTON_DPAD_LEFT , NULL},
+        { "lefttrigger", 11,   TG_BUTTON_LEFT_TRIGGER , NULL},
+        { "righttrigger", 12,  TG_BUTTON_RIGHT_TRIGGER , NULL },
 
-        { "lefttrigger", 11,   TG_AXIS_LEFT_TRIGGER },
-        { "righttrigger", 12,  TG_AXIS_RIGHT_TRIGGER },
-        { "leftx",  5,       TG_AXIS_LEFT_X },
-        { "lefty",  5,       TG_AXIS_LEFT_Y } ,
-        { "rightx", 6,       TG_AXIS_RIGHT_X },
-        { "righty", 6,        TG_AXIS_RIGHT_Y }
+        { "lefttrigger", 11,   TG_AXIS_LEFT_TRIGGER, NULL},
+        { "righttrigger", 12,  TG_AXIS_RIGHT_TRIGGER, NULL },
+        { "leftx",  5,       TG_AXIS_LEFT_X, NULL },
+        { "lefty",  5,       TG_AXIS_LEFT_Y, NULL } ,
+        { "rightx", 6,       TG_AXIS_RIGHT_X, NULL},
+        { "righty", 6,        TG_AXIS_RIGHT_Y, NULL }
     };
 
     len = (sizeof(fields) / sizeof(tg_field)); 
