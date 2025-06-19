@@ -283,17 +283,33 @@ int libevdev_set_fd(struct libevdev* dev, int fd) {
 	if (rc < 0 && errno != EINVAL)
 		goto out;
 
-	rc = ioctl(fd, EVIOCGBIT(EV_REL, sizeof(dev->rel_bits)), dev->rel_bits);
+	rc = ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(dev->abs_bits)), dev->abs_bits);
 	if (rc < 0)
 		goto out;
 
-	rc = ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(dev->abs_bits)), dev->abs_bits);
+	rc = ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(dev->key_bits)), dev->key_bits);
 	if (rc < 0)
 		goto out;
 
 	rc = ioctl(fd, EVIOCGBIT(EV_FF, sizeof(dev->ff_bits)), dev->ff_bits);
 	if (rc < 0)
 		goto out;
+
+	// rc = ioctl(fd, EVIOCGBIT(EV_SND, sizeof(dev->snd_bits)), dev->snd_bits);
+	// if (rc < 0)
+	// 	goto out;
+
+	// rc = ioctl(fd, EVIOCGKEY(sizeof(dev->key_values)), dev->key_values);
+	// if (rc < 0)
+	// 	goto out;
+
+	// rc = ioctl(fd, EVIOCGLED(sizeof(dev->led_values)), dev->led_values);
+	// if (rc < 0)
+	// 	goto out;
+
+	// rc = ioctl(fd, EVIOCGSW(sizeof(dev->sw_values)), dev->sw_values);
+	// if (rc < 0)
+	// 	goto out;
 
 	for (i = ABS_X; i <= ABS_MAX; i++) {
 		if (bit_is_set(dev->abs_bits, i)) {
