@@ -19,7 +19,7 @@ else ifeq ($(PLATFORM),Linux)
 	RGFW_LIBS = -lX11 -lXrandr -lGL -lm 
 else ifeq ($(PLATFORM),Darwin)
 	LIBS =  -framework IOKit -lm
-	RGFW_LIBS = -framework IOKit -framework Cocoa 
+	RGFW_LIBS = -framework IOKit -framework Cocoa -framework OpenGL 
 else
 	PLATFORM = Windows
 endif
