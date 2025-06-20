@@ -48,7 +48,6 @@
 
 /*
 	Credits :
-        minigamepad - inspiration for this project
 		GLFW and SDL - used as a resource 
         https:///github.com/MysteriousJ/Joystick-Input-Examples - good resoruce for learning how to use gamepad code
 			
