@@ -47,6 +47,10 @@ int main(void) {
 
         printf("     Gamepad: %-25s\n", gamepad->name);
 
+        if (gamepad->buttons[MG_BUTTON_GUIDE].current == MG_TRUE) {
+            break;
+        }
+
         for (btn = 0; btn < MG_BUTTON_COUNT; btn++) {
             if (gamepad->buttons[btn].supported == MG_FALSE) continue;
 
@@ -59,7 +63,7 @@ int main(void) {
                 continue;
 
             printf("     %25s:\t", mg_axis_get_name(axis));
-            printf("     %-25d\n", gamepad->axes[axis].value);
+            printf("     %-25f\n", gamepad->axes[axis].value);
         }
         printf("\33[0;0H");
     }

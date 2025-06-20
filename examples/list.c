@@ -1,3 +1,4 @@
+#define MG_C89
 #define MG_IMPLEMENTATION
 #include "minigamepad.h"
 

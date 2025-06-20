@@ -2,7 +2,7 @@
 *
 *	tinygamepad - 0.01-beta  
 
-* Copyright (C) 2025 ColleagueRiley
+* Copyright (C) 2025 ColleagueRiley, Pyrite Development Team
 *
 * libpng license
 *
@@ -121,6 +121,11 @@
     #define MG_FPRINTF fprintf
 #endif
 
+#ifndef MG_FABS
+#include <math.h>
+#define MG_FABS(x) fabs(x)
+#endif
+
 #if defined(MG_EXPORT) ||  defined(MG_IMPORT)
 	#if defined(_WIN32)
 		#if defined(__TINYC__) && (defined(MG_EXPORT) ||  defined(MG_IMPORT))
@@ -236,10 +241,10 @@ typedef MG_ENUM(i8, mg_button) {
     MG_BUTTON_RIGHT_STICK,
     MG_BUTTON_LEFT_SHOULDER,
     MG_BUTTON_RIGHT_SHOULDER,
-    MG_BUTTON_DPAD_UP,
-    MG_BUTTON_DPAD_DOWN,
     MG_BUTTON_DPAD_LEFT,
     MG_BUTTON_DPAD_RIGHT,
+    MG_BUTTON_DPAD_UP,
+    MG_BUTTON_DPAD_DOWN,
     MG_BUTTON_LEFT_TRIGGER,
     MG_BUTTON_RIGHT_TRIGGER,
  /* extras */
@@ -344,8 +349,8 @@ typedef struct mg_button_state {
 
 typedef struct MG_AXIS_state {
     mg_bool supported;
-    i32 value;
-    i32 deadzone;
+    float value;
+    float deadzone;
 } MG_AXIS_state;
 
 struct mg_mapping;
@@ -425,6 +430,31 @@ MG_API void mg_gamepads_init(mg_gamepads* gamepads);
 MG_API mg_bool mg_gamepads_update(mg_gamepads* gamepads, mg_event* event);
 MG_API void mg_gamepads_free(mg_gamepads* gamepads);
 
+/* these are ran by mg_gamepads_update */ 
+MG_API mg_bool mg_gamepads_fetch(mg_gamepads* gamepad, mg_event* event);
+MG_API mg_bool mg_gamepad_update(mg_gamepad* gamepad, mg_event* event);
+
+MG_API mg_bool mg_gamepad_button_is_pressed(mg_gamepad* gamepad, mg_button button);
+MG_API mg_bool mg_gamepad_button_is_released(mg_gamepad* gamepad, mg_button button);
+MG_API mg_bool mg_gamepad_button_is_held(mg_gamepad* gamepad, mg_button button);
+
+MG_API float mg_gamepad_axis_value(mg_gamepad* gamepad, mg_axis axis);
+
+/* callbacks */
+typedef void (*mg_gamepad_connection_func)(mg_gamepad* gamepad, mg_bool connected);
+MG_API mg_gamepad_connection_func mg_set_gamepad_connected_callback(mg_gamepad_connection_func func); 
+MG_API mg_gamepad_connection_func mg_set_gamepad_disconnected_callback(mg_gamepad_connection_func func); 
+
+typedef void (*mg_gamepad_button_func)(mg_gamepad* gamepad, mg_button button, mg_bool pressed);
+MG_API mg_gamepad_button_func mg_set_gamepad_press_callback(mg_gamepad_button_func func); 
+MG_API mg_gamepad_button_func mg_set_gamepad_release_callback(mg_gamepad_button_func func); 
+
+typedef void (*mg_gamepad_axis_func)(mg_gamepad* gamepad, mg_axis);
+MG_API mg_gamepad_axis_func mg_set_gamepad_axis_callback(mg_gamepad_axis_func func); 
+
+/* add a new mapping */
+MG_API mg_bool mg_update_gamepad_mappings(mg_gamepads* gamepads, const char* string);
+
 MG_API const char* mg_button_get_name(mg_button button);
 MG_API const char* mg_axis_get_name(mg_axis button);
 
@@ -454,6 +484,75 @@ MG_API mg_button mg_get_gamepad_button(mg_gamepad* gamepad, u8 button);
 MG_API mg_axis mg_get_gamepad_axis(mg_gamepad* gamepad, u8 axis);
 MG_API void mg_mappings_init(void);
 /* public/global API implementation */
+
+mg_bool mg_gamepads_fetch(mg_gamepads* gamepads, mg_event* event) {
+    return mg_gamepads_update_platform(gamepads, event);
+}
+
+mg_bool mg_gamepad_update(mg_gamepad* gamepad, mg_event* event) {
+    return mg_gamepad_update_platform(gamepad, event);
+}
+
+mg_bool mg_gamepad_button_is_pressed(mg_gamepad* gamepad, mg_button button) {
+    return gamepad->buttons[button].current;
+}
+
+mg_bool mg_gamepad_button_is_released(mg_gamepad* gamepad, mg_button button) {
+    return gamepad->buttons[button].prev && !gamepad->buttons[button].current;
+}
+
+mg_bool mg_gamepad_button_is_held(mg_gamepad* gamepad, mg_button button) {
+    return gamepad->buttons[button].prev && gamepad->buttons[button].current;
+}
+
+float mg_gamepad_axis_value(mg_gamepad* gamepad, mg_axis axis) {
+    return gamepad->axes[axis].value;
+}
+
+mg_gamepad_connection_func mg_gamepad_connected_callback = NULL;
+#define mg_connect_callback(gamepad) if (mg_gamepad_connected_callback) mg_gamepad_connected_callback(gamepad, MG_TRUE) 
+
+mg_gamepad_connection_func mg_set_gamepad_connected_callback(mg_gamepad_connection_func func) {
+    mg_gamepad_connection_func prev = mg_gamepad_connected_callback;
+    mg_gamepad_connected_callback = func;
+    return prev;
+}
+
+mg_gamepad_connection_func mg_gamepad_disconnected_callback = NULL;
+#define mg_disconnect_callback(gamepad) if (mg_gamepad_disconnected_callback) mg_gamepad_disconnected_callback(gamepad, MG_FALSE) 
+
+mg_gamepad_connection_func mg_set_gamepad_disconnected_callback(mg_gamepad_connection_func func) {
+    mg_gamepad_connection_func prev = mg_gamepad_disconnected_callback;
+    mg_gamepad_disconnected_callback = func;
+    return prev;
+}
+
+mg_gamepad_button_func mg_gamepad_press_callback = NULL;
+#define mg_press_callback(gamepad, button) if (mg_gamepad_press_callback) mg_gamepad_press_callback(gamepad, button, MG_TRUE) 
+
+mg_gamepad_button_func mg_set_gamepad_press_callback(mg_gamepad_button_func func) {
+    mg_gamepad_button_func prev = mg_gamepad_press_callback;
+    mg_gamepad_press_callback = func;
+    return prev;
+}
+
+mg_gamepad_button_func mg_gamepad_release_callback = NULL;
+#define mg_release_callback(gamepad, button) if (mg_gamepad_release_callback) mg_gamepad_release_callback(gamepad, button, MG_FALSE) 
+
+mg_gamepad_button_func mg_set_gamepad_release_callback(mg_gamepad_button_func func) {
+    mg_gamepad_button_func prev = mg_gamepad_release_callback;
+    mg_gamepad_release_callback = func;
+    return prev;
+}
+
+mg_gamepad_axis_func mg_gamepad_axis_callback = NULL;
+#define mg_axis_callback(gamepad, axis) if (mg_gamepad_axis_callback) mg_gamepad_axis_callback(gamepad, axis) 
+
+mg_gamepad_axis_func mg_set_gamepad_axis_callback(mg_gamepad_axis_func func) {
+    mg_gamepad_axis_func prev = mg_gamepad_axis_callback;
+    mg_gamepad_axis_callback = func;
+    return prev;
+}
 
 void mg_gamepads_init(mg_gamepads* gamepads) {
     MG_ASSERT(gamepads != NULL);
@@ -681,7 +780,7 @@ mg_gamepad* mg_linux_setup_gamepad(mg_gamepads* gamepads, const char* full_path)
 
     for (axis = 0; axis < ABS_CNT; axis++) {
         mg_axis key;
-        int16_t deadzone = 0;
+        float deadzone = 0;
         if (!isBitSet(axis, absBits)) {
             continue;
         }
@@ -720,7 +819,7 @@ mg_gamepad* mg_linux_setup_gamepad(mg_gamepads* gamepads, const char* full_path)
                 deadzone = 0;
                 break;
             default:
-                deadzone = 15;
+                deadzone = 0.15f;
                 break;
         }
         
@@ -770,10 +869,13 @@ void mg_gamepads_init_platform(mg_gamepads* gamepads) {
     while ((dp = readdir(dfd)) != NULL) {
         /* get the full path of it (size of path + size of file name) */
         const char path[] = "/dev/input/";
+        mg_gamepad* gamepad; 
+        
         MG_STRNCPY(full_path, path, sizeof(full_path));
         MG_STRNCPY(&full_path[sizeof(path) - 1], dp->d_name, sizeof(full_path) - sizeof(path));
         full_path[255] = '\0';
-        mg_linux_setup_gamepad(gamepads, (const char*)full_path);
+        gamepad = mg_linux_setup_gamepad(gamepads, (const char*)full_path);
+        if (gamepad)  mg_connect_callback(gamepad); 
     }
 
     closedir(dfd);
@@ -811,7 +913,8 @@ mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
                     event->type = MG_EVENT_GAMEPAD_CONNECT;
                     event->gamepad = gamepad;
                 }
-                
+
+                mg_connect_callback(gamepad); 
                 return MG_TRUE;
             }
         }
@@ -825,6 +928,7 @@ mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
                         event->gamepad = cur;
                     }
 
+                    mg_disconnect_callback(cur);
                     mg_gamepad_release(gamepads, cur);
                     return MG_TRUE;
                 }
@@ -848,33 +952,53 @@ void mg_gamepads_free_platform(mg_gamepads* gamepads) {
 }
 
 
-
-#define emulate_button(button_code, axis, min, max, flip) { \
-    if ((gamepad->axes[axis].value >= max && flip!gamepad->buttons[button_code].current) || \
-            (gamepad->axes[axis].value <= min && flip gamepad->buttons[button_code].current)) { \
-            gamepad->buttons[button_code].prev =  gamepad->buttons[button_code].current; \
-            gamepad->buttons[button_code].current = flip(gamepad->axes[axis].value >= max) ? 1 : 0; \
-            if (event != NULL) { \
-                event->gamepad = gamepad; \
-                event->button = button_code; \
-                event->type = flip(gamepad->axes[button_code].value >= max) ? MG_EVENT_BUTTON_PRESS : MG_EVENT_BUTTON_RELEASE; \
-                return 1; \
-            } \
-        } \
-}
-
 mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
     struct input_event ev;
+    i8 i;
     if (gamepad->connected == MG_FALSE) return MG_FALSE;
-/*
-    emulate_button(MG_BUTTON_LEFT_TRIGGER, MG_AXIS_LEFT_TRIGGER, -98, 98, )
-    emulate_button(MG_BUTTON_RIGHT_TRIGGER, MG_AXIS_RIGHT_TRIGGER, -98, 98, )
 
-    emulate_button(MG_BUTTON_DPAD_LEFT, MG_AXIS_HAT_DPAD_LEFT, -100, 0, !)
-    emulate_button(MG_BUTTON_DPAD_RIGHT, MG_AXIS_HAT_DPAD_RIGHT, 0, 100, )
-    emulate_button(MG_BUTTON_DPAD_UP, MG_AXIS_HAT_DPAD_UP, -100, 0, !)
-    emulate_button(MG_BUTTON_DPAD_DOWN, MG_AXIS_HAT_DPAD_DOWN, 0, 100, )
-*/
+    for (i = 0; i < 2; i++) {
+        mg_button button = MG_BUTTON_LEFT_TRIGGER + i;
+        mg_axis axis = MG_AXIS_LEFT_TRIGGER + i;
+        if ((gamepad->axes[axis].value >= 0.98f && !gamepad->buttons[button].current) || 
+                (gamepad->axes[axis].value <= -0.98f && gamepad->buttons[button].current)) { 
+                gamepad->buttons[button].prev =  gamepad->buttons[button].current; 
+                gamepad->buttons[button].current = (gamepad->axes[axis].value >= 0.98f) ? 1 : 0; 
+                if (event != NULL) { 
+                    event->gamepad = gamepad; 
+                    event->button = button; 
+                    event->type = (gamepad->axes[button].value >= 98) ? MG_EVENT_BUTTON_PRESS : MG_EVENT_BUTTON_RELEASE;                     
+                    return 1; 
+                }
+
+                if (gamepad->axes[axis].value >= 0.98f) {
+                    mg_press_callback(gamepad, button);
+                } else { mg_release_callback(gamepad, button); }
+        } 
+    }
+
+    for (i = 0; i < 2; i++) {
+        mg_button button = MG_BUTTON_DPAD_LEFT + (mg_button)(i * 2);
+        mg_button button2 = MG_BUTTON_DPAD_LEFT + 1 + (mg_button)(i * 2);
+        mg_axis axis = (mg_axis)(MG_AXIS_HAT_DPAD_LEFT + i);  
+
+        if ((gamepad->axes[axis].value && !gamepad->buttons[button].current) || 
+            (!gamepad->axes[axis].value && gamepad->buttons[button].current) || 
+            (gamepad->axes[axis].value && !gamepad->buttons[button2].current) || 
+            (!gamepad->axes[axis].value && gamepad->buttons[button2].current)
+
+        ) {
+            if (gamepad->axes[axis].value <= 0) { 
+                gamepad->buttons[button].current = MG_BOOL(gamepad->axes[axis].value);
+                gamepad->buttons[button2].current = 0;
+            } else { 
+                gamepad->buttons[button2].current = 1;
+                gamepad->buttons[button].current = 0;
+            }
+        }
+
+    }
+
     MG_MEMSET(&ev, 0, sizeof(ev));
 
     do {
@@ -902,7 +1026,12 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
                 event->gamepad = gamepad;
                 event->button = btn;
                 event->type = ev.value ? MG_EVENT_BUTTON_PRESS  : MG_EVENT_BUTTON_RELEASE; 
+            
             }
+            if (ev.value) {
+                mg_press_callback(gamepad, btn);
+            } else { mg_release_callback(gamepad, btn); }
+
             return MG_TRUE;
         }
         case EV_ABS: {
@@ -928,9 +1057,9 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
             }
             
             if (gamepad->axes[axis].supported) {
-                int deadzone = gamepad->axes[axis].deadzone;
-                int16_t event_val = (int16_t)(normalized * 100);
-                if (abs(event_val) < deadzone) {
+                float deadzone = gamepad->axes[axis].deadzone;
+                float event_val = normalized;
+                if (MG_FABS(event_val) < deadzone) {
                     event_val = 0;
                 }
 
@@ -942,6 +1071,8 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
                 event->gamepad = gamepad;
                 event->axis = axis;
             }
+
+            mg_axis_callback(gamepad, axis);
             return MG_TRUE;
         }
         default:
