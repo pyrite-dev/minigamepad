@@ -31,7 +31,11 @@ endif
 
 all: $(EXAMPLES) $(EXTRA_EXAMPLES) minigamepad.h 
 examples/rgfw_gamepad: examples/rgfw_gamepad.c minigamepad.h 
+ifneq ($(CC),emcc)
 	$(CC) -I./ $< $(LIBS) $(RGFW_LIBS) -o $@ 
+else
+	@echo this example doesn't yet support WASM
+endif
 
 $(EXAMPLES): %: %.c minigamepad.h 
 	$(CC) -std=c89 $(WARNINGS) -I. $< $(LIBS) -o $@
