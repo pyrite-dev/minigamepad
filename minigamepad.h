@@ -128,25 +128,25 @@
 		#endif
 
 		#if defined(MG_EXPORT)
-			#define MGDEF __declspec(dllexport)
+			#define MG_API __declspec(dllexport)
 		#else
-			#define MGDEF __declspec(dllimport)
+			#define MG_API __declspec(dllimport)
 		#endif
 	#else
 		#if defined(MG_EXPORT)
-			#define MGDEF __attribute__((visibility("default")))
+			#define MG_API __attribute__((visibility("default")))
 		#endif
 	#endif
-    #ifndef MGDEF
-        #define MGDEF
+    #ifndef MG_API
+        #define MG_API
     #endif
 #endif
 
-#ifndef MGDEF
+#ifndef MG_API
 	#ifdef MG_C89
-		#define MGDEF __inline
+		#define MG_API 
 	#else
-		#define MGDEF inline
+		#define MG_API inline
 	#endif
 #endif
 
@@ -421,12 +421,12 @@ typedef struct mg_event {
     mg_gamepad* gamepad;
 } mg_event;
 
-MGDEF void mg_gamepads_init(mg_gamepads* gamepads);
-MGDEF mg_bool mg_gamepads_update(mg_gamepads* gamepads, mg_event* event);
-MGDEF void mg_gamepads_free(mg_gamepads* gamepads);
+MG_API void mg_gamepads_init(mg_gamepads* gamepads);
+MG_API mg_bool mg_gamepads_update(mg_gamepads* gamepads, mg_event* event);
+MG_API void mg_gamepads_free(mg_gamepads* gamepads);
 
-MGDEF const char* mg_button_get_name(mg_button button);
-MGDEF const char* mg_axis_get_name(mg_axis button);
+MG_API const char* mg_button_get_name(mg_button button);
+MG_API const char* mg_axis_get_name(mg_axis button);
 
 #endif /* MG_HEADER */
 
@@ -434,25 +434,25 @@ MGDEF const char* mg_axis_get_name(mg_axis button);
 
 /* gamepads->src.global API */
 /* find a valid unused gamepad or return NULL */
-MGDEF mg_gamepad* mg_gamepad_find(mg_gamepads* gamepads);
-MGDEF void mg_gamepad_release(mg_gamepads* gamepads, mg_gamepad* gamepad);
-MGDEF void mg_list_swap_gamepad(mg_gamepad_list* from, mg_gamepad_list* to, mg_gamepad* gamepad);
+MG_API mg_gamepad* mg_gamepad_find(mg_gamepads* gamepads);
+MG_API void mg_gamepad_release(mg_gamepads* gamepads, mg_gamepad* gamepad);
+MG_API void mg_list_swap_gamepad(mg_gamepad_list* from, mg_gamepad_list* to, mg_gamepad* gamepad);
 
 /* gamepads->src.platform-specific API */
-MGDEF void mg_gamepads_init_platform(mg_gamepads* gamepads);
+MG_API void mg_gamepads_init_platform(mg_gamepads* gamepads);
 /* updates gamepad structure by checking if any new gamepads are connected and adding them */
-MGDEF mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event);
-MGDEF void mg_gamepads_free_platform(mg_gamepads* gamepads);
-MGDEF mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event);
-MGDEF void mg_gamepad_release_platform(mg_gamepad* gamepad);
-MGDEF mg_button mg_get_gamepad_button_platform(u32 button);
-MGDEF mg_axis mg_get_gamepad_axis_platform(u32 axis);
+MG_API mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event);
+MG_API void mg_gamepads_free_platform(mg_gamepads* gamepads);
+MG_API mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event);
+MG_API void mg_gamepad_release_platform(mg_gamepad* gamepad);
+MG_API mg_button mg_get_gamepad_button_platform(u32 button);
+MG_API mg_axis mg_get_gamepad_axis_platform(u32 axis);
 
 /* gamepads->src.mappings API */
-MGDEF struct mg_mapping* mg_gamepad_find_valid_mapping(mg_gamepad* gamepad);
-MGDEF mg_button mg_get_gamepad_button(mg_gamepad* gamepad, u8 button);
-MGDEF mg_axis mg_get_gamepad_axis(mg_gamepad* gamepad, u8 axis);
-MGDEF void mg_mappings_init(void);
+MG_API struct mg_mapping* mg_gamepad_find_valid_mapping(mg_gamepad* gamepad);
+MG_API mg_button mg_get_gamepad_button(mg_gamepad* gamepad, u8 button);
+MG_API mg_axis mg_get_gamepad_axis(mg_gamepad* gamepad, u8 axis);
+MG_API void mg_mappings_init(void);
 /* public/global API implementation */
 
 void mg_gamepads_init(mg_gamepads* gamepads) {
@@ -1114,7 +1114,7 @@ const GUID MG_GUID_Slider =
 const GUID MG_GUID_POV =
     {0xa36d02f2,0xc9f3,0x11cf,{0xbf,0xc7,0x44,0x45,0x53,0x54,0x00,0x00}};
 
-static DIOBJECTDATAFORMAT mg_objectDataFormats[] = {
+const DIOBJECTDATAFORMAT mg_objectDataFormats[] = {
     { &MG_GUID_XAxis,DIJOFS_X,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
     { &MG_GUID_YAxis,DIJOFS_Y,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
     { &MG_GUID_ZAxis,DIJOFS_Z,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
@@ -1593,7 +1593,8 @@ void updateGamepadGUID(char* guid) {
 #endif
 }
 
-static mg_mapping* findMapping(const char* guid) {
+MG_API mg_mapping* findMapping(const char* guid);
+mg_mapping* findMapping(const char* guid) {
     int i; 
     for (i = 0;  i < mappings.mappingCount;  i++) {
         if (strncmp(mappings.mappings[i].guid, guid, sizeof(mappings.mappings[i].guid)) == 0) {
@@ -1604,7 +1605,8 @@ static mg_mapping* findMapping(const char* guid) {
     return NULL;
 }
 
-static mg_mapping* findMappingPermisive(const char* guid) {
+MG_API mg_mapping* findMappingPermisive(const char* guid);
+mg_mapping* findMappingPermisive(const char* guid) {
     int i; 
     for (i = 0;  i < mappings.mappingCount;  i++) {
         if (strncmp(mappings.mappings[i].guid, guid, sizeof(mappings.mappings[i].guid) - 8) == 0) {
@@ -1633,7 +1635,9 @@ typedef struct mg_field {
     mg_element* element;
 } mg_field;
 
-static mg_bool parseMapping(mg_mapping* mapping, const char* string) {
+
+MG_API mg_bool parseMapping(mg_mapping* mapping, const char* string);
+mg_bool parseMapping(mg_mapping* mapping, const char* string) {
     const char* substr = string;
     mg_size_t i, length, len;
     mg_field fields[] = {
