@@ -328,11 +328,11 @@ typedef struct mg_gamepad_src {
 } mg_gamepad_src;
 #elif defined(MG_MACOS)
 typedef struct mg_gamepad_src {     
-
+    int TODO; 
 } mg_gamepad_src;
 #elif defined(MG_WASM)
 typedef struct mg_gamepad_src {     
-
+    int TODO;
 } mg_gamepad_src;
 #endif
 
@@ -391,11 +391,11 @@ typedef struct mg_gamepads_src {
 } mg_gamepads_src;
 #elif defined(MG_MACOS)
 typedef struct mg_gamepads_src {     
-
+    int TODO;
 } mg_gamepads_src;
 #elif defined(MG_WASM)
 typedef struct mg_gamepads_src {     
-
+    int TODO;
 } mg_gamepads_src;
 #endif
 
@@ -1114,7 +1114,7 @@ const GUID MG_GUID_Slider =
 const GUID MG_GUID_POV =
     {0xa36d02f2,0xc9f3,0x11cf,{0xbf,0xc7,0x44,0x45,0x53,0x54,0x00,0x00}};
 
-const DIOBJECTDATAFORMAT mg_objectDataFormats[] = {
+static DIOBJECTDATAFORMAT mg_objectDataFormats[] = {
     { &MG_GUID_XAxis,DIJOFS_X,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
     { &MG_GUID_YAxis,DIJOFS_Y,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
     { &MG_GUID_ZAxis,DIJOFS_Z,DIDFT_AXIS|DIDFT_OPTIONAL|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION },
@@ -1448,24 +1448,26 @@ mg_axis mg_get_gamepad_axis_platform(u32 axis) {
 
 #elif defined(MG_MACOS)
 void mg_gamepads_init_platform(mg_gamepads* gamepads) {
-
+    MG_UNUSED(gamepads);
 }
 
 mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
-
+    MG_UNUSED(gamepads); MG_UNUSED(event);
+    return MG_FALSE;
 }
 
 void mg_gamepads_free_platform(mg_gamepads* gamepads) {
-
+    MG_UNUSED(gamepads);
 }
 
 mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
-
+    MG_UNUSED(gamepad); MG_UNUSED(event);
+    return MG_FALSE;
 }
 
 
-void mg_gamepad_release_platform(mg_gamepad* gamepads-) {
-
+void mg_gamepad_release_platform(mg_gamepad* gamepads) {
+    MG_UNUSED(gamepads);
 }
 
 mg_button mg_get_gamepad_button_platform(u32 button) {
@@ -1487,23 +1489,25 @@ mg_axis mg_get_gamepad_axis_platform(u32 axis) {
 
 #elif defined(MG_WASM)
 void mg_gamepads_init_platform(mg_gamepads* gamepads) {
-
+    MG_UNUSED(gamepads);
 }
 
 mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
-
+    MG_UNUSED(gamepads);  MG_UNUSED(event);
+    return MG_FALSE;
 }
 
 void mg_gamepads_free_platform(mg_gamepads* gamepads) {
-
+    MG_UNUSED(gamepads); 
 }
 
 mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
-
+    MG_UNUSED(gamepad);  MG_UNUSED(event);
+    return MG_FALSE;
 }
 
 void mg_gamepad_release_platform(mg_gamepad* gamepads) {
-
+    MG_UNUSED(gamepads); 
 }
 
 mg_button mg_get_gamepad_button_platform(u32 button) {
