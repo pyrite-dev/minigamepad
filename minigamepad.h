@@ -823,8 +823,9 @@ mg_gamepad* mg_linux_setup_gamepad(mg_gamepads* gamepads, const char* full_path)
         }
         
         key = mg_get_gamepad_axis(gamepad, gamepad->src.absMap[axis]);
-        if (key == MG_AXIS_UNKNOWN) 
+        if (key == MG_AXIS_UNKNOWN) {
             key = mg_get_gamepad_axis_platform(axis);
+        }
         if (key == MG_AXIS_UNKNOWN)
             continue;
 
@@ -1313,7 +1314,7 @@ mg_bool mg_supportsXInput(mg_gamepads* gamepads, const GUID* guid) {
         return MG_FALSE;
 
     list = (RAWINPUTDEVICELIST*)malloc(count * sizeof(RAWINPUTDEVICELIST));
-    memset(list, 0, count * sizeof(RAWINPUTDEVICELIST));
+    MG_MEMSET(list, 0, count * sizeof(RAWINPUTDEVICELIST));
 
     if ((int)GetRawInputDeviceList(list, &count, sizeof(RAWINPUTDEVICELIST)) == -1) {
         free(list);
@@ -1337,7 +1338,7 @@ mg_bool mg_supportsXInput(mg_gamepads* gamepads, const GUID* guid) {
         if (MAKELONG(rdi.hid.dwVendorId, rdi.hid.dwProductId) != (LONG) guid->Data1)
             continue;
 
-        memset(name, 0, sizeof(name));
+        MG_MEMSET(name, 0, sizeof(name));
         size = sizeof(name);
 
         if ((int)GetRawInputDeviceInfoA(list[i].hDevice, RIDI_DEVICENAME, name, &size) == -1) {
@@ -1804,22 +1805,20 @@ mg_bool parseMapping(mg_mapping* mapping, const char* string) {
 
     len = (sizeof(fields) / sizeof(mg_field)); 
 
-    for (i = 1; i < len - 6; i++) {
+    for (i = 1; i < len - 8; i++) {
         fields[i].element = &mapping->buttons[fields[i].val]; 
     } 
 
-    for (i = len - 6; i < len; i++) {
+    for (i = len - 8; i < len; i++) {
         fields[i].element = &mapping->axes[fields[i].val]; 
     } 
-
-
 
     length = MG_STRCSPN(substr, ",");
     if (length != 32 || substr[length] != ',') {
         return MG_FALSE;
     }
 
-    memcpy(mapping->guid, substr, length);
+    MG_MEMCPY(mapping->guid, substr, length);
     substr += length + 1;
 
     length = MG_STRCSPN(substr, ",");
@@ -1827,7 +1826,7 @@ mg_bool parseMapping(mg_mapping* mapping, const char* string) {
         return MG_FALSE;
     }
 
-    memcpy(mapping->name, substr, length);
+    MG_MEMCPY(mapping->name, substr, length);
     substr += length + 1;
 
     while (substr[0]) {
@@ -1967,8 +1966,8 @@ mg_bool mg_update_gamepad_mappings(mg_gamepads* gamepads, const char* string) {
 
         length = MG_STRCSPN(substr, "\r\n");
         if (length < sizeof(line)) {
-            memset(&mapping, 0, sizeof(mapping));
-            memcpy(line, substr, length);
+            MG_MEMSET(&mapping, 0, sizeof(mapping));
+            MG_MEMCPY(line, substr, length);
             line[length] = '\0';
 
             if (parseMapping(&mapping, line)) {
@@ -4148,7 +4147,7 @@ void mg_mappings_init(void) {
     mg_size_t i;
     mappings.mappingCount = 0;
     mappings.mappingMax = 1300;
-    memset(mappings.mappings, 0, sizeof(mappings.mappings));
+    MG_MEMSET(mappings.mappings, 0, sizeof(mappings.mappings));
 
     for (i = 0;  i < (sizeof(sdl_db) / sizeof(char*));  i++) {
         if (parseMapping(&mappings.mappings[mappings.mappingCount], sdl_db[i]))
