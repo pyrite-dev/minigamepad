@@ -991,9 +991,22 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
             if (gamepad->axes[axis].value <= 0) { 
                 gamepad->buttons[button].current = MG_BOOL(gamepad->axes[axis].value);
                 gamepad->buttons[button2].current = 0;
+
+                mg_press_callback(gamepad, button);
+                mg_release_callback(gamepad, button2);
             } else { 
                 gamepad->buttons[button2].current = 1;
                 gamepad->buttons[button].current = 0;
+            
+                mg_press_callback(gamepad, button2);
+                mg_release_callback(gamepad, button);
+            }
+
+            if (event != NULL) { 
+                event->gamepad = gamepad; 
+                event->button = button; 
+                event->type = gamepad->axes[axis].value <= 0 ? MG_EVENT_BUTTON_PRESS : MG_EVENT_BUTTON_RELEASE;                     
+                return 1; 
             }
         }
 
