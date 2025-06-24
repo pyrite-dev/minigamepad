@@ -8,6 +8,8 @@
 
 A simple, cross platform lightweight single-header gamepad library for handling controller input.
 
+Written with support for C89, using overridable C99 features, eg. `stdint.h` and `inline` with `#define MG_C89`.
+
 ## basic example
 
 ```c
