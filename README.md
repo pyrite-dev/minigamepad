@@ -1,4 +1,5 @@
 # minigamepad
+
 ![THE MINIGAMEPAD Logo](https://github.com/ColleagueRiley/minigamepad/blob/main/logo.png?raw=true)
 
 ![workflow](https://github.com/ColleagueRiley/minigamepad/actions/workflows/linux.yml/badge.svg)
@@ -9,6 +10,21 @@
 A simple, cross platform lightweight single-header gamepad library for handling controller input.
 
 Written with support for C89, using overridable C99 features, eg. `stdint.h` and `inline` with `#define MG_C89`.
+
+## progress / TODO 
+### linux:
+full support except for rumble 
+
+### windows
+directinput backend is started, but not complete. 
+
+xinput backend has not yet been started other than linking.
+
+### macos
+the iokit backend has not been started 
+
+## wasm
+the emscripten backend has not been started
 
 ## basic example
 
