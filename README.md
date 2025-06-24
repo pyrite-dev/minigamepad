@@ -12,19 +12,21 @@ A simple, cross platform lightweight single-header gamepad library for handling 
 Written with support for C89, using overridable C99 features, eg. `stdint.h` and `inline` with `#define MG_C89`.
 
 ## progress / TODO 
-### linux:
+### linux (evdev)
 full support except for rumble 
 
 ### windows
-directinput backend is started, but not complete. 
+#### directinput 
+backend is started, but not complete. 
 
-xinput backend has not yet been started other than linking.
+#### xinput  
+backend has not yet been started other than linking.
 
-### macos
-the iokit backend has not been started 
+### macos (iokit)
+backend has not been started 
 
-## wasm
-the emscripten backend has not been started
+### wasm (emscripten)
+the backend has not been started
 
 ## basic example
 
