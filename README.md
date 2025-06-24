@@ -34,8 +34,8 @@ int main(void) {
 
 Then compile with:
 
-linux `gcc main.c`
+linux `gcc main.c` \
 macos: `gcc main.c -framework IOKit` \
 windows: `gcc main.c` OR `cl main.c` \
-wasm: `emcc main.c -s ASYNCIFY`  \
+wasm: `emcc main.c -s ASYNCIFY`  
 
