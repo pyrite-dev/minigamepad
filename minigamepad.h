@@ -1,8 +1,8 @@
 /*
 *
-*	tinygamepad - 0.01-beta  
+*	minigamepad - alpha 
 
-* Copyright (C) 2025 ColleagueRiley, Pyrite Development Team
+* Copyright (C) 2025 ColleagueRiley
 *
 * libpng license
 *
@@ -35,8 +35,8 @@
 	#define MG_ALLOC x  - choose the default allocation function (defaults to standard malloc)
 	#define MG_FREE x  - choose the default deallocation function (defaults to standard free)
 
-	#define MG_EXPORT - use when building tinygamepad 
-	#define MG_IMPORT - use when linking with tinygamepad (not as a single-header)
+	#define MG_EXPORT - use when building minigamepad 
+	#define MG_IMPORT - use when linking with minigamepad (not as a single-header)
 
 	#define MG_USE_INT - force the use c-types rather than stdint.h (for systems that might not have stdint.h (msvc))
 	#define mg_bool x - choose what type to use for bool, by default u32 is used
