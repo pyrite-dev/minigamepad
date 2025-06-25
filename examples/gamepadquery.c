@@ -38,7 +38,6 @@ int main(void) {
             Checking if the controller is disconnected is not the only way you should check if you need to refresh the controller list! However, better ways of doing it are a bit complex and out of the scope of this example. */ 
         if (!gamepad->connected) {
             clear();
-            mg_gamepads_update(&gamepads, NULL);
 
             gamepad = gamepad->next;
             if (gamepad == NULL)
@@ -67,7 +66,8 @@ int main(void) {
         }
         printf("\33[0;0H");
     }
-
+    
+    printf("all controllers have been disconnected\n");
     mg_gamepads_free(&gamepads);
     return 0;
 }

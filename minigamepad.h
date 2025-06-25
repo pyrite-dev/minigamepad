@@ -329,6 +329,7 @@ typedef struct mg_gamepad_src {
 
 typedef struct mg_gamepad_src {     
     IDirectInputDevice8* device;
+    DIDEVCAPS caps;
 } mg_gamepad_src;
 #elif defined(MG_MACOS)
 typedef struct mg_gamepad_src {     
@@ -1229,15 +1230,13 @@ mg_axis mg_get_gamepad_axis_platform(u32 axis) {
 
     return MG_AXIS_UNKNOWN;
 }
-
-
+#endif /* MG_LINUX */
 
 /*
- * end of linux
  * start of windows
  */
 
-#elif defined(MG_WINDOWS)
+#if defined(MG_WINDOWS)
 
 const GUID MG_IID_IDirectInput8W =
     {0xbf798031,0x483a,0x4da2,{0xaa,0x99,0x5d,0x64,0xed,0x36,0x97,0x00}};
@@ -1369,19 +1368,21 @@ mg_bool mg_supportsXInput(mg_gamepads* gamepads, const GUID* guid) {
     return MG_FALSE;
 }
 
+#include <math.h>
+
 BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID userData) {
     mg_gamepads* gamepads = (mg_gamepads*)userData;
     mg_gamepad* gamepad;
     u32 i;
     DIDEVCAPS caps;
     DIPROPDWORD dipd; 
-    
     /* avoid clones */
     if (mg_supportsXInput(gamepads, &inst->guidProduct))
         return DIENUM_CONTINUE;
 
     gamepad = mg_gamepad_find(gamepads);
-    
+    gamepad->src.device = NULL;
+
     if (FAILED(IDirectInput8_CreateDevice(gamepads->src.dinput, &inst->guidInstance, &gamepad->src.device, NULL))) {
         mg_gamepad_release(gamepads, gamepad);
         return DIENUM_CONTINUE;
@@ -1397,7 +1398,7 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
     caps.dwSize = sizeof(DIDEVCAPS);
 
     IDirectInputDevice8_GetCapabilities(gamepad->src.device, &caps);
-
+    gamepad->src.caps = caps;
 
     MG_MEMSET(&dipd, 0, sizeof(dipd));
     dipd.diph.dwSize = sizeof(dipd);
@@ -1432,8 +1433,18 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
     gamepad->mapping = mg_gamepad_find_valid_mapping(gamepad);
 
 {
+    HRESULT result;        
     DIJOYSTATE state;
-    IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
+    MG_MEMSET(&state, 0, sizeof(state));
+    
+    IDirectInputDevice8_Acquire(gamepad->src.device);
+    IDirectInputDevice8_Poll(gamepad->src.device);
+
+    result = IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
+    if (FAILED(result)) {
+        mg_gamepad_release(gamepads, gamepad);
+        return DIENUM_CONTINUE;
+    }
 }
 
     for (i = 0; i < caps.dwButtons; i++) {
@@ -1459,7 +1470,21 @@ BOOL CALLBACK DirectInputEnumDevicesCallback(LPCDIDEVICEINSTANCE inst, LPVOID us
         gamepad->axes[key].supported = MG_TRUE;
         gamepad->axes[key].value = 0;
     }
+    
+    if (caps.dwPOVs) {
+        const mg_axis povs[2] = {
+            MG_AXIS_HAT_DPAD_UP_DOWN,
+            MG_AXIS_HAT_DPAD_LEFT_RIGHT,
+        };
 
+        for (i = 0; i < 2; i++) {   
+            mg_axis key = povs[i];
+            gamepad->axes[key].supported = MG_TRUE;
+            gamepad->axes[key].value = 0; 
+        }
+    }
+
+    gamepad->connected = MG_TRUE;
     return DIENUM_CONTINUE;
 }
 
@@ -1471,7 +1496,7 @@ void mg_gamepads_init_platform(mg_gamepads* gamepads) {
 
         uint32_t i;
         for (i = 0; i < sizeof(names) / sizeof(const char*) && (gamepads->src.XInputGetState == NULL || gamepads->src.XInputGetKeystroke != NULL);  i++) {
-            gamepads->src.xinput_dll = LoadLibraryA(names[i]);
+            /* gamepads->src.xinput_dll = LoadLibraryA(names[i]); */
 
             if (gamepads->src.xinput_dll) {
                 gamepads->src.XInputGetState = (PFN_XInputGetState)(mg_proc)GetProcAddress(gamepads->src.xinput_dll, "XInputGetState");
@@ -1538,31 +1563,58 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
     MG_UNUSED(event);
     if (gamepad->src.device) {
         u32 i;
-        DIDEVCAPS caps = {0};
+        DIDEVCAPS caps = gamepad->src.caps;
         DIJOYSTATE state;
         HRESULT result;        
-        
-        caps.dwSize = sizeof(DIDEVCAPS);
+        LONG axes_state[6];
 
+        IDirectInputDevice8_Poll(gamepad->src.device);
         result = IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
         if (result == DIERR_NOTACQUIRED || result == DIERR_INPUTLOST) {
+            IDirectInputDevice8_Acquire(gamepad->src.device);
+            IDirectInputDevice8_Poll(gamepad->src.device);
+       
+            result = IDirectInputDevice8_GetDeviceState(gamepad->src.device, sizeof(state), &state);
+        }
+
+        if (FAILED(result)) {
             event->type = MG_EVENT_GAMEPAD_DISCONNECT;
             event->gamepad = gamepad;
             gamepad->connected = MG_FALSE;
             return MG_FALSE;
         }
-
-        if (FAILED(result)) {
-         /*   mg_gamepad_release(gamepad); */
-            return MG_FALSE;
-        }
-
+        
         for (i = 0; i < caps.dwButtons; i++) {
             mg_button key = mg_get_gamepad_button(gamepad, (u8)i); 
+
             if (key == MG_BUTTON_UNKNOWN) 
                 continue;
+            
             gamepad->buttons[key].prev = gamepad->buttons[key].current;
-            gamepad->buttons[key].current = state.rgbButtons[i];
+            gamepad->buttons[key].current = MG_BOOL(state.rgbButtons[i]);
+        }
+
+        memcpy(&axes_state, &state, sizeof(axes_state));
+        
+        for (i = 0; i < caps.dwAxes && i < 4; i++) {
+            mg_axis key = mg_get_gamepad_axis(gamepad, (u8)i); 
+            if (key == MG_AXIS_UNKNOWN || (i >= sizeof(axes_state) / sizeof(axes_state[0]))) 
+                continue;
+            
+            gamepad->axes[key].value = (((float)axes_state[i] + 0.5f) / 32767.5f) - 1.0f;
+        }
+
+        if (caps.dwPOVs) {
+            DWORD pov = state.rgdwPOV[0]; 
+            
+            if (pov != 0xFFFF) {
+                float angle_rad = ((float)pov / 100.0f) * (3.14159265f / 180.0f);
+                gamepad->axes[MG_AXIS_HAT_DPAD_LEFT_RIGHT].value = (float)sin((float)angle_rad);
+                gamepad->axes[MG_AXIS_HAT_DPAD_UP_DOWN].value = (float)-cos((float)angle_rad);
+            } else {
+                gamepad->axes[MG_AXIS_HAT_DPAD_LEFT_RIGHT].value = 0.0f;
+                gamepad->axes[MG_AXIS_HAT_DPAD_UP_DOWN].value = 0.0f;
+            }
         }
     }
 
@@ -1584,13 +1636,13 @@ mg_axis mg_get_gamepad_axis_platform(u32 axis) {
     MG_UNUSED(axis);
     return MG_AXIS_UNKNOWN;
 }
+#endif /* MG_WINDOWS */
 
 /*
- * end of windows
  * start of macos 
  */
 
-#elif defined(MG_MACOS)
+#if defined(MG_MACOS)
 void mg_gamepads_init_platform(mg_gamepads* gamepads) {
     MG_UNUSED(gamepads);
 }
@@ -1625,13 +1677,13 @@ mg_axis mg_get_gamepad_axis_platform(u32 axis) {
     MG_UNUSED(axis);
     return MG_AXIS_UNKNOWN;
 }
+#endif /* MG_MACOS */
 
 /*
- * end of macos 
  * start of wasm 
  */
 
-#elif defined(MG_WASM)
+#if defined(MG_WASM)
 void mg_gamepads_init_platform(mg_gamepads* gamepads) {
     MG_UNUSED(gamepads);
 }
