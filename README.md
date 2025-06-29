@@ -20,7 +20,7 @@ full support except for rumble
 backend is started, but not complete. 
 
 #### xinput  
-backend has not yet been started other than linking.
+backend is started, but not complete. 
 
 ### macos (iokit)
 backend has not been started 

@@ -1540,8 +1540,37 @@ void mg_gamepads_init_platform(mg_gamepads* gamepads) {
     }
 }
 
+#ifndef XINPUT_DEVSUBTYPE_FLIGHT_STICK
+    /* MINGW PLEASE FIX THIS */
+    #define XINPUT_DEVSUBTYPE_FLIGHT_STICK 0x04
+#endif
+
+static const char* mg_xinput_gamepad_name(const XINPUT_CAPABILITIES xic) {
+    switch (xic.SubType) {
+        case XINPUT_DEVSUBTYPE_WHEEL:
+            return "XInput Wheel";
+        case XINPUT_DEVSUBTYPE_ARCADE_STICK:
+            return "XInput Arcade Stick";
+        case XINPUT_DEVSUBTYPE_FLIGHT_STICK:
+            return "XInput Flight Stick";
+        case XINPUT_DEVSUBTYPE_DANCE_PAD:
+            return "XInput Dance Pad";
+        case XINPUT_DEVSUBTYPE_GUITAR:
+            return "XInput Guitar";
+        case XINPUT_DEVSUBTYPE_DRUM_KIT:
+            return "XInput Drum Kit";
+        case XINPUT_DEVSUBTYPE_GAMEPAD: {
+            if (xic.Flags & XINPUT_CAPS_WIRELESS)
+                return "Wireless Xbox Controller";
+            else
+                return "Xbox Controller";
+        }
+    }
+
+    return "Unknown XInput Device";
+}
+
 mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
-    static const char name[] = "XInput Controller"; 
     mg_bool out = MG_FALSE;
     MG_UNUSED(event);
     if (xinput_dll) {
@@ -1562,6 +1591,7 @@ mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
             if (dwResult == ERROR_SUCCESS) {
                 mg_button button;
                 mg_axis axis;
+                char* name;
                 XINPUT_CAPABILITIES xic;
                 if (XInputGetCapabilitiesSrc(i, 0, &xic) != ERROR_SUCCESS)
                     continue;
@@ -1573,9 +1603,11 @@ mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
                 MG_SPRINTF(gamepad->guid, "78696e707574%02x000000000000000000", xic.SubType & 0xff);
                 
                 for (button = 0; button < MG_BUTTON_MISC1; button++) {
-                   gamepad->buttons[button].supported = MG_TRUE;
-                   gamepad->buttons[button].current = MG_FALSE; 
-                   gamepad->buttons[button].prev = MG_FALSE; 
+                    if (button == MG_BUTTON_GUIDE) continue;
+
+                    gamepad->buttons[button].supported = MG_TRUE;
+                    gamepad->buttons[button].current = MG_FALSE; 
+                    gamepad->buttons[button].prev = MG_FALSE; 
                 }
 
                 for (axis = 0; axis < MG_AXIS_HAT_DPAD_LEFT_RIGHT; axis++) {
@@ -1583,9 +1615,11 @@ mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
                    gamepad->axes[axis].supported = MG_TRUE; 
                 }
                 
+                name = (char*)mg_xinput_gamepad_name(xic);
                 MG_STRNCPY(gamepad->name, name, sizeof(gamepad->name));
                 out = MG_TRUE;
 
+                gamepad->connected = MG_TRUE;
                 mg_xinput_list[i] = gamepad;
             } else {
                 gamepad->src.xinput_index = 0;
@@ -1647,7 +1681,7 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
 /*        mg_gamepad_release(gamepad); */
         return MG_FALSE;
     }
-   
+     
     MG_UNUSED(event);
     if (gamepad->src.xinput_index) {
         DWORD dwResult;
@@ -1669,18 +1703,24 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
         
         for (button = 0; button < MG_BUTTON_MISC1; button++) {
             u32 btn = mg_xinput_map[button];
-            gamepad->buttons[btn].prev = gamepad->buttons[btn].current;  
-            gamepad->buttons[btn].current = MG_BOOL((state.Gamepad.wButtons & btn));
+            
+            gamepad->buttons[button].prev = gamepad->buttons[button].current;  
+            if (btn == 0) continue;
+
+            gamepad->buttons[button].current = MG_BOOL((state.Gamepad.wButtons & btn));
         }
 
+        gamepad->buttons[MG_BUTTON_LEFT_TRIGGER].current = MG_BOOL(gamepad->axes[MG_AXIS_LEFT_TRIGGER].value > 0);
+        gamepad->buttons[MG_BUTTON_RIGHT_TRIGGER].current = MG_BOOL(gamepad->axes[MG_AXIS_RIGHT_TRIGGER].value > 0); 
+ 
         gamepad->axes[MG_AXIS_LEFT_TRIGGER].value = state.Gamepad.bLeftTrigger; 
         gamepad->axes[MG_AXIS_RIGHT_TRIGGER].value = state.Gamepad.bRightTrigger; 
         
-        gamepad->axes[MG_AXIS_LEFT_TRIGGER].value = state.Gamepad.sThumbLX; 
-        gamepad->axes[MG_AXIS_RIGHT_TRIGGER].value = state.Gamepad.sThumbLY; 
+        gamepad->axes[MG_AXIS_LEFT_X].value = state.Gamepad.sThumbLX; 
+        gamepad->axes[MG_AXIS_LEFT_Y].value = state.Gamepad.sThumbLY; 
         
-        gamepad->axes[MG_AXIS_LEFT_TRIGGER].value = state.Gamepad.sThumbRX; 
-        gamepad->axes[MG_AXIS_RIGHT_TRIGGER].value = state.Gamepad.sThumbRY; 
+        gamepad->axes[MG_AXIS_RIGHT_X].value = state.Gamepad.sThumbRX; 
+        gamepad->axes[MG_AXIS_RIGHT_Y].value = state.Gamepad.sThumbRY; 
     }
 
     if (gamepad->src.device) {
