@@ -1713,15 +1713,15 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
         gamepad->buttons[MG_BUTTON_LEFT_TRIGGER].current = MG_BOOL(gamepad->axes[MG_AXIS_LEFT_TRIGGER].value > 0);
         gamepad->buttons[MG_BUTTON_RIGHT_TRIGGER].current = MG_BOOL(gamepad->axes[MG_AXIS_RIGHT_TRIGGER].value > 0); 
  
-        gamepad->axes[MG_AXIS_LEFT_TRIGGER].value = state.Gamepad.bLeftTrigger; 
-        gamepad->axes[MG_AXIS_RIGHT_TRIGGER].value = state.Gamepad.bRightTrigger; 
-        
-        gamepad->axes[MG_AXIS_LEFT_X].value = state.Gamepad.sThumbLX; 
-        gamepad->axes[MG_AXIS_LEFT_Y].value = state.Gamepad.sThumbLY; 
-        
-        gamepad->axes[MG_AXIS_RIGHT_X].value = state.Gamepad.sThumbRX; 
-        gamepad->axes[MG_AXIS_RIGHT_Y].value = state.Gamepad.sThumbRY; 
-    }
+        gamepad->axes[MG_AXIS_LEFT_TRIGGER].value = state.Gamepad.bLeftTrigger / 127.5f - 1.f;
+        gamepad->axes[MG_AXIS_RIGHT_TRIGGER].value = state.Gamepad.bRightTrigger / 127.5f - 1.f;
+
+        gamepad->axes[MG_AXIS_LEFT_X].value = (state.Gamepad.sThumbLX + 0.5f) / 32767.5f; 
+        gamepad->axes[MG_AXIS_LEFT_Y].value = -(state.Gamepad.sThumbLY + 0.5f) / 32767.5f;
+
+        gamepad->axes[MG_AXIS_RIGHT_X].value = (state.Gamepad.sThumbRX + 0.5f) / 32767.5f; 
+        gamepad->axes[MG_AXIS_RIGHT_Y].value = -(state.Gamepad.sThumbRY + 0.5f) / 32767.5f;
+   }
 
     if (gamepad->src.device) {
         u32 i;

@@ -1,7 +1,20 @@
+- standardize output values 
+    - what range should axs
+    - what range should triggers be
+    - hats
+
+
 - implement linux backend
     - rumble
-- implement directinput backend 
-- implement xinput backend
+- implement directinput 
+    - send out callbacks, events
+    - fix hats
+    - fix weird axes values
+
+- implement xinput 
+    - send out callbacks, events
+     
+
 - implement iokit backend
 - implement wasm backend
 
