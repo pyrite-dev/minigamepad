@@ -1938,7 +1938,6 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
 
     for (i = 0;  i < CFArrayGetCount(elements);  i++) {
         u32 elm_usage = 0, page = 0;
-        CFMutableArrayRef target = NULL;
         IOHIDElementType type;
         IOHIDElementRef native = (IOHIDElementRef)
             CFArrayGetValueAtIndex(elements, i);
