@@ -1842,7 +1842,7 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 
     switch (usagePage) {
 		case kHIDPage_Button: {
-			mg_button btn = mg_get_gamepad_button(gamepad, usage)
+			mg_button btn = mg_get_gamepad_button(gamepad, usage);
             if (btn == NULL) 
 			    btn = mg_get_gamepad_button_platform(usage);
             if (btn == NULL) 
@@ -1856,7 +1856,7 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 			CFIndex logicalMin = IOHIDElementGetLogicalMin(element);
 			CFIndex logicalMax = IOHIDElementGetLogicalMax(element);
             float analogValue = 0;
-			mg_axis btn = mg_get_gamepad_axis(gamepad, usage)
+			mg_axis btn = mg_get_gamepad_axis(gamepad, usage);
             if (btn == NULL)
 			    btn = mg_get_gamepad_axis_platform(usage);
             if (btn == NULL) 
@@ -1875,7 +1875,8 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, IOHIDDeviceRef device) {
     mg_gamepad* gamepad;
     mg_gamepads* gamepads = (mg_gamepads*)context;
-
+    
+    CFIndex i;
     CFArrayRef elements;
     CFTypeRef property;
     u32 vendor = 0, product = 0, version = 0;
@@ -1927,16 +1928,16 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
     }
     else {
         MG_SPRINTF(gamepad->guid, "05000000%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x00",
-                name[0], name[1], name[2], name[3],
-                name[4], name[5], name[6], name[7],
-                name[8], name[9], name[10]);
+                gamepad->name[0],  gamepad->name[1],  gamepad->name[2],  gamepad->name[3],
+                gamepad->name[4], gamepad->name[5],  gamepad->name[6],  gamepad->name[7],
+                gamepad->name[8], gamepad->name[9],  gamepad->name[10]);
     }
 
 
     gamepad->mapping = mg_gamepad_find_valid_mapping(gamepad);
     gamepad->connected = MG_TRUE;
 
-    for (CFIndex i = 0;  i < CFArrayGetCount(elements);  i++) {
+    for (i = 0;  i < CFArrayGetCount(elements);  i++) {
         IOHIDElementType type;
         IOHIDElementRef native = (IOHIDElementRef)
             CFArrayGetValueAtIndex(elements, i);
@@ -1957,7 +1958,7 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
         const uint32_t page = IOHIDElementGetUsagePage(native);
         switch (usagePage) {
             case kHIDPage_Button: {
-                mg_button btn = mg_get_gamepad_button(gamepad, usage)
+                mg_button btn = mg_get_gamepad_button(gamepad, usage);
                 if (btn == NULL) 
                     btn = mg_get_gamepad_button_platform(usage);
                 if (btn == NULL) 
@@ -1969,7 +1970,7 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
                 break;
             }
             case kHIDPage_GenericDesktop: {
-                mg_axis btn = mg_get_gamepad_axis(gamepad, usage)
+                mg_axis btn = mg_get_gamepad_axis(gamepad, usage);
                 if (btn == NULL)
                     btn = mg_get_gamepad_axis_platform(usage);
                 if (btn == NULL) 
