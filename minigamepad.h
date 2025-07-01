@@ -334,11 +334,11 @@ typedef struct mg_gamepad_src {
 } mg_gamepad_src;
 #elif defined(MG_MACOS)
 typedef struct mg_gamepad_src {     
-    int TODO; 
+    IOHIDDeviceRef device;
 } mg_gamepad_src;
 #elif defined(MG_WASM)
 typedef struct mg_gamepad_src {     
-    int TODO;
+    int index;
 } mg_gamepad_src;
 #endif
 
@@ -387,7 +387,7 @@ typedef struct mg_gamepads_src {
 } mg_gamepads_src;
 #elif defined(MG_MACOS)
 typedef struct mg_gamepads_src {     
-    int TODO;
+    IOHIDManagerRef hidManager
 } mg_gamepads_src;
 #elif defined(MG_WASM)
 typedef struct mg_gamepads_src {     
@@ -1013,7 +1013,6 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
             return MG_FALSE;
         }
     } while (ev.type != EV_KEY && ev.type != EV_ABS); /* Ignore events we don't handle */
-
 
     switch (ev.type) {
         case EV_KEY: {
@@ -1787,7 +1786,13 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
 }
 
 void mg_gamepad_release_platform(mg_gamepad* gamepad) {
-    IDirectInputDevice8_Release(gamepad->src.device);
+    if (gamepad->src.device) {
+        IDirectInputDevice8_Release(gamepad->src.device);
+    }
+
+    if (gamepad->src.xinput_index) {
+        mg_xinput_list[gamepad->src.xinput_index - 1] = NULL;
+    }
 }
 
 mg_button mg_get_gamepad_button_platform(u32 button) {
@@ -1814,8 +1819,131 @@ mg_axis mg_get_gamepad_axis_platform(u32 axis) {
  */
 
 #if defined(MG_MACOS)
+#include <IOKit/IOKitLib.h>
+#include <IOKit/hid/IOHIDManager.h>
+
+void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *sender, IOHIDValueRef value) {
+	mg_gamepad* gamepad = (mg_gamepad*)context;
+
+    IOHIDElementRef element = IOHIDValueGetElement(value);
+
+	IOHIDDeviceRef device = IOHIDElementGetDevice(element);
+
+	uint32_t usagePage = IOHIDElementGetUsagePage(element);
+	uint32_t usage = IOHIDElementGetUsage(element);
+
+	CFIndex intValue = IOHIDValueGetIntegerValue(value);
+    MG_UNUSED(result); MG_UNUSED(sender);
+	
+    switch (usagePage) {
+		case kHIDPage_Button: {
+			u8 button = usage;
+            MG_UNUSED(button);
+			break;
+		}
+		case kHIDPage_GenericDesktop: {
+			CFIndex logicalMin = IOHIDElementGetLogicalMin(element);
+			CFIndex logicalMax = IOHIDElementGetLogicalMax(element);
+            float value = 0;
+
+			if (logicalMax <= logicalMin) return;
+			if (intValue < logicalMin) intValue = logicalMin;
+			if (intValue > logicalMax) intValue = logicalMax;
+
+			value = (-1.0f + ((intValue - logicalMin) * 2.0f) / (float)(logicalMax - logicalMin));
+
+			switch (usage) {
+				case kHIDUsage_GD_X: break;
+				case kHIDUsage_GD_Y: break;
+				case kHIDUsage_GD_Z:  break;
+				case kHIDUsage_GD_Rz: break;
+				default: return;
+			}
+   		}
+	}
+}
+
+
+void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, IOHIDDeviceRef device) {
+    mg_gamepads* gamepads = (mg_gamepads*)context; 
+	CFTypeRef usageRef = (CFTypeRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDPrimaryUsageKey));
+	int usage = 0;
+	if (usageRef)
+		CFNumberGetValue((CFNumberRef)usageRef, kCFNumberIntType, (void*)&usage);
+
+    MG_UNUSED(context); MG_UNUSED(result); MG_UNUSED(sender);
+	if (usage != kHIDUsage_GD_Joystick && usage != kHIDUsage_GD_GamePad && usage != kHIDUsage_GD_MultiAxisController) {
+		return;
+	}
+    
+    mg_gamepad* gamepad = mg_gamepad_find(gamepads);
+    if (gamepad == NULL) {
+        return;
+    }
+
+    IOHIDDeviceRegisterInputValueCallback(device, mg_osx_input_value_changed_callback, gamepad);
+
+    CFStringRef deviceName = (CFStringRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey));
+    if (deviceName)
+        CFStringGetCString(deviceName, gamepad->name, sizeof(gamepad->name), kCFStringEncodingUTF8);
+
+    gamepad->connected = MG_TRUE;
+}
+
+void mg_osx_device_removed_callback(void *context, IOReturn result, void *sender, IOHIDDeviceRef device) {
+    mg_gamepads* gamepads = (mg_gamepads*)context; 
+    mg_gamepad* cur = NULL;    
+
+    CFNumberRef usageRef = (CFNumberRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDPrimaryUsageKey));
+	int usage = 0;
+	if (usageRef)
+		CFNumberGetValue(usageRef, kCFNumberIntType, &usage);
+
+	MG_UNUSED(context); MG_UNUSED(result); MG_UNUSED(sender); MG_UNUSED(device);
+	if (usage != kHIDUsage_GD_Joystick && usage != kHIDUsage_GD_GamePad && usage != kHIDUsage_GD_MultiAxisController) {
+		return;
+	}
+    
+    for (cur = gamepads->head; cur; cur = gamepads->next) {
+        if (cur->src.device == device) {
+            mg_gamepad_release(gamepads, gamepad);
+            break;
+        }
+    } 
+}
+
 void mg_gamepads_init_platform(mg_gamepads* gamepads) {
-    MG_UNUSED(gamepads);
+	gamepads->src.hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+
+    CFMutableDictionaryRef matchingDictionary = CFDictionaryCreateMutable(
+		kCFAllocatorDefault,
+		0,
+		&kCFTypeDictionaryKeyCallBacks,
+		&kCFTypeDictionaryValueCallBacks
+	);
+	if (!matchingDictionary) {
+		CFRelease(gamepads->src.hidManager);
+		return;
+	}
+
+	CFDictionarySetValue(
+		matchingDictionary,
+		CFSTR(kIOHIDDeviceUsagePageKey),
+		CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, (int[]){kHIDPage_GenericDesktop})
+	);
+
+	IOHIDManagerSetDeviceMatching(gamepads->src.hidManager, matchingDictionary);
+
+	IOHIDManagerRegisterDeviceMatchingCallback(gamepads->src.hidManager, mg_osx_device_added_callback, gamepads);
+	IOHIDManagerRegisterDeviceRemovalCallback(gamepads->src.hidManager, mg_osx_device_removed_callback, gamepads);
+
+	IOHIDManagerScheduleWithRunLoop(gamepads->src.hidManager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+
+	IOHIDManagerOpen(gamepads->src.hidManager, kIOHIDOptionsTypeNone);
+
+	/* Execute the run loop once in order to register any initially-attached joysticks */
+	CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false);
+
 }
 
 mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
@@ -1824,7 +1952,7 @@ mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
 }
 
 void mg_gamepads_free_platform(mg_gamepads* gamepads) {
-    MG_UNUSED(gamepads);
+	CFRelease(gamepads->src.hidManager);
 }
 
 mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
@@ -1855,8 +1983,64 @@ mg_axis mg_get_gamepad_axis_platform(u32 axis) {
  */
 
 #if defined(MG_WASM)
+#include <emscripten/html5.h>
+
+mg_gamepad* mg_wasm_gamepads[MG_MAX_GAMEPADS];
+
+
+EM_BOOL mg_emscripten_on_gamepad(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData) {
+    mg_gamepad* gamepad;
+    mg_gamepads* gamepads = (mg_gamepads*)userData;
+    if (gamepads == NULL) {
+		return 0;
+    }
+ 
+    MG_UNUSED(eventType);
+   
+    gamepad = mg_wasm_gamepads[gamepadEvent->index];
+
+	if (gamepadEvent->connected) {
+        mg_button button; 
+        mg_axis axis;
+
+        if (gamepad) {
+            mg_gamepad_release(gamepads, mg_wasm_gamepads[gamepadEvent->index]);
+        }
+
+        gamepad = mg_gamepad_find(gamepads);
+        if (gamepad == NULL) {
+            return 0;
+        }
+       
+        for (button = 0; button < MG_BUTTON_MISC1; button++) {
+            gamepad->buttons[button].supported = MG_TRUE;
+            gamepad->buttons[button].current = MG_FALSE; 
+            gamepad->buttons[button].prev = MG_FALSE; 
+        }
+
+        for (axis = 0; axis < MG_AXIS_HAT_DPAD_LEFT_RIGHT; axis++) {
+            gamepad->axes[axis].value = 0; 
+            gamepad->axes[axis].supported = MG_TRUE; 
+        }   
+
+        gamepad->connected = MG_TRUE;
+        mg_wasm_gamepads[gamepadEvent->index] = gamepad;
+    } else {
+        mg_gamepad_release(gamepads, mg_wasm_gamepads[gamepadEvent->index]);
+        mg_wasm_gamepads[gamepadEvent->index] = NULL;
+	}
+
+    return 1; /* The event was consumed by the callback handler */
+}
+
 void mg_gamepads_init_platform(mg_gamepads* gamepads) {
-    MG_UNUSED(gamepads);
+    emscripten_set_gamepadconnected_callback(gamepads, 1, mg_emscripten_on_gamepad);
+	emscripten_set_gamepaddisconnected_callback(gamepads, 1, mg_emscripten_on_gamepad);
+
+	emscripten_sample_gamepad_data();
+    
+    for(size_t i = 0; i <   )
+    if (emscripten_get_gamepad_status(i, &gamepadState) != EMSCRIPTEN_RESULT_SUCCESS)
 }
 
 mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
@@ -1869,12 +2053,56 @@ void mg_gamepads_free_platform(mg_gamepads* gamepads) {
 }
 
 mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
+    int i = gamepad->src.index;
+    int j;
+    EmscriptenGamepadEvent gamepadState;
+
     MG_UNUSED(gamepad);  MG_UNUSED(event);
+	emscripten_sample_gamepad_data();
+    
+    if (emscripten_get_gamepad_status(i, &gamepadState) != EMSCRIPTEN_RESULT_SUCCESS)
+        return MG_FALSE;
+
+    for (j = 0; j < gamepadState.numButtons; j++) {
+        mg_button map[] = {
+            MG_BUTTON_SOUTH, MG_BUTTON_EAST, MG_BUTTON_WEST, MG_BUTTON_NORTH,
+            MG_BUTTON_LEFT_SHOULDER, MG_BUTTON_RIGHT_SHOULDER, MG_BUTTON_LEFT_TRIGGER, MG_BUTTON_RIGHT_TRIGGER,
+            MG_BUTTON_BACK, MG_BUTTON_START,
+            MG_BUTTON_LEFT_STICK, MG_BUTTON_RIGHT_STICK,
+            MG_BUTTON_DPAD_UP, MG_BUTTON_DPAD_DOWN, MG_BUTTON_DPAD_LEFT, MG_BUTTON_DPAD_RIGHT,
+            MG_BUTTON_GUIDE
+        };
+        mg_button btn = MG_BUTTON_UNKNOWN; 
+        if (j < (int)(sizeof(map) / sizeof(mg_button))) 
+            btn = map[j];
+        if (btn == MG_BUTTON_UNKNOWN)
+            continue;
+        
+        gamepad->buttons[btn].prev = gamepad->buttons[btn].current;
+        gamepad->buttons[btn].current = gamepadState.digitalButton[j]; 
+    }
+
+    for (j = 0; j < gamepadState.numAxes; j += 2) {
+        mg_axis map[] = {
+            MG_AXIS_LEFT_X, MG_AXIS_LEFT_Y,
+            MG_AXIS_RIGHT_X, MG_AXIS_RIGHT_Y,
+            MG_AXIS_LEFT_TRIGGER, MG_AXIS_LEFT_TRIGGER 
+        };
+        mg_axis btn = MG_AXIS_UNKNOWN; 
+        if (j < (int)(sizeof(map) / sizeof(mg_axis))) 
+            btn = map[j];
+        if (btn == MG_AXIS_UNKNOWN)
+            continue;
+
+        gamepad->axes[btn].value = (float)gamepadState.axis[j]; 
+
+    }
+    
     return MG_FALSE;
 }
 
-void mg_gamepad_release_platform(mg_gamepad* gamepads) {
-    MG_UNUSED(gamepads); 
+void mg_gamepad_release_platform(mg_gamepad* gamepad) {
+    mg_wasm_gamepads[gamepad->src.index] = NULL;
 }
 
 mg_button mg_get_gamepad_button_platform(u32 button) {

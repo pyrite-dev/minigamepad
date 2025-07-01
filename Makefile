@@ -11,9 +11,13 @@ EXAMPLES_SOURCES = $(filter-out examples/rgfw_gamepad.c, $(wildcard examples/*.c
 EXAMPLES  = $(EXAMPLES_SOURCES:.c=)
 
 EXTRA_EXAMPLES = examples/rgfw_gamepad
+OUTPUT = 
 
 ifeq ($(CC), emcc)
+	# EM_BOOL
+	WARNINGS += -Wno-c99-extensions
 	LIBS = 
+	OUTPUT = .html 
 else ifeq ($(PLATFORM),Linux)
 	LIBS = 
 	RGFW_LIBS = -lX11 -lXrandr -lGL -lm 
@@ -38,7 +42,7 @@ else
 endif
 
 $(EXAMPLES): %: %.c minigamepad.h 
-	$(CC) -std=c89 $(WARNINGS) -I. $< $(LIBS) -o $@
+	$(CC) -std=c89 $(WARNINGS) -I. $< $(LIBS) -o $@$(OUTPUT)
 
 debug: all
 	@for exe in $(EXAMPLES); do \

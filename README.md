@@ -23,10 +23,10 @@ backend is started, but not complete.
 backend is started, but not complete. 
 
 ### macos (iokit)
-backend has not been started 
+backend is started, but not complete. 
 
 ### wasm (emscripten)
-the backend has not been started
+backend has not been started 
 
 ## basic example
 
