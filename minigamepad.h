@@ -1837,6 +1837,9 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 	CFIndex intValue = IOHIDValueGetIntegerValue(value);
     MG_UNUSED(result); MG_UNUSED(sender);
 	
+    if (gamepad->src.device != devices) 
+        return;
+
     switch (usagePage) {
 		case kHIDPage_Button: {
 			break;
@@ -1868,9 +1871,11 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, IOHIDDeviceRef device) {
     mg_gamepad* gamepad;
     mg_gamepads* gamepads = (mg_gamepads*)context; 
+    
+    CFStringRef deviceName;
     CFTypeRef usageRef = (CFTypeRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDPrimaryUsageKey));
 	int usage = 0;
-	if (usageRef)
+    if (usageRef)
 		CFNumberGetValue((CFNumberRef)usageRef, kCFNumberIntType, (void*)&usage);
 
     MG_UNUSED(context); MG_UNUSED(result); MG_UNUSED(sender);
@@ -1885,7 +1890,7 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
 
     IOHIDDeviceRegisterInputValueCallback(device, mg_osx_input_value_changed_callback, gamepad);
 
-    CFStringRef deviceName = (CFStringRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey));
+    deviceName = (CFStringRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey));
     if (deviceName)
         CFStringGetCString(deviceName, gamepad->name, sizeof(gamepad->name), kCFStringEncodingUTF8);
 
@@ -1908,16 +1913,19 @@ void mg_osx_device_removed_callback(void *context, IOReturn result, void *sender
     
     for (cur = gamepads->list.head; cur; cur = cur->next) {
         if (cur->src.device == device) {
-            mg_gamepad_release(gamepads, gamepad);
-            break;
+            mg_gamepad_release(gamepads, cur);
+            return;
         }
     } 
 }
 
 void mg_gamepads_init_platform(mg_gamepads* gamepads) {
-	gamepads->src.hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+    const int filter[] = {kHIDPage_GenericDesktop};
 
-    CFMutableDictionaryRef matchingDictionary = CFDictionaryCreateMutable(
+    CFMutableDictionaryRef matchingDictionary;
+    gamepads->src.hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+
+    matchingDictionary = CFDictionaryCreateMutable(
 		kCFAllocatorDefault,
 		0,
 		&kCFTypeDictionaryKeyCallBacks,
@@ -1931,7 +1939,7 @@ void mg_gamepads_init_platform(mg_gamepads* gamepads) {
 	CFDictionarySetValue(
 		matchingDictionary,
 		CFSTR(kIOHIDDeviceUsagePageKey),
-		CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, (int[]){kHIDPage_GenericDesktop})
+		CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, filter)
 	);
 
 	IOHIDManagerSetDeviceMatching(gamepads->src.hidManager, matchingDictionary);
