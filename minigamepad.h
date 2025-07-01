@@ -1938,6 +1938,8 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
     gamepad->connected = MG_TRUE;
 
     for (i = 0;  i < CFArrayGetCount(elements);  i++) {
+        u32 usage = 0, page = 0;
+        CFMutableArrayRef target = NULL;
         IOHIDElementType type;
         IOHIDElementRef native = (IOHIDElementRef)
             CFArrayGetValueAtIndex(elements, i);
@@ -1952,15 +1954,15 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
             continue;
         }
 
-        CFMutableArrayRef target = NULL;
 
-        const uint32_t usage = IOHIDElementGetUsage(native);
-        const uint32_t page = IOHIDElementGetUsagePage(native);
+        elm_usage = IOHIDElementGetUsage(native);
+        page = IOHIDElementGetUsagePage(native);
+
         switch (usagePage) {
             case kHIDPage_Button: {
-                mg_button btn = mg_get_gamepad_button(gamepad, usage);
+                mg_button btn = mg_get_gamepad_button(gamepad, elm_usage);
                 if (btn == NULL) 
-                    btn = mg_get_gamepad_button_platform(usage);
+                    btn = mg_get_gamepad_button_platform(elm_usage);
                 if (btn == NULL) 
                     break;
 
@@ -1970,9 +1972,9 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
                 break;
             }
             case kHIDPage_GenericDesktop: {
-                mg_axis btn = mg_get_gamepad_axis(gamepad, usage);
+                mg_axis btn = mg_get_gamepad_axis(gamepad, elm_usage);
                 if (btn == NULL)
-                    btn = mg_get_gamepad_axis_platform(usage);
+                    btn = mg_get_gamepad_axis_platform(elm_usage);
                 if (btn == NULL) 
                     break;
 
