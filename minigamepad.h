@@ -1855,7 +1855,6 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 		case kHIDPage_GenericDesktop: {
 			CFIndex logicalMin = IOHIDElementGetLogicalMin(element);
 			CFIndex logicalMax = IOHIDElementGetLogicalMax(element);
-            float analogValue = 0;
 			mg_axis btn = mg_get_gamepad_axis(gamepad, (u8)usage);
             if (btn == 0)
 			    btn = mg_get_gamepad_axis_platform(usage);
@@ -1958,9 +1957,9 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
         elm_usage = IOHIDElementGetUsage(native);
         page = IOHIDElementGetUsagePage(native);
 
-        switch (usagePage) {
+        switch (page) {
             case kHIDPage_Button: {
-                mg_button btn = mg_get_gamepad_button(gamepad, elm_usage);
+                mg_button btn = mg_get_gamepad_button(gamepad, (u8)elm_usage);
                 if (btn == 0) 
                     btn = mg_get_gamepad_button_platform(elm_usage);
                 if (btn == 0) 
@@ -1972,7 +1971,7 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
                 break;
             }
             case kHIDPage_GenericDesktop: {
-                mg_axis btn = mg_get_gamepad_axis(gamepad, elm_usage);
+                mg_axis btn = mg_get_gamepad_axis(gamepad, (u8)elm_usage);
                 if (btn == 0)
                     btn = mg_get_gamepad_axis_platform(elm_usage);
                 if (btn == 0) 
