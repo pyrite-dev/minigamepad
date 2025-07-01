@@ -1842,36 +1842,43 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 
     switch (usagePage) {
 		case kHIDPage_Button: {
-			break;
+			mg_button btn = mg_get_gamepad_button(gamepad, usage)
+            if (btn == NULL) 
+			    btn = mg_get_gamepad_button_platform(usage);
+            if (btn == NULL) 
+                break;
+
+            gamepad->buttons[btn].prev = gamepad->buttons[btn].current;
+            gamepad->buttons[btn].current = MG_BOOL(intValue);
+            break;
 		}
 		case kHIDPage_GenericDesktop: {
 			CFIndex logicalMin = IOHIDElementGetLogicalMin(element);
 			CFIndex logicalMax = IOHIDElementGetLogicalMax(element);
             float analogValue = 0;
+			mg_axis btn = mg_get_gamepad_axis(gamepad, usage)
+            if (btn == NULL)
+			    btn = mg_get_gamepad_axis_platform(usage);
+            if (btn == NULL) 
+                break;
 
 			if (logicalMax <= logicalMin) return;
 			if (intValue < logicalMin) intValue = logicalMin;
 			if (intValue > logicalMax) intValue = logicalMax;
 
-			analogValue = (-1.0f + ((intValue - logicalMin) * 2.0f) / (float)(logicalMax - logicalMin));
-            MG_UNUSED(analogValue);
-
-			switch (usage) {
-				case kHIDUsage_GD_X: break;
-				case kHIDUsage_GD_Y: break;
-				case kHIDUsage_GD_Z:  break;
-				case kHIDUsage_GD_Rz: break;
-				default: return;
-			}
-   		}
+			gamepad->axes[btn].value = (-1.0f + ((intValue - logicalMin) * 2.0f) / (float)(logicalMax - logicalMin));
+        }
 	}
 }
 
 
 void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, IOHIDDeviceRef device) {
     mg_gamepad* gamepad;
-    mg_gamepads* gamepads = (mg_gamepads*)context; 
-    
+    mg_gamepads* gamepads = (mg_gamepads*)context;
+
+    CFArrayRef elements;
+    CFTypeRef property;
+    u32 vendor = 0, product = 0, version = 0;
     CFStringRef deviceName;
     CFTypeRef usageRef = (CFTypeRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDPrimaryUsageKey));
 	int usage = 0;
@@ -1883,6 +1890,10 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
 		return;
 	}
     
+    elements = IOHIDDeviceCopyMatchingElements(device, NULL, kIOHIDOptionsTypeNone);
+    if (elements == NULL) 
+        return;
+
     gamepad = mg_gamepad_find(gamepads);
     if (gamepad == NULL) {
         return;
@@ -1893,8 +1904,85 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
     deviceName = (CFStringRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey));
     if (deviceName)
         CFStringGetCString(deviceName, gamepad->name, sizeof(gamepad->name), kCFStringEncodingUTF8);
+    else
+        MG_STRNCPY(gamepad->name, "Unknown", sizeof(gamepad->name));
 
+    property = IOHIDDeviceGetProperty(device, CFSTR(kIOHIDVendorIDKey));
+    if (property)
+        CFNumberGetValue(property, kCFNumberSInt32Type, &vendor);
+
+    property = IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductIDKey));
+    if (property)
+        CFNumberGetValue(property, kCFNumberSInt32Type, &product);
+
+    property = IOHIDDeviceGetProperty(device, CFSTR(kIOHIDVersionNumberKey));
+    if (property)
+        CFNumberGetValue(property, kCFNumberSInt32Type, &version);
+
+    if (vendor && product) {
+        MG_SPRINTF(gamepad->guid, "03000000%02x%02x0000%02x%02x0000%02x%02x0000",
+                (u8) vendor, (u8) (vendor >> 8),
+                (u8) product, (u8) (product >> 8),
+                (u8) version, (u8) (version >> 8));
+    }
+    else {
+        MG_SPRINTF(gamepad->guid, "05000000%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x00",
+                name[0], name[1], name[2], name[3],
+                name[4], name[5], name[6], name[7],
+                name[8], name[9], name[10]);
+    }
+
+
+    gamepad->mapping = mg_gamepad_find_valid_mapping(gamepad);
     gamepad->connected = MG_TRUE;
+
+    for (CFIndex i = 0;  i < CFArrayGetCount(elements);  i++) {
+        IOHIDElementType type;
+        IOHIDElementRef native = (IOHIDElementRef)
+            CFArrayGetValueAtIndex(elements, i);
+        if (CFGetTypeID(native) != IOHIDElementGetTypeID())
+            continue;
+
+        type = IOHIDElementGetType(native);
+        if ((type != kIOHIDElementTypeInput_Axis) &&
+            (type != kIOHIDElementTypeInput_Button) &&
+            (type != kIOHIDElementTypeInput_Misc))
+        {
+            continue;
+        }
+
+        CFMutableArrayRef target = NULL;
+
+        const uint32_t usage = IOHIDElementGetUsage(native);
+        const uint32_t page = IOHIDElementGetUsagePage(native);
+        switch (usagePage) {
+            case kHIDPage_Button: {
+                mg_button btn = mg_get_gamepad_button(gamepad, usage)
+                if (btn == NULL) 
+                    btn = mg_get_gamepad_button_platform(usage);
+                if (btn == NULL) 
+                    break;
+
+                gamepad->buttons[btn].prev = 0;
+                gamepad->buttons[btn].current = 0;
+                gamepad->buttons[btn].supported = MG_TRUE;
+                break;
+            }
+            case kHIDPage_GenericDesktop: {
+                mg_axis btn = mg_get_gamepad_axis(gamepad, usage)
+                if (btn == NULL)
+                    btn = mg_get_gamepad_axis_platform(usage);
+                if (btn == NULL) 
+                    break;
+
+                gamepad->axes[btn].value = 0.0f;
+                gamepad->axes[btn].supported = MG_TRUE;
+                break;
+            }
+        }
+    }
+
+    CFRelease(elements);
 }
 
 void mg_osx_device_removed_callback(void *context, IOReturn result, void *sender, IOHIDDeviceRef device) {
@@ -1976,14 +2064,40 @@ void mg_gamepad_release_platform(mg_gamepad* gamepads) {
 }
 
 mg_button mg_get_gamepad_button_platform(u32 button) {
-    /* TODO */
-    MG_UNUSED(button);
+    switch (button) {
+        case kHIDUsage_GD_DPadUp: return MG_BUTTON_DPAD_UP;
+        case kHIDUsage_GD_DPadRight:  return MG_BUTTON_DPAD_RIGHT;
+        case kHIDUsage_GD_DPadDown:  return MG_BUTTON_DPAD_DOWN;
+        case kHIDUsage_GD_DPadLeft:  return MG_BUTTON_DPAD_LEFT;
+        case kHIDUsage_GD_SystemMainMenu:  return MG_BUTTON_GUIDE;
+        case kHIDUsage_GD_Select:  return MG_BUTTON_BACK;
+        case kHIDUsage_GD_Start: return MG_BUTTON_START;
+        case kHIDUsage_Button_1: return MG_BUTTON_SOUTH; 
+        case kHIDUsage_Button_2: return MG_BUTTON_WEST;
+        case kHIDUsage_Button_3: return MG_BUTTON_EAST;
+        case kHIDUsage_Button_4: return MG_BUTTON_NORTH;
+        case kHIDUsage_Button_5: return MG_BUTTON_LEFT_SHOULDER;
+        case kHIDUsage_Button_6: return MG_BUTTON_RIGHT_SHOULDER;
+        case kHIDUsage_Button_7: return MG_BUTTON_LEFT_TRIGGER;
+        case kHIDUsage_Button_8: return MG_BUTTON_RIGHT_TRIGGER;
+        case kHIDUsage_Button_9: return MG_BUTTON_LEFT_STICK;
+        case kHIDUsage_Button_10: return MG_BUTTON_RIGHT_STICK;
+        default: break;
+    }
+
     return MG_BUTTON_UNKNOWN;
 }
 
 mg_axis mg_get_gamepad_axis_platform(u32 axis) {
-    /* TODO */
-    MG_UNUSED(axis);
+    switch (axis) {
+        case kHIDUsage_GD_X: return MG_AXIS_LEFT_X;
+        case kHIDUsage_GD_Y: return MG_AXIS_LEFT_Y;
+        case kHIDUsage_GD_Z: return MG_AXIS_LEFT_TRIGGER;
+        case kHIDUsage_GD_Rx: return MG_AXIS_RIGHT_X;
+        case kHIDUsage_GD_Ry: return MG_AXIS_RIGHT_Y;
+        case kHIDUsage_GD_Rz: return MG_AXIS_RIGHT_TRIGGER;
+        default: break;
+    } 
     return MG_AXIS_UNKNOWN;
 }
 #endif /* MG_MACOS */
