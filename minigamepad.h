@@ -1842,10 +1842,10 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 
     switch (usagePage) {
 		case kHIDPage_Button: {
-			mg_button btn = mg_get_gamepad_button(gamepad, usage);
-            if (btn == NULL) 
+			mg_button btn = mg_get_gamepad_button(gamepad, (u8)usage);
+            if (btn == 0) 
 			    btn = mg_get_gamepad_button_platform(usage);
-            if (btn == NULL) 
+            if (btn == 0) 
                 break;
 
             gamepad->buttons[btn].prev = gamepad->buttons[btn].current;
@@ -1856,10 +1856,10 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 			CFIndex logicalMin = IOHIDElementGetLogicalMin(element);
 			CFIndex logicalMax = IOHIDElementGetLogicalMax(element);
             float analogValue = 0;
-			mg_axis btn = mg_get_gamepad_axis(gamepad, usage);
-            if (btn == NULL)
+			mg_axis btn = mg_get_gamepad_axis(gamepad, (u8)usage);
+            if (btn == 0)
 			    btn = mg_get_gamepad_axis_platform(usage);
-            if (btn == NULL) 
+            if (btn == 0) 
                 break;
 
 			if (logicalMax <= logicalMin) return;
@@ -1938,7 +1938,7 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
     gamepad->connected = MG_TRUE;
 
     for (i = 0;  i < CFArrayGetCount(elements);  i++) {
-        u32 usage = 0, page = 0;
+        u32 elm_usage = 0, page = 0;
         CFMutableArrayRef target = NULL;
         IOHIDElementType type;
         IOHIDElementRef native = (IOHIDElementRef)
@@ -1961,9 +1961,9 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
         switch (usagePage) {
             case kHIDPage_Button: {
                 mg_button btn = mg_get_gamepad_button(gamepad, elm_usage);
-                if (btn == NULL) 
+                if (btn == 0) 
                     btn = mg_get_gamepad_button_platform(elm_usage);
-                if (btn == NULL) 
+                if (btn == 0) 
                     break;
 
                 gamepad->buttons[btn].prev = 0;
@@ -1973,9 +1973,9 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
             }
             case kHIDPage_GenericDesktop: {
                 mg_axis btn = mg_get_gamepad_axis(gamepad, elm_usage);
-                if (btn == NULL)
+                if (btn == 0)
                     btn = mg_get_gamepad_axis_platform(elm_usage);
-                if (btn == NULL) 
+                if (btn == 0) 
                     break;
 
                 gamepad->axes[btn].value = 0.0f;
