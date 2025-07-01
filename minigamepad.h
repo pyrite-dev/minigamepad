@@ -333,6 +333,8 @@ typedef struct mg_gamepad_src {
     DWORD xinput_index;
 } mg_gamepad_src;
 #elif defined(MG_MACOS)
+#include <IOKit/hid/IOHIDManager.h>
+
 typedef struct mg_gamepad_src {     
     IOHIDDeviceRef device;
 } mg_gamepad_src;
@@ -387,7 +389,7 @@ typedef struct mg_gamepads_src {
 } mg_gamepads_src;
 #elif defined(MG_MACOS)
 typedef struct mg_gamepads_src {     
-    IOHIDManagerRef hidManager
+    IOHIDManagerRef hidManager;
 } mg_gamepads_src;
 #elif defined(MG_WASM)
 typedef struct mg_gamepads_src {     
@@ -1837,20 +1839,19 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 	
     switch (usagePage) {
 		case kHIDPage_Button: {
-			u8 button = usage;
-            MG_UNUSED(button);
 			break;
 		}
 		case kHIDPage_GenericDesktop: {
 			CFIndex logicalMin = IOHIDElementGetLogicalMin(element);
 			CFIndex logicalMax = IOHIDElementGetLogicalMax(element);
-            float value = 0;
+            float analogValue = 0;
 
 			if (logicalMax <= logicalMin) return;
 			if (intValue < logicalMin) intValue = logicalMin;
 			if (intValue > logicalMax) intValue = logicalMax;
 
-			value = (-1.0f + ((intValue - logicalMin) * 2.0f) / (float)(logicalMax - logicalMin));
+			analogValue = (-1.0f + ((intValue - logicalMin) * 2.0f) / (float)(logicalMax - logicalMin));
+            MG_UNUSED(analogValue);
 
 			switch (usage) {
 				case kHIDUsage_GD_X: break;
@@ -1865,8 +1866,9 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 
 
 void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, IOHIDDeviceRef device) {
+    mg_gamepad* gamepad;
     mg_gamepads* gamepads = (mg_gamepads*)context; 
-	CFTypeRef usageRef = (CFTypeRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDPrimaryUsageKey));
+    CFTypeRef usageRef = (CFTypeRef)IOHIDDeviceGetProperty(device, CFSTR(kIOHIDPrimaryUsageKey));
 	int usage = 0;
 	if (usageRef)
 		CFNumberGetValue((CFNumberRef)usageRef, kCFNumberIntType, (void*)&usage);
@@ -1876,7 +1878,7 @@ void mg_osx_device_added_callback(void* context, IOReturn result, void *sender, 
 		return;
 	}
     
-    mg_gamepad* gamepad = mg_gamepad_find(gamepads);
+    gamepad = mg_gamepad_find(gamepads);
     if (gamepad == NULL) {
         return;
     }
@@ -1904,7 +1906,7 @@ void mg_osx_device_removed_callback(void *context, IOReturn result, void *sender
 		return;
 	}
     
-    for (cur = gamepads->head; cur; cur = gamepads->next) {
+    for (cur = gamepads->list.head; cur; cur = cur->next) {
         if (cur->src.device == device) {
             mg_gamepad_release(gamepads, gamepad);
             break;
@@ -2038,9 +2040,6 @@ void mg_gamepads_init_platform(mg_gamepads* gamepads) {
 	emscripten_set_gamepaddisconnected_callback(gamepads, 1, mg_emscripten_on_gamepad);
 
 	emscripten_sample_gamepad_data();
-    
-    for(size_t i = 0; i <   )
-    if (emscripten_get_gamepad_status(i, &gamepadState) != EMSCRIPTEN_RESULT_SUCCESS)
 }
 
 mg_bool mg_gamepads_update_platform(mg_gamepads* gamepads, mg_event* event) {
@@ -2079,7 +2078,7 @@ mg_bool mg_gamepad_update_platform(mg_gamepad* gamepad, mg_event* event) {
             continue;
         
         gamepad->buttons[btn].prev = gamepad->buttons[btn].current;
-        gamepad->buttons[btn].current = gamepadState.digitalButton[j]; 
+        gamepad->buttons[btn].current = MG_BOOL(gamepadState.digitalButton[j]); 
     }
 
     for (j = 0; j < gamepadState.numAxes; j += 2) {
