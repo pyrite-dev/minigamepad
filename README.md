@@ -55,7 +55,7 @@ int main(void) {
 Then compile with:
 
 linux `gcc main.c` \
-macos: `gcc main.c -framework IOKit` \
+macos: `gcc main.c -framework IOKit -framework CoreFoundation` \
 windows: `gcc main.c` OR `cl main.c` \
 wasm: `emcc main.c -s ASYNCIFY`  
 
