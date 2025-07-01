@@ -1837,7 +1837,7 @@ void mg_osx_input_value_changed_callback(void *context, IOReturn result, void *s
 	CFIndex intValue = IOHIDValueGetIntegerValue(value);
     MG_UNUSED(result); MG_UNUSED(sender);
 	
-    if (gamepad->src.device != devices) 
+    if (gamepad->src.device != device) 
         return;
 
     switch (usagePage) {
